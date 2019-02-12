@@ -12,4 +12,5 @@ fi
 
 apt-get update
 apt-get install ansible
+cd keca_init/
 ansible-playbook plays/keca.yml 
