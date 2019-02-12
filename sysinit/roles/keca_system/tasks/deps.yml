@@ -1,0 +1,34 @@
+---
+- name: Update the apt package index
+  apt:
+    name: "*"
+    state: latest
+    update_cache: yes
+    force_apt_get: yes
+
+- name: add non-free official repository for Debian Stretch
+  apt_repository:
+    repo: deb http://ftp.ca.debian.org/debian/ stretch main non-free
+    state: present
+
+- name: Install packages
+  apt:
+    name: "{{ packagesdep }}"
+    force_apt_get: yes
+    state: latest
+    update_cache: yes
+  vars:
+    packagesdep:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - dirmngr
+      - git
+      - gnupg2
+      - network-manager-openvpn
+      - network-manager-openvpn-gnome
+      - openvpn
+      - python-dev
+      - python-pip
+      - software-properties-common
+      - wget
