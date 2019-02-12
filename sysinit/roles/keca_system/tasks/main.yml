@@ -1,5 +1,11 @@
 ---
 # tasks file for keca_system
 - import_tasks: deps.yml
+  become: yes
 
 - import_tasks: install.yml
+  become: yes
+
+- import_tasks: fix_gnome_keyring.yml
+  become: no
+
