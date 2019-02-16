@@ -50,23 +50,29 @@
       - virtualbox-6.0
       - vagrant
 
-    # - name: Ensure docker-compose is installed and available
-    #   get_url:
-    #     url: https://github.com/docker/compose/releases/download/1.23.2/docker-compose-{{ ansible_system }}-{{ ansible_userspace_architecture }}
-    #     dest: /usr/local/bin/docker-compose
-    #     mode: 'u+x,g+x'
+- name: Ensure docker-compose is installed and available
+  get_url:
+    url: https://github.com/docker/compose/releases/download/1.23.2/docker-compose-{{ ansible_system }}-{{ ansible_userspace_architecture }}
+    dest: /usr/local/bin/docker-compose
+    mode: 'u+x,g+x'
 
-- name: Upgrade latest pip, setuptools, docker-py and docker-compose with pip
-  pip:
-    name: "{{ item.name }}"
-    state: latest
-  with_items:
-    #- { name: pip, version: "latest", install: true }
-    #- { name: setuptools, version: "latest", install: true }
-    #- { name: docker-py, version: "latest", install: true }
-    - { name: docker-compose, version: "latest", install: true }
-  when: (item.version=="latest" and item.install)
-  ignore_errors: yes
+- name: Ensure docker-machine is installed and available
+  get_url:
+    url: "https://github.com/docker/machine/releases/download/v0.16.0/docker-machine-{{ ansible_system }}-{{ ansible_userspace_architecture }}"
+    dest: /usr/local/bin/docker-machine
+    mode: 'u+x,g+x'
+
+#- name: Upgrade latest pip, setuptools, docker-py and docker-compose with pip
+#  pip:
+#    name: "{{ item.name }}"
+#    state: latest
+#  with_items:
+#    - { name: pip, version: "latest", install: true }
+#    - { name: setuptools, version: "latest", install: true }
+#    - { name: docker-py, version: "latest", install: true }
+#    - { name: docker-compose, version: "latest", install: true }
+#  when: (item.version=="latest" and item.install)
+#  ignore_errors: yes
 
 - name: "Add docker group"
   group:
