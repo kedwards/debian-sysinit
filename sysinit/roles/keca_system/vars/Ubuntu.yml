@@ -1,0 +1,5 @@
+---
+# vars file for keca_system
+packages:
+  - docker-ce
+  - vagrant

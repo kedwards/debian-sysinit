@@ -1,2 +1,7 @@
 ---
 # defaults file for keca_system
+virtualbox_package: virtualbox-6.0_6.0.4-128413~Ubuntu~bionic_amd64
+virtualbox_url: "https://download.virtualbox.org/virtualbox/6.0.4/{{ virtualbox_package }}.deb"
+
+dropbox_package: dropbox_2019.01.31_amd64.deb
+dropbox_url: "https://www.dropbox.com/download?dl=packages/ubuntu/{{ dropbox_package }}.deb"

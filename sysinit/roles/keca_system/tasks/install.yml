@@ -1,23 +1,61 @@
 ---
 - name: Add Apt signing key from official docker repo
   apt_key:
-    url: https://download.docker.com/linux/debian/gpg
+    url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
     state: present
 
-- name: add docker official repository for Debian Stretch
+- name: add docker official repository
   apt_repository:
-    repo: deb [arch=amd64] https://download.docker.com/linux/debian stretch stable
+    repo: "deb [arch=amd64] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
     state: present
 
 - name: Add Apt signing key from official virtualbox repo
   apt_key:
     url: https://www.virtualbox.org/download/oracle_vbox_2016.asc
     state: present
+  when: ansible_distribution == "Debian"
 
-- name: add virtualbox official repository for Debian Stretch
+- name: add virtualbox official repository for Debian
   apt_repository:
     repo: deb http://download.virtualbox.org/virtualbox/debian stretch contrib
     state: present
+  when: ansible_distribution == "Debian"
+
+- name: Check if dropbox is installed
+  command: dpkg-query -W dropbox
+  register: dropbox_check_deb
+  failed_when: dropbox_check_deb.rc > 1
+  changed_when: dropbox_check_deb.rc == 1 
+  when: ansible_distribution == "Ubuntu"
+
+- name: Download dropbox
+  get_url: 
+    url: "{{ dropbox_url }}"
+    dest: "/home/{{ ansible_env.USER }}/Downloads/{{ dropbox_package }}.deb"
+  when: dropbox_check_deb.rc == 1 and ansible_distribution == "Ubuntu"
+
+- name: Install dropbox
+  apt:
+    deb: "/home/{{ ansible_env.USER }}/Downloads/{{ dropbox_package }}.deb"
+  when: dropbox_check_deb.rc == 1
+
+- name: Check if virtualbox is installed
+  command: dpkg-query -W virtualbox
+  register: virtualbox_check_deb
+  failed_when: virtualbox_check_deb.rc > 1
+  changed_when: virtualbox_check_deb.rc == 1 
+  when: ansible_distribution == "Ubuntu"
+
+- name: Download virtualbox
+  get_url: 
+    url: "{{ virtualbox_url }}"
+    dest: "/home/{{ ansible_env.USER }}/Downloads/{{ virtualbox_package }}.deb"
+  when: virtualbox_check_deb.rc == 1 and ansible_distribution == "Ubuntu"
+
+- name: Install virtualbox
+  apt:
+    deb: "/home/{{ ansible_env.USER }}/Downloads/{{ virtualbox_package }}.deb"
+  when: virtualbox_check_deb.rc == 1
 
 - name: Add Apt signing key from unofficial vagrant repo
   apt_key:
@@ -25,7 +63,7 @@
     id: AD319E0F7CFFA38B4D9F6E55CE3F3DE92099F7A4
     state: present
 
-- name: add vagrant repository for Debian Stretch
+- name: add vagrant repository
   apt_repository:
     repo: deb https://vagrant-deb.linestarve.com/ any main
     state: present
@@ -39,16 +77,10 @@
 
 - name: Install packages
   apt:
-    name: "{{ packagesdep }}"
+    name: "{{ packages }}"
     force_apt_get: yes
     state: latest
     update_cache: yes
-  vars:
-    packagesdep:
-      - docker-ce
-      - caja-dropbox
-      - virtualbox-6.0
-      - vagrant
 
 - name: Ensure docker-compose is installed and available
   get_url:
@@ -62,18 +94,6 @@
     dest: /usr/local/bin/docker-machine
     mode: 'u+x,g+x'
 
-#- name: Upgrade latest pip, setuptools, docker-py and docker-compose with pip
-#  pip:
-#    name: "{{ item.name }}"
-#    state: latest
-#  with_items:
-#    - { name: pip, version: "latest", install: true }
-#    - { name: setuptools, version: "latest", install: true }
-#    - { name: docker-py, version: "latest", install: true }
-#    - { name: docker-compose, version: "latest", install: true }
-#  when: (item.version=="latest" and item.install)
-#  ignore_errors: yes
-
 - name: "Add docker group"
   group:
     name: docker
@@ -85,7 +105,3 @@
     groups: docker
     append: yes
 
-# - name: "Restart Docker service"
-#   service:
-#     name: docker
-#     state: restarted

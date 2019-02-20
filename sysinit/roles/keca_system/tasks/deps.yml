@@ -6,10 +6,11 @@
     update_cache: yes
     force_apt_get: yes
 
-- name: add non-free official repository for Debian Stretch
+- name: Add non-free official repository for Debian 
   apt_repository:
     repo: deb http://ftp.ca.debian.org/debian/ stretch main non-free
     state: present
+  when: ansible_distribution == "Debian"
 
 - name: Install packages
   apt:
