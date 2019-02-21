@@ -13,49 +13,11 @@
   apt_key:
     url: https://www.virtualbox.org/download/oracle_vbox_2016.asc
     state: present
-  when: ansible_distribution == "Debian"
 
-- name: add virtualbox official repository for Debian
+- name: add virtualbox official repository
   apt_repository:
-    repo: deb http://download.virtualbox.org/virtualbox/debian stretch contrib
+    repo: "deb https://download.virtualbox.org/virtualbox/debian {{ ansible_distribution_release }} contrib"
     state: present
-  when: ansible_distribution == "Debian"
-
-- name: Check if dropbox is installed
-  command: dpkg-query -W dropbox
-  register: dropbox_check_deb
-  failed_when: dropbox_check_deb.rc > 1
-  changed_when: dropbox_check_deb.rc == 1 
-  when: ansible_distribution == "Ubuntu"
-
-- name: Download dropbox
-  get_url: 
-    url: "{{ dropbox_url }}"
-    dest: "/home/{{ ansible_env.USER }}/Downloads/{{ dropbox_package }}.deb"
-  when: dropbox_check_deb.rc == 1 and ansible_distribution == "Ubuntu"
-
-- name: Install dropbox
-  apt:
-    deb: "/home/{{ ansible_env.USER }}/Downloads/{{ dropbox_package }}.deb"
-  when: dropbox_check_deb.rc == 1
-
-- name: Check if virtualbox is installed
-  command: dpkg-query -W virtualbox
-  register: virtualbox_check_deb
-  failed_when: virtualbox_check_deb.rc > 1
-  changed_when: virtualbox_check_deb.rc == 1 
-  when: ansible_distribution == "Ubuntu"
-
-- name: Download virtualbox
-  get_url: 
-    url: "{{ virtualbox_url }}"
-    dest: "/home/{{ ansible_env.USER }}/Downloads/{{ virtualbox_package }}.deb"
-  when: virtualbox_check_deb.rc == 1 and ansible_distribution == "Ubuntu"
-
-- name: Install virtualbox
-  apt:
-    deb: "/home/{{ ansible_env.USER }}/Downloads/{{ virtualbox_package }}.deb"
-  when: virtualbox_check_deb.rc == 1
 
 - name: Add Apt signing key from unofficial vagrant repo
   apt_key:

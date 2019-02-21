@@ -1,7 +1,2 @@
 ---
 # vars file for keca_system
-packages:
-  - docker-ce
-  - caja-dropbox
-  - virtualbox-6.0
-  - vagrant

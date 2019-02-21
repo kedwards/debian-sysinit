@@ -1,0 +1,21 @@
+---
+- name: User
+  debug:
+    msg: "{{ ansible_user_id }}"
+
+- name: System
+  debug:
+    msg: "{{ ansible_system }}"
+
+- name: Arch
+  debug:
+    msg: "{{ ansible_userspace_architecture }}"
+
+- name: Distribution
+  debug:
+    msg: "{{ ansible_distribution }}"
+
+- name: Release
+  debug:
+    msg: "{{ ansible_distribution_release }}"
+

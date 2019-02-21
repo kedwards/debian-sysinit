@@ -1,7 +1,26 @@
 ---
 # defaults file for keca_system
-virtualbox_package: virtualbox-6.0_6.0.4-128413~Ubuntu~bionic_amd64
-virtualbox_url: "https://download.virtualbox.org/virtualbox/6.0.4/{{ virtualbox_package }}.deb"
+ctags_version: 0.1.0
+ctags_release: 1
+ctags_arch: amd64
+ctags_package_name: "ctags-{{ ctags_version }}"
 
-dropbox_package: dropbox_2019.01.31_amd64.deb
-dropbox_url: "https://www.dropbox.com/download?dl=packages/ubuntu/{{ dropbox_package }}.deb"
+packages:
+  - vim-nox
+  - caja-dropbox
+  - docker-ce
+  - virtualbox-6.0
+  - vagrant
+
+system_packages:
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - dirmngr
+  - gnupg2
+  - network-manager-openvpn
+  - network-manager-openvpn-gnome
+  - openvpn
+  - autoconf
+  - pkg-config
+  - checkinstall
