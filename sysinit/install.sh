@@ -5,6 +5,7 @@ if (( EUID != 0 )); then
    exit 100
 fi
 
+SUDO_PASS=$1
 RELEASE=$(cat /etc/os-release | grep '^ID=' | awk '{ split($0, a, "="); print a[2]}')
 ANSIBLE_URL="deb http://ppa.launchpad.net/ansible/ansible/ubuntu trusty main"
 ANSIBLE_APT_LIST=/etc/apt/sources.list.d/download_ansible_launchpad_net.list
@@ -29,4 +30,4 @@ then
 fi
 
 cd /home/${SUDO_USER}/Dev/keca_sysinit
-su -c "ansible-playbook plays/keca.yml -e 'debug=true ansible_sudo_pass=9499'" ${SUDO_USER}
+su -c "ansible-playbook plays/keca.yml -e 'ansible_sudo_pass=${SUDO_PASS}'" ${SUDO_USER}
