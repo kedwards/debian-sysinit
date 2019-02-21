@@ -29,4 +29,4 @@ then
 fi
 
 cd /home/${SUDO_USER}/Dev/keca_sysinit
-su -c "ansible-playbook plays/keca.yml -e 'debug=true ansible_sudo_pass=9499'" kedwards
+su -c "ansible-playbook plays/keca.yml -e 'debug=true ansible_sudo_pass=9499'" ${SUDO_USER}
