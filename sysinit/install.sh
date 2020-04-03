@@ -11,6 +11,16 @@ ANSIBLE_URL="deb http://ppa.launchpad.net/ansible/ansible/ubuntu trusty main"
 ANSIBLE_APT_LIST=/etc/apt/sources.list.d/download_ansible_launchpad_net.list
 ANSIBLE_LIST=$(grep "${ANSIBLE_URL}" "${ANSIBLE_APT_LIST}")
 
+sudo apt update
+sudo apt-get install -y git build-essential
+git clone git://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git 
+sudo cp linux-firmware/iwlwifi-* /lib/firmware/
+git clone https://git.kernel.org/pub/scm/linux/kernel/git/iwlwifi/backport-iwlwifi.git
+cd backport-iwlwifi
+sudo make defconfig-iwlwifi-public
+sudo make -j4
+sudo make install
+
 if [ "${RELEASE}" == 'ubuntu' ] && [ ! "${ANSIBLE_LIST}" ]
 then
   apt-add-repository --yes --update ppa:ansible/ansible
