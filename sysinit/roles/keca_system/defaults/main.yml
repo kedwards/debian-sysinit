@@ -1,15 +1,9 @@
 ---
-# defaults file for keca_system
-ctags_version: 0.1.0
-ctags_release: 1
-ctags_arch: amd64
-ctags_package_name: "ctags-{{ ctags_version }}"
-
 packages:
   - vim-nox
   - caja-dropbox
   - docker-ce
-  - virtualbox-6.0
+  - virtualbox-6.1
   - vagrant
 
 system_packages:
@@ -18,9 +12,9 @@ system_packages:
   - curl
   - dirmngr
   - gnupg2
-  - network-manager-openvpn
-  - network-manager-openvpn-gnome
-  - openvpn
-  - autoconf
-  - pkg-config
-  - checkinstall
+  #- network-manager-openvpn
+  #- network-manager-openvpn-gnome
+  #- openvpn
+  #- autoconf
+  #- pkg-config
+  #- checkinstall

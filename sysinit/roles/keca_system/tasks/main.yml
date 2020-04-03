@@ -1,5 +1,4 @@
 ---
-# tasks file for keca_system
 - include_vars: "{{ ansible_distribution }}.yml"
 
 - import_tasks: debug.yml

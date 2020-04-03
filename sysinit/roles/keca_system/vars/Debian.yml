@@ -1,2 +1,13 @@
 ---
-# vars file for keca_system
+- name: Add non-free official repository for Debian 
+  apt_repository:
+    repo: deb http://ftp.ca.debian.org/debian/ buster main non-free
+    state: present
+  when: ansible_distribution == "Debian"
+
+- name: Update the apt package index
+  apt:
+    name: "*"
+    state: latest
+    update_cache: yes
+    force_apt_get: yes

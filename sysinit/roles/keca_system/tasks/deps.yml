@@ -1,17 +1,4 @@
 ---
-- name: Update the apt package index
-  apt:
-    name: "*"
-    state: latest
-    update_cache: yes
-    force_apt_get: yes
-
-- name: Add non-free official repository for Debian 
-  apt_repository:
-    repo: deb http://ftp.ca.debian.org/debian/ stretch main non-free
-    state: present
-  when: ansible_distribution == "Debian"
-
 - name: Install packages
   apt:
     name: "{{ system_packages }}"
@@ -19,33 +6,3 @@
     state: latest
     update_cache: yes
 
-- name: check if ctags is installed
-  shell: dpkg-query -W -f='${Status}' ctags | grep 'install ok installed'
-  register: is_installed
-  failed_when: no
-  changed_when: no
-
-- name: create temporary build directory
-  tempfile:
-    state: directory
-  register: ctags_build_dir
-  when: is_installed.rc == 0
-
-- name: download universal-ctags source
-  git:
-    repo: "https://github.com/universal-ctags/ctags.git"
-    dest: "{{ ctags_build_dir.path }}"
-    version: master
-  when: is_installed.rc == 0
-
-- name: build ctags
-  shell: "./autogen.sh && ./configure && make && checkinstall -D --install --pkgname ctags --pkgversion {{ ctags_version }} --pkgarch {{ ctags_arch }} --pkgrelease {{ ctags_release }} --pkglicense GPL --pkggroup checkinstall --pkgsource {{ ctags_package_name }} --maintainer 'Kevin Edwards <kedwards@kevinedwards.ca>' --nodoc --provides ctags"
-  args:
-    chdir: "{{ ctags_build_dir.path }}"
-  when: is_installed.rc == 0
-
-- name: Clean tmp artifact path
-  file:
-    state: absent
-    path: "{{ ctags_build_dir.path }}"
-  when: is_installed.rc == 0
