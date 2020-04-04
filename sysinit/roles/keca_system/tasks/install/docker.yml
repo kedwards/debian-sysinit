@@ -1,0 +1,38 @@
+---
+- name: Docker signing key
+  apt_key:
+    url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
+    state: present
+
+- name: Docker Repository
+  apt_repository:
+    repo: "deb [arch=amd64] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+    state: present
+
+- name: Docker Install
+  apt:
+    pkg:
+      - docker-ce
+
+- name: Docker Compose
+  get_url:
+    url: "https://github.com/docker/compose/releases/download/1.26.0-rc3/docker-compose-{{ ansible_system }}-{{ ansible_userspace_architecture }}"
+    dest: /usr/local/bin/docker-compose
+    mode: 'u+x,g+x,o+x'
+
+- name: Docker Machine
+  get_url:
+    url: "https://github.com/docker/machine/releases/download/v0.16.2/docker-machine-{{ ansible_system }}-{{ ansible_userspace_architecture }}"
+    dest: /usr/local/bin/docker-machine
+    mode: 'u+x,g+x,o+x'
+
+- name: Docker Group
+  group:
+    name: docker
+    state: present
+
+- name: Docker User
+  user:
+    name: "{{ ansible_user_id }}"
+    groups: docker
+    append: yes

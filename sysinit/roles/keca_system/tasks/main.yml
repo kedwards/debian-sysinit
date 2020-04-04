@@ -5,7 +5,20 @@
   when: debug | default('false') == "true"
 
 - import_tasks: deps.yml
-  become: yes
+  when: ansible_distribution == "Debian"
 
-- import_tasks: install.yml
-  become: yes
+- import_tasks: install/system.yml
+
+- import_tasks: install/vagrant.yml
+
+- import_tasks: install/virtualbox.yml
+
+- import_tasks: install/docker.yml
+
+- import_tasks: install/vscode.yml
+
+- import_tasks: install/teams.yml
+
+- import_tasks: install/teamviewer.yml
+
+- import_tasks: install/skype.yml

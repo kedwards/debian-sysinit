@@ -1,0 +1,12 @@
+---
+- name: Team Viewer - Exists
+  stat:
+    path: /usr/bin/teamviewer
+  register: teamviewer_result
+
+- name: Team Viewer
+  apt:
+    deb: https://download.teamviewer.com/download/linux/teamviewer_amd64.deb
+  when: teamviewer_result.stat.exists == False
+  
+  

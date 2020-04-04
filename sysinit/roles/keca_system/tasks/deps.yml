@@ -1,8 +1,5 @@
 ---
 - name: Add non-free official repository for Debian 
   apt_repository:
-    repo: deb http://ftp.ca.debian.org/debian/ buster main non-free
+    repo: "deb http://ftp.ca.debian.org/debian/ {{ ansible_distribution_release }} main non-free"
     state: present
-  when: ansible_distribution == "Debian"
-
-

@@ -2,9 +2,6 @@
 packages:
   - vim-nox
   - caja-dropbox
-  - docker-ce
-  - virtualbox-6.1
-  - vagrant
   - apt-transport-https
   - ca-certificates
   - curl
@@ -13,6 +10,3 @@ packages:
   - network-manager-openvpn
   - network-manager-openvpn-gnome
   - openvpn
-  #- autoconf
-  #- pkg-config
-  #- checkinstall

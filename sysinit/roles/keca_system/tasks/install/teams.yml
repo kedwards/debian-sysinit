@@ -1,0 +1,10 @@
+---
+- name: Teams - Exists
+  stat:
+    path: /usr/bin/teams
+  register: teams_result
+
+- name: Microsoft Teams
+  apt:
+    deb: https://go.microsoft.com/fwlink/p/?linkid=2112886
+  when: teams_result.stat.exists == False

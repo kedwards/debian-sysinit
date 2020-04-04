@@ -1,0 +1,10 @@
+---
+- name: Skype - Exists
+  stat:
+    path: /usr/bin/skype
+  register: skype_result
+
+- name: Skype
+  apt:
+    deb: https://go.skype.com/skypeforlinux-64.deb
+  when: skype_result.stat.exists == False

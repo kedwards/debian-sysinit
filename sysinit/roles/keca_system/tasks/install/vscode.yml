@@ -1,0 +1,10 @@
+---
+- name: VSCode - Exists
+  stat:
+    path: /usr/bin/vscode
+  register: vscode_result
+
+- name: VSCode
+  apt:
+    deb: https://go.microsoft.com/fwlink/?LinkID=760868
+  when: vscode_result.stat.exists == False
