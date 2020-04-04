@@ -61,3 +61,7 @@
     append: yes
 
 
+- name: VSCode
+  apt:
+    deb: https://go.microsoft.com/fwlink/?LinkID=760868
+
