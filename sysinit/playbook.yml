@@ -3,9 +3,5 @@
   hosts: local
   become: yes
   vars:
-    nodejs_version: "10.x"
-    nodejs_npm_global_packages:
-      - name: '@angular/cli'
-      - name: 'typescript'
   roles:
     - keca_system
