@@ -33,6 +33,6 @@
 
 - name: Docker User
   user:
-    name: "{{ ansible_user_id }}"
+    name: "{{ lookup('env','USER') }}"
     groups: docker
     append: yes

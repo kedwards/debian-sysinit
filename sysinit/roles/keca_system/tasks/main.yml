@@ -2,7 +2,7 @@
 - include_vars: "{{ ansible_distribution }}.yml"
 
 - import_tasks: debug.yml
-  when: debug | default('false') == "true"
+  tags: debug
 
 - import_tasks: deps.yml
   when: ansible_distribution == "Debian"

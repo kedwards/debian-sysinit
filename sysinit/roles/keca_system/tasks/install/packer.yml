@@ -1,7 +1,7 @@
 - name: Packer - Exists
   stat:
     path: /usr/local/bin/packer
-  register: terraform_result
+  register: packer_result
 
 - name: Packer
   unarchive:

@@ -3,6 +3,11 @@
   debug:
     msg: "{{ ansible_user_id }}"
 
+- name: Real User
+  debug:
+    msg: "{{ lookup('env','USER') }}"
+
+
 - name: System
   debug:
     msg: "{{ ansible_system }}"
