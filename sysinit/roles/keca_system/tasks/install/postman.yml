@@ -1,0 +1,19 @@
+---
+- name: Postman - Exists
+  stat:
+    path: /usr/local/bin/postman
+  register: postman_result
+
+- name: Postman
+  unarchive:
+    src: https://dl.pstmn.io/download/latest/linux64
+    dest: /usr/local
+    remote_src: yes
+  when: postman_result.stat.exists == False
+
+- name: Postman Configure
+  file:
+    src: /usr/local/Postman/app/Postman
+    dest: /usr/local/bin/postman
+    state: link
+  when: postman_result.stat.exists == False

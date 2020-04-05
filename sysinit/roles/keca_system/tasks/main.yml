@@ -22,3 +22,5 @@
 - import_tasks: install/teamviewer.yml
 
 - import_tasks: install/skype.yml
+
+- import_tasks: install/postman.yml

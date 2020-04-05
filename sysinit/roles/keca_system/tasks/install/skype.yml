@@ -1,7 +1,7 @@
 ---
 - name: Skype - Exists
   stat:
-    path: /usr/bin/skype
+    path: /usr/bin/skypeforlinux
   register: skype_result
 
 - name: Skype
