@@ -1,0 +1,16 @@
+---
+- name: AWS-Cli - Exists
+  stat:
+    path: /usr/local/bin/aws
+  register: aws_cli_result
+
+- name: AWS-Cli
+  unarchive:
+    src: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+    dest: /usr/local
+    remote_src: yes
+  when: aws_cli_result.stat.exists == False
+
+- name: AWS-Cli Configure
+  command: sh /usr/local/aws/install
+  when: aws_cli_result.stat.exists == False

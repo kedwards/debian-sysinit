@@ -28,3 +28,7 @@
 - import_tasks: install/terraform.yml
 
 - import_tasks: install/packer.yml
+
+- import_tasks: install/aws-vault.yml
+
+- import_tasks: install/aws-cli.yml

@@ -1,0 +1,14 @@
+---
+- name: AWS-Vault - Exists
+  stat:
+    path: /usr/local/bin/aws-vault
+  register: aws_vault_result
+
+- name: AWS-Vault
+  get_url:
+    url: https://github.com/99designs/aws-vault/releases/download/v5.3.2/aws-vault-linux-amd64
+    dest: /usr/local/bin/aws-vault
+    mode: 'u+x,g+x,o+x'
+  when: aws_vault_result.stat.exists == False
+  
+  
