@@ -1,0 +1,10 @@
+---
+- name: Slack - Exists
+  stat:
+    path: /usr/bin/slack
+  register: slack_result
+
+- name: Slack
+  apt:
+    deb: https://downloads.slack-edge.com/linux_releases/slack-desktop-4.4.2-amd64.deb
+  when: slack_result.stat.exists == False

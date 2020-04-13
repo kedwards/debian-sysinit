@@ -1,7 +1,7 @@
 ---
 - name: VSCode - Exists
   stat:
-    path: /usr/bin/vscode
+    path: /usr/bin/code
   register: vscode_result
 
 - name: VSCode
