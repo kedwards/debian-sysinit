@@ -34,3 +34,5 @@
 - import_tasks: install/aws-cli.yml
 
 - import_tasks: install/slack.yml
+
+- import_tasks: install/minikube.yml

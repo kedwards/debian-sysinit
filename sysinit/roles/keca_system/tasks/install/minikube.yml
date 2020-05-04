@@ -1,0 +1,12 @@
+---
+- name: Minikube  Exists
+  stat:
+    path: /usr/local/bin/minikube
+  register: minikube_result
+
+- name: Minikube
+  get_url:
+    url: https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+    dest: /usr/local/bin/minikube
+    mode: 0755
+  when: minikube_result.stat.exists == False
