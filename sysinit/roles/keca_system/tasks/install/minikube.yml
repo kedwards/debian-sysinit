@@ -10,3 +10,24 @@
     dest: /usr/local/bin/minikube
     mode: 0755
   when: minikube_result.stat.exists == False
+
+- name: Kubectl Exists
+  stat:
+    path: /usr/local/bin/kubectl
+  register: kubectl_result
+
+- name: Kubectl Version
+  shell: curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt
+  register: kubectl_version_result
+  when: kubectl_result.stat.exists == False
+
+
+- debug:
+    msg: "{{ kubectl_version_result.stdout}}"
+
+- name: Kubectl
+  get_url:
+    url: "https://storage.googleapis.com/kubernetes-release/release/{{ kubectl_version_result.stdout }}/bin/linux/amd64/kubectl"
+    dest: /usr/local/bin/kubectl
+    mode: 0755
+  when: kubectl_result.stat.exists == False
