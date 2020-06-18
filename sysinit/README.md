@@ -13,3 +13,9 @@ Script to setup [Ansible](http://www.ansible.com/), which then configures the sy
 bash <(curl -sL http://bit.ly/keca_system_init) <sudo_password>
 ```
 
+* or in a regular shell:
+
+```
+wget -sO - http://bit.ly/keca_system_init | sudo bash -s <sudo_password>
+```
+
