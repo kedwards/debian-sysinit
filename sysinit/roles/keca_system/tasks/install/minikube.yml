@@ -21,10 +21,6 @@
   register: kubectl_version_result
   when: kubectl_result.stat.exists == False
 
-
-- debug:
-    msg: "{{ kubectl_version_result.stdout}}"
-
 - name: Kubectl
   get_url:
     url: "https://storage.googleapis.com/kubernetes-release/release/{{ kubectl_version_result.stdout }}/bin/linux/amd64/kubectl"

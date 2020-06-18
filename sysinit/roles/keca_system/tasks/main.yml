@@ -26,6 +26,8 @@
 - import_tasks: install/postman.yml
 
 - import_tasks: install/terraform.yml
+  tags:
+    - tf
 
 - import_tasks: install/packer.yml
 

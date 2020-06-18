@@ -10,3 +10,5 @@ packages:
   - network-manager-openvpn
   - network-manager-openvpn-gnome
   - openvpn
+
+terraform_version: 0.12.26
