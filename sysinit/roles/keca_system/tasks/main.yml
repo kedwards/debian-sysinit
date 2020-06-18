@@ -38,3 +38,7 @@
 - import_tasks: install/slack.yml
 
 - import_tasks: install/minikube.yml
+
+- import_tasks: install/zoom.yml
+  tags:
+    - zoom

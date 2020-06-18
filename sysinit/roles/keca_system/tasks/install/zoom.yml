@@ -1,0 +1,12 @@
+---
+- name: Zoom - Exists
+  stat:
+    path: /usr/bin/zoom
+  register: zoom_result
+
+- name: Zoom
+  apt:
+    deb: https://zoom.us/client/latest/zoom_amd64.deb
+  when: zoom_result.stat.exists == False
+
+  
