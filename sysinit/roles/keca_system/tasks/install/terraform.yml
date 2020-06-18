@@ -7,15 +7,15 @@
   register: terraform_version
   when: terraform_result.stat.exists == True
 
-- set_fact:
-    tf_version: "{{ terraform_version.stdout | regex_search(regexp,'\\1') }}"
-  vars:
-    regexp: '(\d+(\.\d+)+)'
+# - set_fact:
+#     tf_version: "{{ terraform_version.stdout | regex_search(regexp,'\\1') }}"
+#   vars:
+#     regexp: '(\d+(\.\d+)+)'
 
-- debug:
-    msg: "{{ tf_version }}"
-  when: 
-    - terraform_result.stat.exists == True
+# - debug:
+#     msg: "{{ tf_version }}"
+#   when: 
+#     - terraform_result.stat.exists == True
 
 - name: Terraform
   unarchive:
