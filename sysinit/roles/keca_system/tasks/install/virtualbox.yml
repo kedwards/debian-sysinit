@@ -1,15 +1,21 @@
 ---
+# {% macro sentence_case(text) %}
+#     {{ text[0]|upper}}{{text[1:] }}
+# {% endmacro %}
+
 - name: Virtualbox signing key
   apt_key:
     url: https://www.virtualbox.org/download/oracle_vbox_2016.asc
     state: present
 
 - name: Virtualbox Repository
-  apt_repository:
-    repo: "deb https://download.virtualbox.org/virtualbox/debian {{ ansible_distribution_release }} contrib"
+  apt:
+    # deb: https://download.virtualbox.org/virtualbox/6.1.10/virtualbox-6.1_6.1.10-138449~{{ sentence_case(ansible_distribution) }}~{{ ansible_distribution_release }}_amd64.deb
+    deb: https://download.virtualbox.org/virtualbox/6.1.10/virtualbox-6.1_6.1.10-138449~Ubuntu~eoan_amd64.deb
     state: present
 
 - name: Virtualbox Install
   apt:
+    update_cache: yes
     pkg:
       - virtualbox-6.1

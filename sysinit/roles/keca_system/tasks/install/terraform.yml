@@ -10,22 +10,16 @@
 - set_fact:
     tf_version: "{{ terraform_version.stdout | regex_search(regexp,'\\1') }}"
   vars:
-    regexp: 'Terraform v(\d+(\.\d+)+)'
-
-# - set_fact:
-#     tf_version: "{{ terraform_version.stdout | regex_search(regexp,'\\1') }}"
-#   vars:
-#     regexp: 'The latest version\nis (\d+(\.\d+)+)'
+    regexp: '(\d+(\.\d+)+)'
 
 - debug:
     msg: "{{ tf_version }}"
   when: 
     - terraform_result.stat.exists == True
-    - tf_version >= terraform_version
 
 - name: Terraform
   unarchive:
-    src: https://releases.hashicorp.com/terraform/{{ terraform_version }}/terraform_{{ terraform_version }}_linux_amd64.zip
+    src: "https://releases.hashicorp.com/terraform/{{ terraform_version }}/terraform_{{ terraform_version }}_linux_amd64.zip"
     dest: /usr/local/bin
     remote_src: yes
   when: terraform_result.stat.exists == False
