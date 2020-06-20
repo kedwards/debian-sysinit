@@ -26,7 +26,9 @@ ANSIBLE_APT_LIST=/etc/apt/sources.list.d/ansible-${CODENAME}.list
 
 if [ "${RELEASE}" == 'ubuntu' ]
 then
+  # remove ppa
   # apt-add-repository --yes --update ppa:ansible/ansible
+  echo "running"
 elif [ "${RELEASE}" == 'debian' ]
 then
   echo "${ANSIBLE_URL}" | tee "${ANSIBLE_APT_LIST}"
