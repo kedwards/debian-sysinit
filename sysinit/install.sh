@@ -24,7 +24,7 @@ CODENAME=eoan
 ANSIBLE_URL="deb http://ppa.launchpad.net/ansible/ansible/ubuntu ${CODENAME} main"
 ANSIBLE_APT_LIST=/etc/apt/sources.list.d/ansible-${CODENAME}.list
 
-if [ "${RELEASE}" == 'ubuntu' ]
+if [ "${RELEASE}" == 'ubuntu' && $CODENAME === 'focal' ]
 then
   # remove ppa
   # apt-add-repository --yes --update ppa:ansible/ansible
