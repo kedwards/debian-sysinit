@@ -3,7 +3,8 @@
     path: /usr/local/bin/terraform
   register: terraform_result
 
-- shell: /usr/local/bin/terraform --version
+- name: Terraform - Version
+  shell: /usr/local/bin/terraform --version
   register: terraform_version
   when: terraform_result.stat.exists == True
 
@@ -12,15 +13,19 @@
 #   vars:
 #     regexp: '(\d+(\.\d+)+)'
 
-# - debug:
-#     msg: "{{ tf_version }}"
+#- debug:
+#    msg: "{{ terraform_result }}"
 #   when: 
 #     - terraform_result.stat.exists == True
 
+# - name: Terraform
+#   unarchive:
+#     src: "https://releases.hashicorp.com/terraform/{{ terraform_version }}/terraform_{{ terraform_version }}_linux_amd64.zip"
+#     dest: /usr/local/bin
+#     remote_src: yes
+
 - name: Terraform
   unarchive:
-    src: "https://releases.hashicorp.com/terraform/{{ terraform_version }}/terraform_{{ terraform_version }}_linux_amd64.zip"
+    src: "https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_linux_amd64.zip"
     dest: /usr/local/bin
     remote_src: yes
-  when: terraform_result.stat.exists == False
-
