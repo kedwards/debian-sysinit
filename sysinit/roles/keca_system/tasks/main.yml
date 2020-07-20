@@ -38,3 +38,7 @@
 - import_tasks: install/minikube.yml
 
 - import_tasks: install/zoom.yml
+
+- import_tasks: install/atlantis.yml
+
+- import_tasks: install/gh.yml

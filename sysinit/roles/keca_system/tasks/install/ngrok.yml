@@ -1,0 +1,12 @@
+---
+- name: Ngrok - Exists
+  stat:
+    path: /usr/local/bin/ngrok --version
+  register: ngrok_result
+
+- name: Ngrok
+  unarchive:
+    src: "https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip"
+    dest: /usr/local/bin
+    remote_src: yes
+  when: ngrok_result.stat.exists == False

@@ -1,0 +1,12 @@
+---
+- name: Atlantis - Exists
+  stat:
+    path: /usr/local/bin/atlantis version
+  register: atlantis_result
+
+- name: Atlantis
+  unarchive:
+    src: "https://github.com/runatlantis/atlantis/releases/download/v0.14.0/atlantis_linux_amd64.zip"
+    dest: /usr/local/bin
+    remote_src: yes
+  when: atlantis_result.stat.exists == False
