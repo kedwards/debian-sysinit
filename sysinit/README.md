@@ -1,21 +1,21 @@
-# keca SysInit
-Script to initialize my system.
+# SysInit
 
-## Description
+An opinionated script to initialize a developers system.
 
-Script to setup [Ansible](http://www.ansible.com/), which then configures the system.
+## Prerequisites
 
-## Installation
+1. Linux compatible PC, with [Ubuntu](https://ubuntu.com/) or [Debian](https://www.debian.org/) based OS.
 
-* Run the following command in a root shell:
+##### Recommended to use distro with a smaller footprint such as [Debian](https://www.debian.org/) or [Xubuntu](https://xubuntu.org/) or [Lubuntu](https://lubuntu.net/) or be a ninja and forgo the UI and use the cli.
 
-```
-bash <(curl -sL http://bit.ly/keca_system_init) <sudo_password>
-```
+2. Git - git version 2.x+ [Install](./docs/git-install.md)
 
-* or in a regular shell:
+3. GnuPG - [website](https://gnupg.org/), [repo docs](./docs/gpg.md)
 
-```
-wget -sO - http://bit.ly/keca_system_init | sudo bash -s <sudo_password>
-```
+## Quick Start
 
+1. Open a terminal and run the following
+
+   ```sh
+   wget -sO - https://raw.githubusercontent.com/connectusglobal/infra/tools/install.sh | sudo bash -s <sudo_password>
+   ```

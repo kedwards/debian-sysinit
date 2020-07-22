@@ -38,9 +38,9 @@ apt-get update && apt-get install -y ansible
 
 if [ ! -d /home/${SUDO_USER}/keca_sysinit ]
 then
-  git clone -b master --single-branch https://github.com/kedwards/keca_sysinit.git /home/${SUDO_USER}/keca_sysinit
+  git clone -b master --single-branch https://github.com/kedwards/sysinit.git /home/${SUDO_USER}/sysinit
   cd /home/${SUDO_USER}/keca_sysinit && git pull
 fi
 
-cd /home/${SUDO_USER}/keca_sysinit
+cd /home/${SUDO_USER}/sysinit
 su -c "ansible-playbook playbook.yml -e 'ansible_sudo_pass=${SUDO_PASS}'" ${SUDO_USER}
