@@ -17,5 +17,5 @@ An opinionated script to initialize a developers system.
 1. Open a terminal and run the following
 
    ```sh
-   wget -sO - https://raw.githubusercontent.com/connectusglobal/infra/tools/install.sh | sudo bash -s <sudo_password>
+   wget -sO - https://raw.githubusercontent.com/kedwards/sysinit/install.sh | sudo bash -s <sudo_password>
    ```
