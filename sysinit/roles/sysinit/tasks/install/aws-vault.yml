@@ -19,9 +19,9 @@
     path: /usr/local/bin/aws-vault
   register: aws_vault_result
 
-- name: vault
-  debug:
-    msg:  "{{ aws_vault_result }}"
+# - name: vault
+#   debug:
+#     msg:  "{{ aws_vault_result }}"
 
 - name: Get installed version
   command: aws-vault --version
