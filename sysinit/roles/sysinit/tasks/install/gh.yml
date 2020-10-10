@@ -1,5 +1,0 @@
----
-- name: Install "gh" node.js package.
-  npm:
-    name: gh
-    global: yes

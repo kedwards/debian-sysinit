@@ -1,14 +1,55 @@
 ---
+- import_tasks: pythonvenv.yml
+
+# - name: "Setup the initial virtual environment"
+#   pip:
+#     name:
+#       - setuptools
+#     extra_args: --upgrade
+#     virtualenv: "/tmp/test01.venv"
+
+- name: "Install github3.py module"
+  pip:
+    name:
+      - github3.py
+    # virtualenv: "/tmp/test01.venv"
+
 - name: AWS-Vault - Exists
   stat:
     path: /usr/local/bin/aws-vault
   register: aws_vault_result
 
+- name: vault
+  debug:
+    msg:  "{{ aws_vault_result }}"
+
+- name: Get installed version
+  command: aws-vault --version
+  register: aws_vault_version
+  when: aws_vault_result.stat.exists != false
+
+- name: Get latest release of a public repository
+  # vars:
+    # ansible_python_interpreter: "/tmp/test01.venv/bin/python"
+  community.general.github_release:
+    user: 99designs
+    repo: aws-vault
+    action: latest_release
+  register: aws_vault_latest_version
+
+# - name: Vault Installed
+#   debug:
+#     msg: "{{ aws_vault_version.stderr }}"
+#   when: aws_vault_result.stat.exists != false 
+
+# - name: Vault Latest
+#   debug:
+#     msg: "{{ aws_vault_latest_version.tag }}"
+
+
 - name: AWS-Vault
   get_url:
-    url: https://github.com/99designs/aws-vault/releases/download/v5.3.2/aws-vault-linux-amd64
+    url: "https://github.com/99designs/aws-vault/releases/download/{{ aws_vault_latest_version.tag }}/aws-vault-linux-amd64"
     dest: /usr/local/bin/aws-vault
     mode: 'u+x,g+x,o+x'
-  when: aws_vault_result.stat.exists == False
-  
-  
+  when: aws_vault_result.stat.exists == false or aws_vault_version.stderr < aws_vault_latest_version.tag or aws_vault_version.stdout != aws_vault_latest_version.tag

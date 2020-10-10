@@ -9,36 +9,72 @@
 
 - import_tasks: install/system.yml
 
-- import_tasks: install/vagrant.yml
-
-- import_tasks: install/virtualbox.yml
-
-- import_tasks: install/docker.yml
-
-- import_tasks: install/vscode.yml
-
-- import_tasks: install/teams.yml
-
-- import_tasks: install/teamviewer.yml
-
-- import_tasks: install/skype.yml
-
-- import_tasks: install/postman.yml
-
-- import_tasks: install/terraform.yml
-
-- import_tasks: install/packer.yml
-
-- import_tasks: install/aws-vault.yml
+- import_tasks: install/atlantis.yml
+  tags:
+    - atlantis
 
 - import_tasks: install/aws-cli.yml
+  tags:
+    - aws
 
-- import_tasks: install/slack.yml
+- import_tasks: install/aws-vault.yml
+  tags:
+    - aws
+    - vault
+
+- import_tasks: install/docker.yml
+  tags:
+    - docker
 
 - import_tasks: install/minikube.yml
+  tags:
+    - atlantis
+    - ngrok
+
+- import_tasks: install/ngrok.yml
+  tags:
+    - minikube
+
+- import_tasks: install/packer.yml
+  tags:
+    - packer
+
+- import_tasks: install/postman.yml
+  tags:
+    - postman
+
+- import_tasks: install/skype.yml
+  tags:
+    - skype
+
+- import_tasks: install/slack.yml
+  tags:
+    - slack
+
+- import_tasks: install/teams.yml
+  tags:
+    - teams
+
+- import_tasks: install/teamviewer.yml
+  tags:
+    - teamviewer
+
+- import_tasks: install/terraform.yml
+  tags:
+    - terraform
+
+- import_tasks: install/vagrant.yml
+  tags:
+    - vagrant
+
+- import_tasks: install/virtualbox.yml
+  tags:
+    - virtualbox
+
+- import_tasks: install/vscode.yml
+  tags:
+    - vscode
 
 - import_tasks: install/zoom.yml
-
-- import_tasks: install/atlantis.yml
-
-- import_tasks: install/gh.yml
+  tags:
+    - zoom

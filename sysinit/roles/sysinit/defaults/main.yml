@@ -10,5 +10,8 @@ packages:
   - network-manager-openvpn
   - network-manager-openvpn-gnome
   - openvpn
+  - python3-venv
 
 terraform_version: 0.12.26
+docker_compose_version: 1.27.4
+docker_machine_version: v0.16.2

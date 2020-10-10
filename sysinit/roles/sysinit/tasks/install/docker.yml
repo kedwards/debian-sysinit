@@ -14,15 +14,30 @@
     pkg:
       - docker-ce
 
+- name: Get latest release of a public repository
+  # vars:
+    # ansible_python_interpreter: "/tmp/test01.venv/bin/python"
+  community.general.github_release:
+    user: docker
+    repo: compose
+    action: latest_release
+  register: docker_compose_latest_version
+
+- name: Get installed version
+  command: aws-vault --version
+  register: aws_vault_version
+  when: aws_vault_result.stat.exists != false
+
+
 - name: Docker Compose
   get_url:
-    url: "https://github.com/docker/compose/releases/download/1.26.0-rc3/docker-compose-{{ ansible_system }}-{{ ansible_userspace_architecture }}"
+    url: "https://github.com/docker/compose/releases/download/{{ docker_compose_version }}/docker-compose-{{ ansible_system }}-{{ ansible_userspace_architecture }}"
     dest: /usr/local/bin/docker-compose
     mode: 'u+x,g+x,o+x'
 
 - name: Docker Machine
   get_url:
-    url: "https://github.com/docker/machine/releases/download/v0.16.2/docker-machine-{{ ansible_system }}-{{ ansible_userspace_architecture }}"
+    url: "https://github.com/docker/machine/releases/download/{{ docker_machine_version }}/docker-machine-{{ ansible_system }}-{{ ansible_userspace_architecture }}"
     dest: /usr/local/bin/docker-machine
     mode: 'u+x,g+x,o+x'
 
