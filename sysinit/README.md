@@ -13,5 +13,5 @@ Linux compatible PC, with [Ubuntu](https://ubuntu.com/) or [Debian](https://www.
 1. Open a terminal and run the following
 
    ```sh
-   wget -O - https://raw.githubusercontent.com/kedwards/master/sysinit/install.sh | sudo bash -s <sudo_password>
+   wget -O - https://raw.githubusercontent.com/kedwards/sysinit/master/install.sh | sudo bash -s <sudo_password>
    ```
