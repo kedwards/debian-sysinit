@@ -3,5 +3,10 @@
   hosts: local
   become: yes
   vars:
+    nodejs_version: "14.x"
   roles:
     - sysinit
+    - geerlingguy.nodejs
+
+    
+
