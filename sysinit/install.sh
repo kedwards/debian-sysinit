@@ -43,4 +43,5 @@ then
 fi
 
 cd /home/${SUDO_USER}/sysinit
+ansible-galaxy install geerlingguy.nodejs
 su -c "ansible-playbook playbook.yml -e 'ansible_sudo_pass=${SUDO_PASS}'" ${SUDO_USER}

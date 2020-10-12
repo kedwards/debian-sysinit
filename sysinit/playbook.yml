@@ -5,6 +5,7 @@
   vars:
     update: true
     debug: true
+    nodejs_version: "14.x"
     # github_token: !vault |
     #   $ANSIBLE_VAULT;1.1;AES256
     #   37646561393635383438323162386364656335383633636437613239386437353138323930656530
@@ -15,3 +16,7 @@
     #   6333343963376539356335376131646638626661353537363062
   roles:
     - sysinit
+    - geerlingguy.nodejs
+
+    
+
