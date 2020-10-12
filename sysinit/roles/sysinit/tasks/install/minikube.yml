@@ -2,28 +2,58 @@
 - name: Minikube  Exists
   stat:
     path: /usr/local/bin/minikube
-  register: minikube_result
+  register: minikube_exists_result
 
 - name: Minikube
   get_url:
     url: https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
     dest: /usr/local/bin/minikube
     mode: 0755
-  when: minikube_result.stat.exists == False
+    force: true
+  when: minikube_exists_result.stat.exists == False or upgrade == true
 
 - name: Kubectl Exists
   stat:
     path: /usr/local/bin/kubectl
-  register: kubectl_result
+  register: kubectl_exists_result
 
-- name: Kubectl Version
-  shell: curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt
-  register: kubectl_version_result
-  when: kubectl_result.stat.exists == False
+- block:
+    - name: Kubectl - Get installed version
+      command: kubectl version
+      register: kubectl_version_result
+      ignore_errors: yes
 
-- name: Kubectl
-  get_url:
-    url: "https://storage.googleapis.com/kubernetes-release/release/{{ kubectl_version_result.stdout }}/bin/linux/amd64/kubectl"
-    dest: /usr/local/bin/kubectl
-    mode: 0755
-  when: kubectl_result.stat.exists == False
+    - name: Kubectl - Set installed version
+      set_fact:
+        kubectl_installed_version: "{{ kubectl_version_result.stdout | regex_search(regexp,'\\1') }}"
+      vars:
+        regexp: '.*GitVersion:\"v([^\"]+)\".*$'
+
+    - name: "Kubectl - Debug: Installed version"
+      debug:
+        msg: "{{ kubectl_installed_version }}"
+      when: debug == true
+  when: kubectl_exists_result.stat.exists != False and upgrade == true
+
+- block:
+    - name: "Kubectl - Debug: Get Latest"
+      shell: curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt
+      register: kubectl_latest_version_result
+
+    - name: Kubectl - Set latest version
+      set_fact:
+        kubectl_latest_version: "{{ kubectl_latest_version_result.stdout[1:] }}"
+
+    - name: "Kubectl - Debug: latest version"
+      debug:
+        msg: "{{ kubectl_latest_version }}"
+      when: debug == true
+
+    - name: Kubectl - Install/Upgrade
+      get_url:
+        url: "https://storage.googleapis.com/kubernetes-release/release/{{ kubectl_latest_version_result.stdout }}/bin/linux/amd64/kubectl"
+        dest: /usr/local/bin/kubectl
+        mode: 0755
+        force: true
+      when: kubectl_installed_version != kubectl_latest_version
+  when: kubectl_exists_result.stat.exists == False or upgrade == true

@@ -2,7 +2,9 @@
 - include_vars: "{{ ansible_distribution }}.yml"
 
 - import_tasks: debug.yml
-  tags: debug
+  tags:
+    - debug
+  when: debug == true
 
 - import_tasks: deps.yml
   when: ansible_distribution == "Debian"
@@ -20,7 +22,7 @@
 - import_tasks: install/aws-vault.yml
   tags:
     - aws
-    - vault
+    - aws-vault
 
 - import_tasks: install/docker.yml
   tags:
@@ -28,12 +30,12 @@
 
 - import_tasks: install/minikube.yml
   tags:
-    - atlantis
-    - ngrok
+    - minikube
 
 - import_tasks: install/ngrok.yml
   tags:
     - minikube
+    - ngrok
 
 - import_tasks: install/packer.yml
   tags:

@@ -1,31 +1,103 @@
+---
+# - name: Atlantis - Setup virtual environment
+#   pip:
+#     name:
+#       - setuptools
+#     extra_args: --upgrade
+#     virtualenv: "/tmp/test01.venv"
+
+# - name: Atlantis Install github3.py module
+#   pip:
+#     name:
+#       - github3.py
+#     virtualenv: "/tmp/test01.venv"
+
+# - name: Atlantis - Setup virtual environment (github3.py) module
+#   raw: |
+#      if [ -x /tmp/ansible/bin/python ]; then exit 0; fi
+#      /usr/bin/python3 -m venv --prompt tmp /tmp/ansible
+#      .  /tmp/ansible/bin/activate
+#      /tmp/ansible/bin/pip install --upgrade 'github3.py >= 1.0.0a3'
+
 - name: Terraform - Exists
   stat:
     path: /usr/local/bin/terraform
-  register: terraform_result
+  register: terraform_exists_result
 
-- name: Terraform - Version
-  shell: /usr/local/bin/terraform --version
-  register: terraform_version
-  when: terraform_result.stat.exists == True
+- block:
+    - name: Terraform - Get installed version
+      command: terraform --version
+      register: terraform_version_result
 
-# - set_fact:
-#     tf_version: "{{ terraform_version.stdout | regex_search(regexp,'\\1') }}"
-#   vars:
-#     regexp: '(\d+(\.\d+)+)'
+    - name: Terraform - Search installed version
+      set_fact:
+        terraform_installed_version_result: "{{ terraform_installed_version_result | default([]) +  [item] }}"
+      when: "{{ item | regex_search(regexp,'\\1') }}"
+      vars:
+        regexp: 'Terraform\sv(.*)$'
+      with_items:
+        - "{{ terraform_version_result.stdout_lines }}"
 
-#- debug:
-#    msg: "{{ terraform_result }}"
-#   when: 
-#     - terraform_result.stat.exists == True
+    - name: Terraform - Set installed version
+      set_fact:
+        terraform_installed_version: "{{ terraform_installed_version_result[0] | regex_search(regexp,'\\1') }}"
+      vars:
+        regexp: 'Terraform\sv(.*)$'
 
-# - name: Terraform
-#   unarchive:
-#     src: "https://releases.hashicorp.com/terraform/{{ terraform_version }}/terraform_{{ terraform_version }}_linux_amd64.zip"
-#     dest: /usr/local/bin
-#     remote_src: yes
+    - name: "Terraform - Debug: Installed version"
+      debug:
+        msg: "{{ terraform_installed_version }}"
+      when: debug == true
+  when: terraform_exists_result.stat.exists != false and upgrade == true
 
-- name: Terraform
+- block:
+    - name: Terraform - Get latest
+      vars:
+        # ansible_python_interpreter: "/tmp/ansible/bin/python"
+      community.general.github_release:
+        user: hashicorp
+        repo: terraform
+        action: latest_release
+        token: "{{ github_token }}"
+      register: terraform_latest_version_result
+
+    - name: Terraform - Set latest version
+      set_fact:
+        terraform_latest_version: "{{ terraform_latest_version_result.tag[1:] }}"
+
+    - name: "Terraform - Debug: latest version"
+      debug:
+        msg: "{{ terraform_latest_version }}"
+      when: debug == true
+  when: terraform_exists_result.stat.exists == false or upgrade == true
+
+# - block:  
+#     - name: Terraform - Search latest version
+#       set_fact:
+#         terraform_latest_version_result: "{{ terraform_latest_version_result | default([]) +  [item] }}"
+#       when: "{{ item | regex_search(regexp,'\\1') }}"
+#       vars:
+#         regexp: 'is\s(\d+\.\d+\.\d+).*$'
+#       with_items:
+#         - "{{ terraform_version_result.stdout_lines }}"
+
+#     - name: Terraform - Set latest version
+#       set_fact:
+#         terraform_latest_version: "{{ terraform_latest_version_result[0] | regex_search(regexp,'\\1') }}"
+#       vars:
+#         regexp: 'is\s(\d+\.\d+\.\d+).*$'
+
+#     - name: "Terraform - Debug:  Latest version"
+#       debug:
+#         msg: "{{ terraform_latest_version }}"
+#       when: debug == true
+#   when: terraform_exists_result.stat.exists == false or upgrade == true
+
+- name: Terraform Install/Upgrade
   unarchive:
-    src: "https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_linux_amd64.zip"
+    src: "https://releases.hashicorp.com/terraform/{{ terraform_latest_version }}/terraform_{{ terraform_latest_version }}_linux_amd64.zip"
     dest: /usr/local/bin
     remote_src: yes
+    force: true
+  when: 
+    - terraform_exists_result.stat.exists == false or (terraform_exists_result.stat.exists != false and upgrade == true and terraform_latest_version != terraform_installed_version[0])

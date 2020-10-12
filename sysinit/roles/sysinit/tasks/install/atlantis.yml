@@ -1,65 +1,71 @@
 ---
-- import_tasks: pythonvenv.yml
-
-# - name: "Setup the initial virtual environment"
+# - name: Atlantis - Setup virtual environment
 #   pip:
 #     name:
 #       - setuptools
 #     extra_args: --upgrade
 #     virtualenv: "/tmp/test01.venv"
 
-# - name: "Setup the initial virtual environment"
+# - name: Atlantis Install github3.py module
+#   pip:
+#     name:
+#       - github3.py
+#     virtualenv: "/tmp/test01.venv"
+
+# - name: Atlantis - Setup virtual environment (github3.py) module
 #   raw: |
 #      if [ -x /tmp/ansible/bin/python ]; then exit 0; fi
 #      /usr/bin/python3 -m venv --prompt tmp /tmp/ansible
 #      .  /tmp/ansible/bin/activate
 #      /tmp/ansible/bin/pip install --upgrade 'github3.py >= 1.0.0a3'
 
-- name: "Install github3.py module"
-  pip:
-    name:
-      - github3.py
-    # virtualenv: "/tmp/test01.venv"
-
 - name: Atlantis - Exists
   stat:
     path: /usr/local/bin/atlantis
-  register: atlantis_result    
+  register: atlantis_exist_result    
 
-- name: Get installed version
-  command: atlantis version
-  register: atlantis_version_result
-  when: atlantis_result.stat.exists != false
+- block:
+    - name: Atlantis - Get installed version
+      command: atlantis version
+      register: atlantis_version_result
 
-- set_fact:
-    atlantis_version: "{{ atlantis_version_result.stdout | regex_search(regexp,'\\1') }}"
-  vars:
-    regexp: 'atlantis\s(.*)$'
+    - name: Atlantis - Set installed version
+      set_fact:
+        atlantis_installed_version: "{{ atlantis_version_result.stdout | regex_search(regexp,'\\1') }}"
+      vars:
+        regexp: 'atlantis\s(.*)$'
 
-- name: Get latest release of a public repository
-  vars:
-    # ansible_python_interpreter: "/tmp/ansible/bin/python"
-  community.general.github_release:
-    user: runatlantis
-    repo: atlantis
-    action: latest_release
-  register: atlantis_latest_version_result
+    - name: "Atlantis - Debug: Installed version"
+      debug:
+        msg: "{{ atlantis_installed_version }}"
+      when: debug == true
+  when: atlantis_exist_result.stat.exists != false and upgrade == true
 
-- set_fact:
-    atlantis_latest_version: "{{ atlantis_latest_version_result.tag[1:] }}"
+- block:
+    - name: Atlantis - Get latest
+      vars:
+        # ansible_python_interpreter: "/tmp/ansible/bin/python"
+      community.general.github_release:
+        user: runatlantis
+        repo: atlantis
+        action: latest_release
+        token: "{{ github_token }}"
+      register: atlantis_latest_version_result
+      
+    - name: Atlantis - Set latest version
+      set_fact:
+        atlantis_latest_version: "{{ atlantis_latest_version_result.tag[1:] }}"
 
-- name: Installed
-  debug:
-    msg: "{{ atlantis_version }}"
-  when: atlantis_result.stat.exists != false 
+    - name: "Atlantis - Debug:  Latest version"
+      debug:
+        msg: "{{ atlantis_latest_version }}"
+      when: debug == true
 
-- name: Latest
-  debug:
-    msg: "{{ atlantis_latest_version }}"
-
-- name: Atlantis
-  unarchive:
-    src: "https://github.com/runatlantis/atlantis/releases/download/{{ atlantis_latest_version_result.tag }}/atlantis_linux_amd64.zip"
-    dest: /usr/local/bin
-    remote_src: yes
-  when: atlantis_result.stat.exists == False or atlantis_version != atlantis_latest_version
+    - name: Atlantis - Install/Upgrade
+      unarchive:
+        src: "https://github.com/runatlantis/atlantis/releases/download/{{ atlantis_latest_version_result.tag }}/atlantis_linux_amd64.zip"
+        dest: /usr/local/bin
+        remote_src: yes
+      when: atlantis_installed_version != atlantis_latest_version
+  when: 
+    - (atlantis_exist_result.stat.exists == false) or (atlantis_exist_result.stat.exists != false and upgrade == true)

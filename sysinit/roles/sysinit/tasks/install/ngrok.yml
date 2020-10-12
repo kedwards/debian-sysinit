@@ -1,12 +1,30 @@
 ---
 - name: Ngrok - Exists
   stat:
-    path: /usr/local/bin/ngrok --version
-  register: ngrok_result
+    path: /usr/local/bin/ngrok
+  register: ngrok_exists_result
 
-- name: Ngrok
+- block:
+    - name: Ngrok - Get installed version
+      command: ngrok --version
+      register: ngrok_version_result
+      ignore_errors: yes
+
+    - name: Ngrok - Set installed version
+      set_fact:
+        ngrok_installed_version: "{{ ngrok_version_result.stdout | regex_search(regexp,'\\1') }}"
+      vars:
+        regexp: '^ngrok version (.*)$'
+
+    - name: "Ngrok - Debug: Installed version"
+      debug:
+        msg: "{{ ngrok_installed_version }}"
+      when: debug == true
+  when: ngrok_exists_result.stat.exists != False and upgrade == true
+
+- name: Ngrok Install/Upgrade
   unarchive:
     src: "https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip"
     dest: /usr/local/bin
     remote_src: yes
-  when: ngrok_result.stat.exists == False
+  when: ngrok_exists_result.stat.exists == False or upgrade == true

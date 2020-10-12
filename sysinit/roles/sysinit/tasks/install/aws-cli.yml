@@ -2,15 +2,19 @@
 - name: AWS-Cli - Exists
   stat:
     path: /usr/local/bin/aws
-  register: aws_cli_result
+  register: aws_cli_exists_result
 
-- name: AWS-Cli
-  unarchive:
-    src: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
-    dest: /usr/local
-    remote_src: yes
-  when: aws_cli_result.stat.exists == False
+- block:
+    - name: AWS-Cli
+      unarchive:
+        src: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+        dest: /usr/local
+        remote_src: yes
 
-- name: AWS-Cli Configure
-  command: sh /usr/local/aws/install
-  when: aws_cli_result.stat.exists == False
+    - name: AWS-Cli Configure
+      command: sh /usr/local/aws/install
+  when: aws_cli_exists_result.stat.exists == False
+
+  # docker run -ti \
+  #   --env-file <(aws-vault exec default -- env | grep --no-color ^AWS_) \
+  #   {image_name} sh
