@@ -48,12 +48,12 @@
       debug:
         msg: "{{ kubectl_latest_version }}"
       when: debug == true
-
-    - name: Kubectl - Install/Upgrade
-      get_url:
-        url: "https://storage.googleapis.com/kubernetes-release/release/{{ kubectl_latest_version_result.stdout }}/bin/linux/amd64/kubectl"
-        dest: /usr/local/bin/kubectl
-        mode: 0755
-        force: true
-      when: kubectl_installed_version != kubectl_latest_version
   when: kubectl_exists_result.stat.exists == False or upgrade == true
+  
+  - name: Kubectl - Install/Upgrade
+    get_url:
+      url: "https://storage.googleapis.com/kubernetes-release/release/{{ kubectl_latest_version_result.stdout }}/bin/linux/amd64/kubectl"
+      dest: /usr/local/bin/kubectl
+      mode: 0755
+      force: true
+    when: kubectl_exists_result.stat.exists == False or kubectl_installed_version != kubectl_latest_version

@@ -11,9 +11,9 @@
 
 - import_tasks: install/system.yml
 
-- import_tasks: install/atlantis.yml
-  tags:
-    - atlantis
+# - import_tasks: install/atlantis.yml
+#   tags:
+#     - atlantis
 
 - import_tasks: install/aws-cli.yml
   tags:
