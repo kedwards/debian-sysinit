@@ -14,6 +14,8 @@ else
   SUDO_PASS=$1
 fi
 
+SYSINIT_PATH=/home/${SUDO_USER}/sysinit
+
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 93C4A3FD7BB9C367
 RELEASE=$(cat /etc/os-release | grep '^ID=' | awk '{ split($0, a, "="); print a[2]}')
 
@@ -36,12 +38,12 @@ fi
 
 apt-get update && apt-get install -y ansible
 
-if [ ! -d /home/${SUDO_USER}/keca_sysinit ]
+if [ ! -d ${SYSINIT_PATH} ]
 then
-  git clone -b master --single-branch https://github.com/kedwards/sysinit.git /home/${SUDO_USER}/sysinit
-  cd /home/${SUDO_USER}/keca_sysinit && git pull
+  git clone -b master --single-branch https://github.com/kedwards/sysinit.git ${SYSINIT_PATH}
+  cd ${SYSINIT_PATH} && git pull
 fi
 
-cd /home/${SUDO_USER}/sysinit
-ansible-galaxy install geerlingguy.nodejs
+cd ${SYSINIT_PATH}
+ansible-galaxy install geerlingguy.nodejs && ansible-galaxy collection install community.general
 su -c "ansible-playbook playbook.yml -e 'ansible_sudo_pass=${SUDO_PASS}'" ${SUDO_USER}
