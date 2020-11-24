@@ -28,9 +28,9 @@
   tags:
     - docker
 
-- import_tasks: install/minikube.yml
-  tags:
-    - minikube
+# - import_tasks: install/minikube.yml
+#   tags:
+#     - minikube
 
 - import_tasks: install/ngrok.yml
   tags:
