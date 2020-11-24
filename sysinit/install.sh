@@ -42,7 +42,7 @@ if [ ! -d ${SYSINIT_PATH} ]
 then
   git clone -b master --single-branch https://github.com/kedwards/sysinit.git ${SYSINIT_PATH}
 fi
-cd ${SYSINIT_PATH} && git pull
+# cd ${SYSINIT_PATH} && git pull
 
 # cd ${SYSINIT_PATH}
 

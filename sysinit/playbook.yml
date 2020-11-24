@@ -16,7 +16,7 @@
       6333343963376539356335376131646638626661353537363062
   roles:
     - sysinit
-    - geerlingguy.nodejs
+    # - geerlingguy.nodejs
 
     
 
