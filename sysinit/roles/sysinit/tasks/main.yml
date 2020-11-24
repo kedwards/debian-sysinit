@@ -69,9 +69,9 @@
   tags:
     - vagrant
 
-# - import_tasks: install/virtualbox.yml
-#   tags:
-#     - virtualbox
+- import_tasks: install/virtualbox.yml
+  tags:
+    - virtualbox
 
 - import_tasks: install/vscode.yml
   tags:
