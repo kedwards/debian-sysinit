@@ -7,6 +7,6 @@
 - name: Team Viewer
   apt:
     deb: https://download.teamviewer.com/download/linux/teamviewer_amd64.deb
-  when: teamviewer_result.stat.exists == False
-  
+  when: teamviewer_result.stat.exists == false or upgrade == true
+   
   

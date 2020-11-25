@@ -7,4 +7,4 @@
 - name: Slack
   apt:
     deb: https://downloads.slack-edge.com/linux_releases/slack-desktop-4.4.2-amd64.deb
-  when: slack_result.stat.exists == False
+  when: slack_result.stat.exists == false or upgrade == true

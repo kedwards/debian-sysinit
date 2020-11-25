@@ -10,27 +10,45 @@
   when: ansible_distribution == "Debian"
 
 - import_tasks: install/system.yml
+  tags:
+    - req
 
-# - import_tasks: install/atlantis.yml
-#   tags:
-#     - atlantis
+- import_tasks: install/atlantis.yml
+  tags:
+    - atlantis
 
 - import_tasks: install/aws-cli.yml
   tags:
     - aws
+    - aws-cli
+    - req
 
 - import_tasks: install/aws-vault.yml
   tags:
     - aws
     - aws-vault
+    - req
 
 - import_tasks: install/docker.yml
   tags:
     - docker
+    - docker-compose
+    - docker-machine
+    - req
 
-# - import_tasks: install/minikube.yml
-#   tags:
-#     - minikube
+- import_tasks: install/docker-compose.yml
+  tags:
+    - docker-compose
+    - req
+
+- import_tasks: install/docker-machine.yml
+  tags:
+    - docker-machine
+    - req
+
+- import_tasks: install/minikube.yml
+  tags:
+    - minikube
 
 - import_tasks: install/ngrok.yml
   tags:
@@ -44,39 +62,49 @@
 - import_tasks: install/postman.yml
   tags:
     - postman
+    - req
 
 - import_tasks: install/skype.yml
   tags:
     - skype
+    - req
 
 - import_tasks: install/slack.yml
   tags:
     - slack
+    - req
 
 - import_tasks: install/teams.yml
   tags:
     - teams
+    - req
 
 - import_tasks: install/teamviewer.yml
   tags:
     - teamviewer
+    - req
 
 - import_tasks: install/terraform.yml
   tags:
     - terraform
+    - req
 
 - import_tasks: install/vagrant.yml
   tags:
     - vagrant
+    - req
 
 - import_tasks: install/virtualbox.yml
   tags:
     - virtualbox
+    - req
 
 - import_tasks: install/vscode.yml
   tags:
     - vscode
+    - req
 
 - import_tasks: install/zoom.yml
   tags:
     - zoom
+    - req

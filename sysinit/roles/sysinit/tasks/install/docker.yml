@@ -1,24 +1,4 @@
 ---
-# - name: AWS-Vault - Setup virtual environment
-#   pip:
-#     name:
-#       - setuptools
-#     extra_args: --upgrade
-#     virtualenv: "/tmp/test01.venv"
-
-# - name: AWS-Vault Install github3.py module
-#   pip:
-#     name:
-#       - github3.py
-#     virtualenv: "/tmp/test01.venv"
-
-# - name: AWS-Vault - Setup virtual environment (github3.py) module
-#   raw: |
-#      if [ -x /tmp/ansible/bin/python ]; then exit 0; fi
-#      /usr/bin/python3 -m venv --prompt tmp /tmp/ansible
-#      .  /tmp/ansible/bin/activate
-#      /tmp/ansible/bin/pip install --upgrade 'github3.py >= 1.0.0a3'
-
 - name: Docker - Get signing key
   apt_key:
     url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
@@ -33,8 +13,11 @@
   apt:
     pkg:
       - docker-ce
+      - docker-ce-cli
+      - containerd.io
+    update_cache: yes
 
-- name: Docker Group
+- name: Docker - Add user to docker group
   group:
     name: docker
     state: present
@@ -44,105 +27,3 @@
     name: "{{ lookup('env','USER') }}"
     groups: docker
     append: yes
-
-- name: Docker-Compose - Exists
-  stat:
-    path: /usr/local/bin/docker-compose
-  register: docker_compose_exists_result
-
-- block:
-    - name: Docker-Compose - Get installed version
-      command: docker-compose --version
-      register: docker_compose_version_result
-
-    - name: Docker-Compose - Set installed version
-      set_fact:
-        docker_compose_installed_version: "{{ docker_compose_version_result.stdout | regex_search(regexp,'\\1') }}"
-      vars:
-        regexp: 'docker-compose version\s(.*),.*$'
-
-    - name: "Docker-Compose - Debug: Installed version"
-      debug:
-        msg: "{{ docker_compose_installed_version }}"
-      when: debug == true
-  when: docker_compose_exists_result.stat.exists != False or upgrade == true
-
-- block:
-    - name: Docker-Compose - Get latest 
-      vars:
-        # ansible_python_interpreter: "/tmp/test01.venv/bin/python"
-      community.general.github_release:
-        user: docker
-        repo: compose
-        action: latest_release
-        # token: "{{ github_token }}"
-      register: docker_compose_latest_version
-
-    - name: Docker-Compose - Set latest version
-      set_fact:
-        docker_compose_latest_version: "{{ docker_compose_latest_version.tag }}"
-
-    - name: "Docker-Compose  - Debug:  Latest version"
-      debug:
-        msg: "{{ docker_compose_latest_version }}"
-      when: debug == true
-
-    - name: Docker-Compose - Install/Upgrade
-      get_url:
-        url: "https://github.com/docker/compose/releases/download/{{ docker_compose_latest_version }}/docker-compose-{{ ansible_system }}-{{ ansible_userspace_architecture }}"
-        dest: /usr/local/bin/docker-compose
-        mode: 'u+x,g+x,o+x'
-        force: true
-      when: docker_compose_installed_version != docker_compose_latest_version
-  when: docker_compose_exists_result.stat.exists == False or upgrade == true
-
-- name: Docker-Machine - Exists
-  stat:
-    path: /usr/local/bin/docker-machine
-  register: docker_machine_exists_result
-
-- block:
-    - name: Docker-Machine - Get installed version
-      command: docker-machine --version
-      register: docker_machine_version_result
-
-    - name: Docker-Machine - Set installed version
-      set_fact:
-        docker_machine_installed_version: "{{ docker_machine_version_result.stdout | regex_search(regexp,'\\1') }}"
-      vars:
-        regexp: 'docker-machine version\s(.*),.*$'
-
-    - name: "Docker-Machine - Debug: Installed version"
-      debug:
-        msg: "{{ docker_machine_installed_version }}"
-      when: debug == true
-  when: docker_machine_exists_result.stat.exists != False or upgrade == true
-
-- block:
-    - name: Docker-Machine - Get latest 
-      vars:
-        # ansible_python_interpreter: "/tmp/test01.venv/bin/python"
-      community.general.github_release:
-        user: docker
-        repo: machine
-        action: latest_release
-        # token: "{{ github_token }}"
-      register: docker_machine_latest_version_result
-
-    - name: Docker-Machine - Set latest version
-      set_fact:
-        docker_machine_latest_version: "{{ docker_machine_latest_version_result.tag[1:] }}"
-
-    - name: "Docker-Machine  - Debug:  Latest version"
-      debug:
-        msg: "{{ docker_machine_latest_version }}"
-      when: debug == true
-
-    - name: Docker-Machine - Install/Upgrade
-      get_url:
-        url: "https://github.com/docker/machine/releases/download/{{ docker_machine_latest_version_result.tag }}/docker-machine-{{ ansible_system }}-{{ ansible_userspace_architecture }}"
-        dest: /usr/local/bin/docker-machine
-        mode: 'u+x,g+x,o+x'
-        force: true
-      when: docker_machine_installed_version != docker_machine_latest_version
-  when: docker_machine_exists_result.stat.exists == False or upgrade == true

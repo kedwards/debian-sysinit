@@ -5,7 +5,7 @@
 
 - name: Virtualbox Repository
   apt:
-    deb: "{{ virtualbox_url }}"
+    deb: "https://download.virtualbox.org/virtualbox/6.1.16/{{ virtualbox_version_deb }}"
     state: present
 
 - name: Virtualbox Install

@@ -1,5 +1,5 @@
 ---
-- name: Install packages
+- name: Install system packages
   apt:
     name: "{{ packages }}"
     force_apt_get: yes

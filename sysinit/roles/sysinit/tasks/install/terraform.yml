@@ -1,24 +1,4 @@
 ---
-# - name: Atlantis - Setup virtual environment
-#   pip:
-#     name:
-#       - setuptools
-#     extra_args: --upgrade
-#     virtualenv: "/tmp/test01.venv"
-
-# - name: Atlantis Install github3.py module
-#   pip:
-#     name:
-#       - github3.py
-#     virtualenv: "/tmp/test01.venv"
-
-# - name: Atlantis - Setup virtual environment (github3.py) module
-#   raw: |
-#      if [ -x /tmp/ansible/bin/python ]; then exit 0; fi
-#      /usr/bin/python3 -m venv --prompt tmp /tmp/ansible
-#      .  /tmp/ansible/bin/activate
-#      /tmp/ansible/bin/pip install --upgrade 'github3.py >= 1.0.0a3'
-
 - name: Terraform - Exists
   stat:
     path: /usr/local/bin/terraform
@@ -52,8 +32,6 @@
 
 - block:
     - name: Terraform - Get latest
-      vars:
-        # ansible_python_interpreter: "/tmp/ansible/bin/python"
       community.general.github_release:
         user: hashicorp
         repo: terraform

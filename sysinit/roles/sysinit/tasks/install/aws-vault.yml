@@ -1,23 +1,7 @@
 ---
-# - name: AWS-Vault - Setup virtual environment
-#   pip:
-#     name:
-#       - setuptools
-#     extra_args: --upgrade
-#     virtualenv: "/tmp/test01.venv"
-
-# - name: AWS-Vault Install github3.py module
-#   pip:
-#     name:
-#       - github3.py
-#     virtualenv: "/tmp/test01.venv"
-
-# - name: AWS-Vault - Setup virtual environment (github3.py) module
-#   raw: |
-#      if [ -x /tmp/ansible/bin/python ]; then exit 0; fi
-#      /usr/bin/python3 -m venv --prompt tmp /tmp/ansible
-#      .  /tmp/ansible/bin/activate
-#      /tmp/ansible/bin/pip install --upgrade 'github3.py >= 1.0.0a3'
+- name: Install githubpy3 module
+  pip:
+    name: github3.py 
 
 - name: AWS-Vault - Exists
   stat:

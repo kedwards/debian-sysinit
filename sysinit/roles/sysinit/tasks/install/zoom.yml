@@ -7,6 +7,6 @@
 - name: Zoom
   apt:
     deb: https://zoom.us/client/latest/zoom_amd64.deb
-  when: zoom_result.stat.exists == False
+  when: zoom_result.stat.exists == false or upgrade == true
 
   

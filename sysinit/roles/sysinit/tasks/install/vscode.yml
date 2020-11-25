@@ -7,4 +7,4 @@
 - name: VSCode
   apt:
     deb: https://go.microsoft.com/fwlink/?LinkID=760868
-  when: vscode_result.stat.exists == False
+  when: vscode_result.stat.exists == false or upgrade == true
