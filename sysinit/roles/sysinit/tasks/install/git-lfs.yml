@@ -1,0 +1,24 @@
+---
+- name: Git-LFS - Exists
+  stat:
+    path: /usr/bin/git-lfrs
+  register: git_lfs_exists_result
+
+- block:
+    - name: Git-LFS - Get gpg
+      apt_key:
+        url: https://packagecloud.io/github/git-lfs/gpgkey
+        state: present
+    
+    - name: Git-LFS - Add repository
+      apt_repository:
+        repo: "{{ item }}"
+        state: present
+      loop: "{{ git_lfs_repos }}"
+
+    - name: Git-LFS - Install
+      apt:
+        update_cache: yes
+        pkg:
+          - git-lfs
+  when: git_lfs_exists_result.stat.exists == false or upgrade == true

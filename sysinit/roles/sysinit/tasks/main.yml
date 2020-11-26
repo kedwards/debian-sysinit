@@ -46,6 +46,11 @@
     - docker-machine
     - req
 
+- import_tasks: install/git-lfs.yml
+  tags:
+    - git-lfs
+    - req
+
 - import_tasks: install/minikube.yml
   tags:
     - minikube
