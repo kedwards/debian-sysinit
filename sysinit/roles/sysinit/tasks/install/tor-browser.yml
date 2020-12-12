@@ -1,0 +1,20 @@
+---
+- name: Tor-Browser - Exists
+  stat:
+    path: /usr/local/bin/tor
+  register: tor_browser_exists_result
+
+- block:
+    - name: Tor-Browser - Install
+      unarchive:
+        src: https://www.torproject.org/dist/torbrowser/10.0.6/tor-browser-linux64-10.0.6_en-US.tar.xz
+        dest: /usr/local
+        creates: /usr/local/tor-browser_en-US
+        remote_src: yes
+        owner: "{{ lookup('env','USER') }}"
+    - name: Tor-Browser - Configure
+      command: ./start-tor-browser.desktop --register-app
+      become_user: "{{ lookup('env','USER') }}"
+      args:
+        chdir: /usr/local/tor-browser_en-US/
+  when: tor_browser_exists_result.stat.exists == false or upgrade == true

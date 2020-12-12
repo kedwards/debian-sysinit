@@ -4,7 +4,6 @@
 - import_tasks: debug.yml
   tags:
     - debug
-  when: debug == true
 
 - import_tasks: deps.yml
   when: ansible_distribution == "Debian"
@@ -93,6 +92,10 @@
   tags:
     - terraform
     - req
+
+- import_tasks: install/tor-browser.yml
+  tags:
+    - tor
 
 - import_tasks: install/vagrant.yml
   tags:
