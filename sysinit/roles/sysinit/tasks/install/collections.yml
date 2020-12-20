@@ -1,0 +1,7 @@
+---
+- name: Install required collections
+  shell: "ansible-galaxy collection install {{ item }}"
+  loop:
+    - amazon.aws
+    - community.general
+    - community.docker

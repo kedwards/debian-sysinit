@@ -1,6 +1,6 @@
 ---
 - name: System Initialization
-  hosts: local
+  hosts: all
   become: yes
   vars:
     upgrade: true
@@ -8,3 +8,4 @@
     github_token:
   roles:
     - sysinit
+    - dev

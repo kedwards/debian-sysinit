@@ -10,7 +10,11 @@
 
 - import_tasks: install/system.yml
   tags:
-    - req
+    - system
+
+- import_tasks: install/collections.yml
+  tags:
+    - collections
 
 - import_tasks: install/atlantis.yml
   tags:

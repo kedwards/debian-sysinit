@@ -24,6 +24,9 @@
 
 - name: Docker User
   user:
-    name: "{{ lookup('env','USER') }}"
+    name: "{{ item }}"
     groups: docker
     append: yes
+  loop:
+    - "{{ lookup('env','USER') }}"
+    - ubuntu

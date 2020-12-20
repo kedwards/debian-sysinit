@@ -1,0 +1,13 @@
+plugin: aws_ec2
+
+regions:
+  - ca-central-1
+
+strict_permissions: False
+
+filters:
+  # All instances with their `Name` tag set to `Studio`
+  tag:feature: studio
+
+hostnames:
+  - ip-address
