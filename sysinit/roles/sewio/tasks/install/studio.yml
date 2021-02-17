@@ -12,15 +12,6 @@
     state: latest
     update_cache: yes
 
-- name: Ensure GitHub key is present
-  copy:
-    src: "{{ item }}"
-    dest: /home/ubuntu/.ssh/
-    mode: 0600
-    owner: ubuntu
-    group: ubuntu
-  loop: "{{ git_keys }}"
-
 - name: Ensure required studio files & folders are present
   copy:
     src: "{{ item.src }}"

@@ -8,6 +8,15 @@
 - import_tasks: deps.yml
   when: ansible_distribution == "Debian"
 
+- name: ansible conf file
+  shell: cat /etc/ansible/ansible.cfg | grep remote_tmp | awk '{print $3}'
+  register: remote_tmp
+
+- name: Creates remote_tmp
+  file:
+    path: "{{ remote_tmp }}"
+    state: directory
+
 - import_tasks: install/system.yml
   tags:
     - system
@@ -60,7 +69,7 @@
 
 - import_tasks: install/ngrok.yml
   tags:
-    - minikube
+    - atlantis
     - ngrok
 
 - import_tasks: install/packer.yml

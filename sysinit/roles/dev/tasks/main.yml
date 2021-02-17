@@ -2,3 +2,7 @@
 - import_tasks: heroku/task.yml
   tags:
     - heroku
+
+- import_tasks: terraspace/task.yml
+  tags:
+    - terraspace

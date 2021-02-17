@@ -1,0 +1,23 @@
+---
+- name: Terraspace CLI Exists
+  stat:
+    path: /usr/local/bin/terraspace
+  register: terraspace_exists_result
+
+- block:
+    - name: Trraspace - Get gpg
+      apt_key:
+        url: https://apt.boltops.com/boltops-key.public
+        state: present
+
+    - name: Terraspace - Add repository
+      apt_repository:
+        repo: "deb https://apt.boltops.com stable main"
+        state: present
+
+    - name: Terraspace - Install
+      apt:
+        update_cache: yes
+        pkg:
+          - terraspace
+  when: terraspace_exists_result.stat.exists == false or upgrade == true

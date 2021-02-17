@@ -6,11 +6,6 @@
   vars:
     upgrade: true
     debug: true
-    git_keys:
-      - /home/kedwards/.ssh/kedwards/id_rsa
-      - /home/kedwards/.ssh/kedwards/id_rsa.pub
-    git_token: f2f8b2260ee6d53264bfed8c62d79b7cff10dcb1
-    git_organization: connectusglobal
     git_repo_name: rtls-meta
     docker_login_username: kevinedwards
     docker_login_password: Y2tFT9n*xEqb

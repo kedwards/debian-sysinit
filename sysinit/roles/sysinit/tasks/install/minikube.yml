@@ -1,5 +1,14 @@
 ---
-- name: Minikube  Exists
+- name: Read ansible conf file
+  shell: cat /etc/ansible/ansible.cfg | grep remote_tmp | awk '{print $3}'
+  register: remote_tmp
+
+- name: Creates remote_tmp directory
+  file:
+    path: "{{ remote_tmp }}"
+    state: directory
+
+- name: Minikube Exists
   stat:
     path: /usr/local/bin/minikube
   register: minikube_exists_result
@@ -36,23 +45,29 @@
   when: kubectl_exists_result.stat.exists != False and upgrade == true
 
 - block:
-    - name: "Kubectl - Debug: Get Latest"
-      shell: curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt
-      register: kubectl_latest_version_result
+    - name: "Kubectl - Download version file"
+      get_url:
+        url: https://storage.googleapis.com/kubernetes-release/release/stable.txt
+        dest: "{{ remote_tmp }}/minikube_version"
+
+    - name: "Kubectl - Read Latest version from file"
+      slurp:
+        src: "{{ remote_tmp }}/minikube_version"
+      register: slurpfile
 
     - name: Kubectl - Set latest version
       set_fact:
-        kubectl_latest_version: "{{ kubectl_latest_version_result.stdout[1:] }}"
+        kubectl_latest_version: "{{ slurpfile['content'] | b64decode }}"
 
     - name: "Kubectl - Debug: latest version"
       debug:
         msg: "{{ kubectl_latest_version }}"
       when: debug == true
   when: kubectl_exists_result.stat.exists == False or upgrade == true
-  
+
 - name: Kubectl - Install/Upgrade
   get_url:
-    url: "https://storage.googleapis.com/kubernetes-release/release/{{ kubectl_latest_version_result.stdout }}/bin/linux/amd64/kubectl"
+    url: "https://storage.googleapis.com/kubernetes-release/release/{{ kubectl_latest_version }}/bin/linux/amd64/kubectl"
     dest: /usr/local/bin/kubectl
     mode: 0755
     force: true
