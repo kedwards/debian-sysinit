@@ -20,10 +20,12 @@
 - import_tasks: install/system.yml
   tags:
     - system
+    - req
 
 - import_tasks: install/collections.yml
   tags:
     - collections
+    - req
 
 - import_tasks: install/atlantis.yml
   tags:
@@ -58,6 +60,11 @@
     - docker-machine
     - req
 
+- import_tasks: install/dropbox.yml
+  tags:
+    - dropbox
+    - req
+
 - import_tasks: install/git-lfs.yml
   tags:
     - git-lfs
@@ -84,22 +91,21 @@
 - import_tasks: install/skype.yml
   tags:
     - skype
-    - req
+    - comms
 
 - import_tasks: install/slack.yml
   tags:
     - slack
-    - req
+    - comms
 
 - import_tasks: install/teams.yml
   tags:
     - teams
-    - req
+    - comms
 
 - import_tasks: install/teamviewer.yml
   tags:
     - teamviewer
-    - req
 
 - import_tasks: install/terraform.yml
   tags:
@@ -128,4 +134,4 @@
 - import_tasks: install/zoom.yml
   tags:
     - zoom
-    - req
+    - comms

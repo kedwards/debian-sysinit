@@ -1,13 +1,12 @@
 ---
 - name: Vagrant Signing key
   apt_key:
-    keyserver: keyserver.ubuntu.com
-    id: AD319E0F7CFFA38B4D9F6E55CE3F3DE92099F7A4
+    url: https://apt.releases.hashicorp.com/gpg
     state: present
 
 - name: Vagrant Repository
   apt_repository:
-    repo: deb https://vagrant-deb.linestarve.com/ any main
+    repo: deb [arch=amd64] https://apt.releases.hashicorp.com {{ ansible_distribution_release }} main
     state: present
 
 - name: Vagrant Install
