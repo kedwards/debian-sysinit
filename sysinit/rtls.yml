@@ -1,5 +1,5 @@
 ---
-- name: Connectus-Base
+- name: Connectus-RTLS-Base
   hosts: all
   become: yes
   remote_user: ubuntu

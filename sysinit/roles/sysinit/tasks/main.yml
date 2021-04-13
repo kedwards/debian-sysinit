@@ -19,12 +19,10 @@
 
 - import_tasks: install/system.yml
   tags:
-    - system
     - req
 
 - import_tasks: install/collections.yml
   tags:
-    - collections
     - req
 
 - import_tasks: install/atlantis.yml
