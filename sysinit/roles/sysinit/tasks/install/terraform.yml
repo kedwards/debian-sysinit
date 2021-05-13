@@ -76,6 +76,5 @@
     src: "https://releases.hashicorp.com/terraform/{{ terraform_latest_version }}/terraform_{{ terraform_latest_version }}_linux_amd64.zip"
     dest: /usr/local/bin
     remote_src: yes
-    force: true
   when: 
     - terraform_exists_result.stat.exists == false or (terraform_exists_result.stat.exists != false and upgrade == true and terraform_latest_version != terraform_installed_version[0])
