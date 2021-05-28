@@ -2,8 +2,7 @@
 - include_vars: "{{ ansible_distribution }}.yml"
 
 - import_tasks: debug.yml
-  tags:
-    - debug
+  when: debug == true
 
 - import_tasks: deps.yml
   when: ansible_distribution == "Debian"
@@ -71,6 +70,10 @@
 - import_tasks: install/minikube.yml
   tags:
     - minikube
+
+- import_tasks: install/mkcert.yml
+  tags:
+    - mkcert
 
 - import_tasks: install/ngrok.yml
   tags:
