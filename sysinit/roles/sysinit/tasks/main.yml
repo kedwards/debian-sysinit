@@ -106,6 +106,7 @@
 
 - import_tasks: install/teamviewer.yml
   tags:
+    - comms
     - teamviewer
 
 - import_tasks: install/terraform.yml

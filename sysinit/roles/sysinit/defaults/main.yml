@@ -8,6 +8,7 @@ packages:
   - gnupg-agent
   - python3-pip
   - unzip
+  - libnss3-tools
 
 pip_packages:
   - github3.py
