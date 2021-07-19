@@ -1,9 +1,0 @@
----
-- include_vars: "{{ ansible_distribution }}.yml"
-
-- import_tasks: deps.yml
-  when: ansible_distribution == "Debian"
-
-- import_tasks: install/studio.yml
-  tags:
-    - studio

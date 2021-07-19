@@ -1,5 +1,0 @@
----
-- name: Install Heroku CLI
-  community.general.snap:
-    name:
-      - heroku
