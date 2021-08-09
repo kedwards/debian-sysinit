@@ -7,133 +7,124 @@
 - import_tasks: deps.yml
   when: ansible_distribution == "Debian"
 
-- name: ansible conf file
-  shell: cat /etc/ansible/ansible.cfg | grep remote_tmp | awk '{print $3}'
-  register: remote_tmp
-
-- name: Creates remote_tmp
-  file:
-    path: "{{ remote_tmp }}"
-    state: directory
-
-- import_tasks: install/system.yml
+- import_tasks: module/system.yml
   tags:
     - req
 
-- import_tasks: install/collections.yml
+- import_tasks: module/collections.yml
   tags:
     - req
 
-- import_tasks: install/atlantis.yml
+- import_tasks: module/atlantis.yml
   tags:
     - atlantis
 
-- import_tasks: install/aws-cli.yml
+- import_tasks: module/aws-cli.yml
   tags:
     - aws
     - aws-cli
     - req
 
-- import_tasks: install/aws-vault.yml
+- import_tasks: module/aws-vault.yml
   tags:
     - aws
     - aws-vault
     - req
 
-- import_tasks: install/docker.yml
+- import_tasks: module/docker.yml
   tags:
     - docker
     - docker-compose
     - docker-machine
     - req
 
-- import_tasks: install/docker-compose.yml
+- import_tasks: module/docker-compose.yml
   tags:
     - docker-compose
     - req
 
-- import_tasks: install/docker-machine.yml
+- import_tasks: module/docker-machine.yml
   tags:
     - docker-machine
     - req
 
-- import_tasks: install/dropbox.yml
+- import_tasks: module/dropbox.yml
   tags:
     - dropbox
     - req
 
-- import_tasks: install/git-lfs.yml
+- import_tasks: module/git-lfs.yml
   tags:
     - git-lfs
     - req
 
-- import_tasks: install/minikube.yml
+- import_tasks: module/minikube.yml
   tags:
     - minikube
 
-- import_tasks: install/mkcert.yml
+- import_tasks: module/mkcert.yml
   tags:
     - mkcert
 
-- import_tasks: install/ngrok.yml
+- import_tasks: module/ngrok.yml
   tags:
     - atlantis
     - ngrok
 
-- import_tasks: install/packer.yml
+- import_tasks: module/packer.yml
   tags:
     - packer
 
-- import_tasks: install/postman.yml
+- import_tasks: module/postman.yml
   tags:
     - postman
     - req
 
-- import_tasks: install/skype.yml
+- import_tasks: module/skype.yml
   tags:
     - skype
     - comms
 
-- import_tasks: install/slack.yml
+- import_tasks: module/slack.yml
   tags:
     - slack
     - comms
 
-- import_tasks: install/teams.yml
+- import_tasks: module/teams.yml
   tags:
     - teams
     - comms
 
-- import_tasks: install/teamviewer.yml
+- import_tasks: module/teamviewer.yml
   tags:
     - comms
     - teamviewer
 
-- import_tasks: install/terraform.yml
+- import_tasks: module/terraform.yml
   tags:
     - terraform
     - req
 
-- import_tasks: install/tor-browser.yml
+- import_tasks: module/tor-browser.yml
   tags:
     - tor
 
-- import_tasks: install/vagrant.yml
+- import_tasks: module/vagrant.yml
   tags:
     - vagrant
     - req
 
-- import_tasks: install/virtualbox.yml
+- import_tasks: module/virtualbox.yml
   tags:
     - virtualbox
     - req
 
-- import_tasks: install/vscode.yml
+- import_tasks: module/vscode.yml
   tags:
     - vscode
     - req
 
-- import_tasks: install/zoom.yml
+- import_tasks: module/zoom.yml
   tags:
     - zoom
     - comms

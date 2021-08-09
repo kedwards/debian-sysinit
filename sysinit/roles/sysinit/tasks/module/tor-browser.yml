@@ -7,7 +7,7 @@
 - block:
     - name: Tor-Browser - Install
       unarchive:
-        src: https://www.torproject.org/dist/torbrowser/10.0.6/tor-browser-linux64-10.0.6_en-US.tar.xz
+        src: "https://www.torproject.org/dist/torbrowser/{{ tor_version_deb }}"
         dest: /usr/local
         creates: /usr/local/tor-browser_en-US
         remote_src: yes

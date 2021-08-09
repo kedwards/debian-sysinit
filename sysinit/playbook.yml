@@ -6,6 +6,7 @@
     upgrade: true
     debug: true
     github_token:
+    tor_version_deb: 10.5.2/tor-browser-linux64-10.5.2_en-US.tar.xz
+    virtualbox_version_deb: 6.1.26/virtualbox-6.1_6.1.26-145957
   roles:
     - sysinit
-    # - dev

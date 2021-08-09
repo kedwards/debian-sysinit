@@ -6,8 +6,8 @@ regions:
 strict_permissions: False
 
 filters:
-  # All instances with their `Name` tag set to `Studio`
-  tag:feature: studio
+  # All instances with their `Name` tag set to `LivITy`
+  tag:feature: LivITy
 
 hostnames:
   - ip-address

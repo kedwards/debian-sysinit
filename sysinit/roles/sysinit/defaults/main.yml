@@ -15,8 +15,5 @@ pip_packages:
   - boto3
   - botocore
 
-virtualbox_version_deb: 6.1.18/virtualbox-6.1_6.1.18-142142~Ubuntu~eoan_amd64.deb
-
 git_lfs_repos:
   - "deb https://packagecloud.io/github/git-lfs/ubuntu/ focal main"
-  - "deb-src https://packagecloud.io/github/git-lfs/ubuntu/ focal main"
