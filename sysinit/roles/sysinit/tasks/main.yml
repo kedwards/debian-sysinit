@@ -105,6 +105,11 @@
     - terraform
     - req
 
+- import_tasks: module/terraspace.yml
+  tags:
+    - terraspace
+    - req
+
 - import_tasks: module/tor-browser.yml
   tags:
     - tor
