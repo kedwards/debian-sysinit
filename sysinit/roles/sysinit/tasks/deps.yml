@@ -3,3 +3,24 @@
   apt_repository:
     repo: "deb http://ftp.ca.debian.org/debian/ {{ ansible_distribution_release }} main non-free"
     state: present
+  when: ansible_distribution == "Debian"
+
+- name: Install system packages
+  apt:
+    name: "{{ packages }}"
+    force_apt_get: yes
+    state: latest
+    update_cache: yes
+
+- name: Install pip modules
+  pip:
+    name: "{{ pip_packages }}"
+
+- name: Install required collections
+  shell: "ansible-galaxy collection install {{ item }}"
+  loop:
+    - amazon.aws
+    - community.general
+    - community.docker
+    - community.kubernetes
+    

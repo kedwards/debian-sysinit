@@ -1,31 +1,8 @@
----
-# - name: Read ansible conf file
-#   shell: cat /etc/ansible/ansible.cfg | grep remote_tmp | awk '{print $3}'
-#   register: remote_tmp
-
-# - name: Creates remote_tmp directory
-#   file:
-#     path: "{{ remote_tmp }}"
-#     state: directory
-
 - name: Create a temporary directory
   tempfile:
     state: "directory"
     suffix: "tmp"
   register: "tmpdir"
-
-- name: Minikube Exists
-  stat:
-    path: /usr/local/bin/minikube
-  register: minikube_exists_result
-
-- name: Minikube
-  get_url:
-    url: https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
-    dest: /usr/local/bin/minikube
-    mode: 0755
-    force: true
-  when: minikube_exists_result.stat.exists == False or upgrade == true
 
 - name: Kubectl Exists
   stat:
@@ -78,3 +55,13 @@
     mode: 0755
     force: true
   when: kubectl_exists_result.stat.exists == False or kubectl_installed_version != kubectl_latest_version
+
+- name: Remove temporary directory
+  file:
+    path: "{{ tmpdir.path }}"
+    state: "absent"
+# https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html
+# curl -o kubectl hhttps://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/kubectl
+
+# https://docs.aws.amazon.com/eks/latest/userguide/eksctl.html#installing-eksctl
+# curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp

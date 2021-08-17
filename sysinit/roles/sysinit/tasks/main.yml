@@ -5,15 +5,6 @@
   when: debug == true
 
 - import_tasks: deps.yml
-  when: ansible_distribution == "Debian"
-
-- import_tasks: module/system.yml
-  tags:
-    - req
-
-- import_tasks: module/collections.yml
-  tags:
-    - req
 
 - import_tasks: module/atlantis.yml
   tags:
@@ -61,6 +52,7 @@
 - import_tasks: module/minikube.yml
   tags:
     - minikube
+    - req
 
 - import_tasks: module/mkcert.yml
   tags:
@@ -108,6 +100,7 @@
 - import_tasks: module/terraspace.yml
   tags:
     - terraspace
+    - terraform
     - req
 
 - import_tasks: module/tor-browser.yml
