@@ -10,6 +10,6 @@
 
 - name: Packer - Install/Upgrade
   apt:
-    update_cache: yes
+    update_cache: true
     pkg:
       - packer

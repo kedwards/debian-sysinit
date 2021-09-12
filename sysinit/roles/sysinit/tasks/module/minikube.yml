@@ -25,7 +25,7 @@
     dest: /usr/local/bin/minikube
     mode: 0755
     force: true
-  when: minikube_exists_result.stat.exists == False or upgrade == true
+  when: minikube_exists_result.stat.exists == "false" or upgrade == "true"
 
 - name: Kubectl Exists
   stat:
@@ -36,7 +36,7 @@
     - name: Kubectl - Get installed version
       command: kubectl version
       register: kubectl_version_result
-      ignore_errors: yes
+      ignore_errors: true
 
     - name: Kubectl - Set installed version
       set_fact:
@@ -47,8 +47,8 @@
     - name: "Kubectl - Debug: Installed version"
       debug:
         msg: "{{ kubectl_installed_version }}"
-      when: debug == true
-  when: kubectl_exists_result.stat.exists != False and upgrade == true
+      when: debug == "true"
+  when: kubectl_exists_result.stat.exists != "false" and upgrade == "true"
 
 - block:
     - name: "Kubectl - Download version file"
@@ -68,8 +68,8 @@
     - name: "Kubectl - Debug: latest version"
       debug:
         msg: "{{ kubectl_latest_version }}"
-      when: debug == true
-  when: kubectl_exists_result.stat.exists == False or upgrade == true
+      when: debug == "true"
+  when: kubectl_exists_result.stat.exists == "false" or upgrade == "true"
 
 - name: Kubectl - Install/Upgrade
   get_url:
@@ -77,4 +77,4 @@
     dest: /usr/local/bin/kubectl
     mode: 0755
     force: true
-  when: kubectl_exists_result.stat.exists == False or kubectl_installed_version != kubectl_latest_version
+  when: kubectl_exists_result.stat.exists == "false" or kubectl_installed_version != kubectl_latest_version

@@ -10,11 +10,11 @@
         src: "https://www.torproject.org/dist/torbrowser/{{ tor_version_deb }}"
         dest: /usr/local
         creates: /usr/local/tor-browser_en-US
-        remote_src: yes
+        remote_src: true
         owner: "{{ lookup('env','USER') }}"
     - name: Tor-Browser - Configure
       command: ./start-tor-browser.desktop --register-app
       become_user: "{{ lookup('env','USER') }}"
       args:
         chdir: /usr/local/tor-browser_en-US/
-  when: tor_browser_exists_result.stat.exists == false or upgrade == true
+  when: tor_browser_exists_result.stat.exists == "false" or upgrade == "true"

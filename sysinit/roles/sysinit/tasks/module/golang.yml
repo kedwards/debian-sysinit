@@ -9,7 +9,7 @@
       unarchive:
         src: "{{ golang_url }}"
         dest: /usr/local
-        remote_src: yes
-      when: (golang_exists_result.stat.exists == False) or (golang_installed_version != golang_latest_version)
+        remote_src: true
+      when: (golang_exists_result.stat.exists == "false") or (golang_installed_version != golang_latest_version)
   when:
-    - (golang_exists_result.stat.exists == false) or (golang_exists_result.stat.exists != false and upgrade == true)
+    - (golang_exists_result.stat.exists == "false") or (golang_exists_result.stat.exists != "false" and upgrade == "true")

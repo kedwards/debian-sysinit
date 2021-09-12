@@ -16,8 +16,8 @@
     - name: "Terrascan - Debug: Installed version"
       debug:
         msg: "{{ terrascan_installed_version }}"
-      when: debug == true
-  when: terrascan_exists_result.stat.exists != false and upgrade == true
+      when: debug == "true"
+  when: terrascan_exists_result.stat.exists != "false" and upgrade == "true"
 
 - block:
     - name: Terrascan - Get latest
@@ -35,13 +35,16 @@
     - name: "terrascan - Debug: latest version"
       debug:
         msg: "{{ terrascan_latest_version }}"
-      when: debug == true
-  when: terrascan_exists_result.stat.exists == false or upgrade == true
+      when: debug == "true"
+  when: terrascan_exists_result.stat.exists == "false" or upgrade == "true"
 
 - name: Terrascan Install/Upgrade
   unarchive:
     src: " https://github.com/accurics/terrascan/releases/download/v{{ terrascan_latest_version }}/terrascan_{{ terrascan_latest_version }}_Linux_x86_64.tar.gz"
     dest: /usr/local/bin
-    remote_src: yes
-  when: 
-    - terrascan_exists_result.stat.exists == false or (terrascan_exists_result.stat.exists != false and upgrade == true and terrascan_latest_version != terraform_installed_version[0])
+    remote_src: true
+  when: >-
+    terrascan_exists_result.stat.exists == "false" or
+    (terrascan_exists_result.stat.exists != "false" and
+    upgrade == "true" and
+    terrascan_latest_version != terraform_installed_version[0])

@@ -1,8 +1,9 @@
 ---
-- include_vars: "{{ ansible_distribution }}.yml"
+- name: include os vars
+  include_vars: "{{ ansible_distribution }}.yml"
 
 - import_tasks: debug.yml
-  when: debug == true
+  when: debug == "true"
 
 - import_tasks: deps.yml
 

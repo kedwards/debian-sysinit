@@ -1,7 +1,7 @@
 ---
 - name: System Initialization
   hosts: localhost
-  become: yes
+  become: true
   vars:
     upgrade: true
     debug: true

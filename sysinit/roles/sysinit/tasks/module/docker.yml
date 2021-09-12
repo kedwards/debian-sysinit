@@ -15,7 +15,7 @@
       - docker-ce
       - docker-ce-cli
       - containerd.io
-    update_cache: yes
+    update_cache: true
 
 - name: Docker - Add user to docker group
   group:
@@ -26,7 +26,7 @@
   user:
     name: "{{ item }}"
     groups: docker
-    append: yes
+    append: true
   loop:
     - "{{ lookup('env','USER') }}"
     - ubuntu

@@ -7,5 +7,5 @@
 - name: Slack
   community.general.snap:
     name: slack
-    classic: yes
-  when: slack_result.stat.exists == False or upgrade == true
+    classic: true
+  when: slack_result.stat.exists == "false" or upgrade == "true"

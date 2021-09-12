@@ -9,8 +9,8 @@
       unarchive:
         src: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
         dest: /usr/local
-        remote_src: yes
+        remote_src: true
 
     - name: AWS-Cli - Configure
       command: sh /usr/local/aws/install --update
-  when: aws_cli_exists_result.stat.exists == false or upgrade == true
+  when: aws_cli_exists_result.stat.exists == "false" or upgrade == "true"

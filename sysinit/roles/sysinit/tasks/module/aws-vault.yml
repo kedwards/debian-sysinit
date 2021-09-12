@@ -1,7 +1,7 @@
 ---
 - name: Install githubpy3 module
   pip:
-    name: github3.py 
+    name: github3.py
 
 - name: AWS-Vault - Exists
   stat:
@@ -20,8 +20,8 @@
     - name: "AWS-Vault - Debug: Installed version"
       debug:
         msg: "{{ aws_vault_installed_version }}"
-      when: debug == true
-  when: aws_vault_exists_result.stat.exists != false and upgrade == true
+      when: debug == "true"
+  when: aws_vault_exists_result.stat.exists != "false" and upgrade == "true"
 
 - block:
     - name: AWS-Vault - Get latest
@@ -41,12 +41,12 @@
     - name: "AWS-Vault - Debug:  Latest version"
       debug:
         msg: "{{ aws_vault_latest_version }}"
-      when: debug == true
-  when: (aws_vault_exists_result.stat.exists == false) or upgrade == true
+      when: debug == "true"
+  when: (aws_vault_exists_result.stat.exists == "false") or upgrade == "true"
 
 - name: AWS-Vault Install/Upgrade
   get_url:
     url: "https://github.com/99designs/aws-vault/releases/download/{{ aws_vault_latest_version_result.tag }}/aws-vault-linux-amd64"
     dest: /usr/local/bin/aws-vault
     mode: 'u+x,g+x,o+x'
-  when: (aws_vault_exists_result.stat.exists == false) or upgrade == true and (aws_vault_installed_version != aws_vault_latest_version)
+  when: (aws_vault_exists_result.stat.exists == "false") or upgrade == "true" and (aws_vault_installed_version != aws_vault_latest_version)

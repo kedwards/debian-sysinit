@@ -10,6 +10,6 @@
 
 - name: Virtualbox Install
   apt:
-    update_cache: yes
+    update_cache: true
     pkg:
       - virtualbox-6.1

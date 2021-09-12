@@ -12,7 +12,7 @@
     - name: Terraform - Search installed version
       set_fact:
         terraform_installed_version_result: "{{ terraform_installed_version_result | default([]) +  [item] }}"
-      when: "{{ item | regex_search(regexp,'\\1') }}"
+      when: item | regex_search(regexp,'\\1')
       vars:
         regexp: 'Terraform\sv(.*)$'
       with_items:
@@ -27,8 +27,8 @@
     - name: "Terraform - Debug: Installed version"
       debug:
         msg: "{{ terraform_installed_version }}"
-      when: debug == true
-  when: terraform_exists_result.stat.exists != false and upgrade == true
+      when: debug == "true"
+  when: terraform_exists_result.stat.exists != "false" and upgrade == "true"
 
 - block:
     - name: Terraform - Get latest
@@ -46,10 +46,10 @@
     - name: "Terraform - Debug: latest version"
       debug:
         msg: "{{ terraform_latest_version }}"
-      when: debug == true
-  when: terraform_exists_result.stat.exists == false or upgrade == true
+      when: debug == "true"
+  when: terraform_exists_result.stat.exists == "false" or upgrade == "true"
 
-# - block:  
+# - block:
 #     - name: Terraform - Search latest version
 #       set_fact:
 #         terraform_latest_version_result: "{{ terraform_latest_version_result | default([]) +  [item] }}"
@@ -68,13 +68,16 @@
 #     - name: "Terraform - Debug:  Latest version"
 #       debug:
 #         msg: "{{ terraform_latest_version }}"
-#       when: debug == true
-#   when: terraform_exists_result.stat.exists == false or upgrade == true
+#       when: debug == "true"
+#   when: terraform_exists_result.stat.exists == "false" or upgrade == "true"
 
 - name: Terraform Install/Upgrade
   unarchive:
     src: "https://releases.hashicorp.com/terraform/{{ terraform_latest_version }}/terraform_{{ terraform_latest_version }}_linux_amd64.zip"
     dest: /usr/local/bin
-    remote_src: yes
-  when: 
-    - terraform_exists_result.stat.exists == false or (terraform_exists_result.stat.exists != false and upgrade == true and terraform_latest_version != terraform_installed_version[0])
+    remote_src: true
+  when: >-
+    terraform_exists_result.stat.exists == "false" or
+    (terraform_exists_result.stat.exists != "false" and
+    upgrade == "true" and
+    terraform_latest_version != terraform_installed_version[0])

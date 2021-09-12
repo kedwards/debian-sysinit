@@ -1,7 +1,7 @@
 ---
 - name: Install githubpy3 module
   pip:
-    name: github3.py 
+    name: github3.py
 
 - name: Terragrunt - Exists
   stat:
@@ -20,8 +20,8 @@
     - name: "Terragrunt - Debug: Installed version"
       debug:
         msg: "{{ terragrunt_installed_version }}"
-      when: debug == true
-  when: terragrunt_exists_result.stat.exists != false and upgrade == true
+      when: debug == "true"
+  when: terragrunt_exists_result.stat.exists != "false" and upgrade == "true"
 
 - block:
     - name: Terragrunt - Get latest
@@ -39,12 +39,12 @@
     - name: "Terragrunt - Debug:  Latest version"
       debug:
         msg: "{{ terragrunt_latest_version }}"
-      when: debug == true
-  when: (terragrunt_exists_result.stat.exists == false) or upgrade == true
+      when: debug == "true"
+  when: (terragrunt_exists_result.stat.exists == "false") or upgrade == "true"
 
 - name: Terragrunt Install/Upgrade
   get_url:
     url: "https://github.com/gruntwork-io/terragrunt/releases/download/{{ terragrunt_latest_version_result.tag }}/terragrunt_linux_amd64"
     dest: /usr/local/bin/terragrunt
     mode: 'u+x,g+x,o+x'
-  when: (terragrunt_exists_result.stat.exists == false) or upgrade == true and (terragrunt_installed_version != terragrunt_latest_version)
+  when: (terragrunt_exists_result.stat.exists == "false") or upgrade == "true" and (terragrunt_installed_version != terragrunt_latest_version)

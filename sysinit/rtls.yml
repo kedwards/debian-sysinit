@@ -1,7 +1,7 @@
 ---
 - name: Connectus-RTLS-Base
   hosts: all
-  become: yes
+  become: true
   remote_user: ubuntu
   vars:
     upgrade: true

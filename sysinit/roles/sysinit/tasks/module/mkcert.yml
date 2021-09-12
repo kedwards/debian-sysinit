@@ -16,13 +16,13 @@
     - name: "mkcert - Debug: Installed version"
       debug:
         msg: "{{ mkcert_installed_version }}"
-      when: debug == true
-  when: mkcert_exists_result.stat.exists != false and upgrade == true
+      when: debug == "true"
+  when: mkcert_exists_result.stat.exists != "false" and upgrade == "true"
 
 - block:
-    - name: mkcert - Get latest 
+    - name: mkcert - Get latest
       community.general.github_release:
-        user: FiloSottile 
+        user: FiloSottile
         repo: mkcert
         action: latest_release
         token: "{{ github_token }}"
@@ -35,13 +35,13 @@
     - name: "mkcert - Debug:  Latest version"
       debug:
         msg: "{{ mkcert_latest_version }}"
-      when: debug == true
-  when: mkcert_exists_result.stat.exists == false or upgrade == true
-  
+      when: debug == "true"
+  when: mkcert_exists_result.stat.exists == "false" or upgrade == "true"
+
 - name: mkcert - Install/Upgrade
   get_url:
     url: "https://github.com/FiloSottile/mkcert/releases/download/{{ mkcert_latest_version }}/mkcert-{{ mkcert_latest_version }}-linux-amd64"
     dest: /usr/local/bin/mkcert
     mode: 'u+x,g+x,o+x'
     force: true
-  when: (mkcert_exists_result.stat.exists == false) or upgrade == true and (mkcert_installed_version != mkcert_latest_version)
+  when: (mkcert_exists_result.stat.exists == "false") or upgrade == "true" and (mkcert_installed_version != mkcert_latest_version)

@@ -18,11 +18,11 @@
     - name: "Docker-Machine - Debug: Installed version"
       debug:
         msg: "{{ docker_machine_installed_version }}"
-      when: debug == true
-  when: docker_machine_exists_result.stat.exists != false and upgrade == true
+      when: debug == "true"
+  when: docker_machine_exists_result.stat.exists != "false" and upgrade == "true"
 
 - block:
-    - name: Docker-Machine - Get latest 
+    - name: Docker-Machine - Get latest
       community.general.github_release:
         user: docker
         repo: machine
@@ -37,13 +37,17 @@
     - name: "Docker-Machine  - Debug:  Latest version"
       debug:
         msg: "{{ docker_machine_latest_version }}"
-      when: debug == true
-  when: docker_machine_exists_result.stat.exists == false or upgrade == true
+      when: debug == "true"
+  when: docker_machine_exists_result.stat.exists == "false" or upgrade == "true"
 
 - name: Docker-Machine - Install/Upgrade
   get_url:
-    url: "https://github.com/docker/machine/releases/download/{{ docker_machine_latest_version_result.tag }}/docker-machine-{{ ansible_system }}-{{ ansible_userspace_architecture }}"
+    url: >-
+      "https://github.com/docker/machine/releases/download/
+      {{ docker_machine_latest_version_result.tag }}/
+      docker-machine-{{ ansible_system }}-
+      {{ ansible_userspace_architecture }}"
     dest: /usr/local/bin/docker-machine
     mode: 'u+x,g+x,o+x'
     force: true
-  when: (docker_machine_exists_result.stat.exists == false) or upgrade == true and (docker_machine_installed_version != docker_machine_latest_version)
+  when: (docker_machine_exists_result.stat.exists == "false") or upgrade == "true" and (docker_machine_installed_version != docker_machine_latest_version)
