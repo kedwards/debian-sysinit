@@ -18,8 +18,8 @@
     - name: "Docker-Compose - Debug: Installed version"
       debug:
         msg: "{{ docker_compose_installed_version }}"
-      when: debug == "true"
-  when: docker_compose_exists_result.stat.exists != "false" and upgrade == "true"
+      when: debug == true
+  when: docker_compose_exists_result.stat.exists != false and upgrade == true
 
 - block:
     - name: Docker-Compose - Get latest
@@ -37,17 +37,14 @@
     - name: "Docker-Compose - Debug:  Latest version"
       debug:
         msg: "{{ docker_compose_latest_version }}"
-      when: debug == "true"
-  when: docker_compose_exists_result.stat.exists == "false" or upgrade == "true"
+      when: debug == true
+  when: docker_compose_exists_result.stat.exists == false or upgrade == true
 
 - name: Docker-Compose - Install/Upgrade
   get_url:
     url: >-
-      "https://github.com/docker/compose/releases/download/
-      {{ docker_compose_latest_version }}/
-      docker-compose-{{ ansible_system }}-
-      {{ ansible_userspace_architecture }}"
+      https://github.com/docker/compose/releases/download/{{ docker_compose_latest_version }}/docker-compose-{{ ansible_system }}-{{ ansible_userspace_architecture }}
     dest: /usr/local/bin/docker-compose
     mode: 'u+x,g+x,o+x'
     force: true
-  when: (docker_compose_exists_result.stat.exists == "false") or upgrade == "true" and (docker_compose_installed_version != docker_compose_latest_version)
+  when: (docker_compose_exists_result.stat.exists == false) or upgrade == true and (docker_compose_installed_version != docker_compose_latest_version)

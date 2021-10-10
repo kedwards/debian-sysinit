@@ -24,8 +24,8 @@
     - name: "Kubectl - Debug: Installed version"
       debug:
         msg: "{{ kubectl_installed_version }}"
-      when: debug == "true"
-  when: kubectl_exists_result.stat.exists != "false" and upgrade == "true"
+      when: debug == true
+  when: kubectl_exists_result.stat.exists != false and upgrade == true
 
 - block:
     - name: "Kubectl - Download version file"
@@ -45,8 +45,8 @@
     - name: "Kubectl - Debug: latest version"
       debug:
         msg: "{{ kubectl_latest_version }}"
-      when: debug == "true"
-  when: kubectl_exists_result.stat.exists == "false" or upgrade == "true"
+      when: debug == true
+  when: kubectl_exists_result.stat.exists == false or upgrade == true
 
 - name: Kubectl - Install/Upgrade
   get_url:
@@ -54,7 +54,7 @@
     dest: /usr/local/bin/kubectl
     mode: 0755
     force: true
-  when: kubectl_exists_result.stat.exists == "false" or kubectl_installed_version != kubectl_latest_version
+  when: kubectl_exists_result.stat.exists == false or kubectl_installed_version != kubectl_latest_version
 
 - name: Remove temporary directory
   file:

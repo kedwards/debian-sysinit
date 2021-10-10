@@ -21,4 +21,4 @@
         update_cache: true
         pkg:
           - git-lfs
-  when: git_lfs_exists_result.stat.exists == "false" or upgrade == "true"
+  when: git_lfs_exists_result.stat.exists == false or upgrade == true

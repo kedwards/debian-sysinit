@@ -4,6 +4,10 @@
     path: /usr/local/bin/aws
   register: aws_cli_exists_result
 
+- name: Debug
+  debug:
+    msg: "{{ aws_cli_exists_result }}"
+
 - block:
     - name: AWS-Cli - Install
       unarchive:
@@ -13,4 +17,4 @@
 
     - name: AWS-Cli - Configure
       command: sh /usr/local/aws/install --update
-  when: aws_cli_exists_result.stat.exists == "false" or upgrade == "true"
+  when: aws_cli_exists_result.stat.exists == false or upgrade == true

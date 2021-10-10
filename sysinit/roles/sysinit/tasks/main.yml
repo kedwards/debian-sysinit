@@ -13,14 +13,14 @@
 
 - import_tasks: module/aws-cli.yml
   tags:
-    - aws
     - aws-cli
+    - aws
     - req
 
 - import_tasks: module/aws-vault.yml
   tags:
-    - aws
     - aws-vault
+    - aws
     - req
 
 - import_tasks: module/docker.yml
@@ -38,11 +38,15 @@
 - import_tasks: module/docker-machine.yml
   tags:
     - docker-machine
-    - req
 
 - import_tasks: module/dropbox.yml
   tags:
     - dropbox
+    - req
+
+- import_tasks: module/git-filter-repo.yml
+  tags:
+    - git-filter-repo
     - req
 
 - import_tasks: module/git-lfs.yml
@@ -54,10 +58,13 @@
   tags:
     - golang
 
+- import_tasks: module/kubectl.yml
+  tags:
+    - kubectl
+
 - import_tasks: module/minikube.yml
   tags:
     - minikube
-    - req
 
 - import_tasks: module/mkcert.yml
   tags:
@@ -71,6 +78,7 @@
 - import_tasks: module/packer.yml
   tags:
     - packer
+    - req
 
 - import_tasks: module/postman.yml
   tags:
@@ -124,6 +132,7 @@
 - import_tasks: module/vagrant.yml
   tags:
     - vagrant
+    - virtualbox
     - req
 
 - import_tasks: module/virtualbox.yml

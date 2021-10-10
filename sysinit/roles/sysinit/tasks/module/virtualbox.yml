@@ -1,15 +1,22 @@
-- name: Virtualbox signing key
-  apt_key:
-    url: https://www.virtualbox.org/download/oracle_vbox_2016.asc
-    state: present
+- name: Virtualbox - Exists
+  stat:
+    path: /usr/bin/teams
+  register: virtualbox_exists_result
 
-- name: Virtualbox Repository
-  apt:
-    deb: "https://download.virtualbox.org/virtualbox/{{ virtualbox_version_deb }}~Ubuntu~eoan_amd64.deb"
-    state: present
+- block:
+    - name: Virtualbox signing key
+      apt_key:
+        url: https://www.virtualbox.org/download/oracle_vbox_2016.asc
+        state: present
 
-- name: Virtualbox Install
-  apt:
-    update_cache: true
-    pkg:
-      - virtualbox-6.1
+    - name: Virtualbox Repository
+      apt:
+        deb: "https://download.virtualbox.org/virtualbox/{{ virtualbox_version_deb }}~Ubuntu~eoan_amd64.deb"
+        state: present
+
+    - name: Virtualbox Install
+      apt:
+        update_cache: true
+        pkg:
+          - virtualbox-6.1
+  when: virtualbox_exists_result.stat.exists == false or upgrade == true
