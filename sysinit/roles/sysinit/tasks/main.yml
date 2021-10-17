@@ -47,12 +47,10 @@
 - import_tasks: module/git-filter-repo.yml
   tags:
     - git-filter-repo
-    - req
 
 - import_tasks: module/git-lfs.yml
   tags:
     - git-lfs
-    - req
 
 - import_tasks: module/golang.yml
   tags:

@@ -19,4 +19,4 @@
       apt:
         pkg:
           - vagrant
-  when: vagrant_exists_result.stat.exists != false and upgrade == true
+  when: vagrant_exists_result.stat.exists == false or upgrade == true
