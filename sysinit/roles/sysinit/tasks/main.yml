@@ -59,6 +59,7 @@
 - import_tasks: module/kubectl.yml
   tags:
     - kubectl
+    - minikube
 
 - import_tasks: module/minikube.yml
   tags:
