@@ -35,10 +35,6 @@
     - docker-compose
     - req
 
-- import_tasks: module/docker-machine.yml
-  tags:
-    - docker-machine
-
 - import_tasks: module/dropbox.yml
   tags:
     - dropbox
