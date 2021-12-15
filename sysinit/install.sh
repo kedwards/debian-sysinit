@@ -22,9 +22,15 @@ SYSINIT_PATH=/home/${SUDO_USER}/sysinit
 RELEASE=$(cat /etc/os-release | grep '^ID=' | awk '{ split($0, a, "="); print a[2]}')
 CODENAME=$(lsb_release -cs)
 
-apt-get update && \
-apt-get upgrade && \
-apt-get install -y ansible git
+if [ -f /usr/bin/pkcon ]
+then
+  pkcon update && \
+  pkcon install ansible git
+else
+  apt-get update && \
+  apt-get upgrade && \
+  apt-get install -y ansible git
+fi
 
 if [ ! -d ${SYSINIT_PATH} ]
 then

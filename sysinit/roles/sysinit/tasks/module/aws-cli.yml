@@ -4,10 +4,6 @@
     path: /usr/local/bin/aws
   register: aws_cli_exists_result
 
-- name: Debug
-  debug:
-    msg: "{{ aws_cli_exists_result }}"
-
 - block:
     - name: AWS-Cli - Install
       unarchive:
