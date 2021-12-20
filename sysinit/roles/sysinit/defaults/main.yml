@@ -17,6 +17,6 @@ pip_packages:
   - virtualenv
   - checkov
 
-git_lfs_repos: "deb https://packagecloud.io/github/git-lfs/ubuntu/ focal main"
+git_lfs_repo: "deb https://packagecloud.io/github/git-lfs/ubuntu/ focal main"
 
 golang_url: https://golang.org/dl/go1.17.1.linux-amd64.tar.gz

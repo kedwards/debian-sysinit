@@ -12,9 +12,8 @@
 
     - name: Git-LFS - Add repository
       apt_repository:
-        repo: "{{ item }}"
+        repo: "{{ git_lfs_repo }}"
         state: present
-      loop: "{{ git_lfs_repos }}"
 
     - name: Git-LFS - Install
       apt:
