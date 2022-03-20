@@ -64,6 +64,11 @@
     - minikube
     - req
 
+- import_tasks: module/leapp.yml
+  tags:
+    - leapp
+    - req
+
 - import_tasks: module/minikube.yml
   tags:
     - minikube

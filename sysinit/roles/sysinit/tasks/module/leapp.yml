@@ -1,0 +1,9 @@
+- name: Leapp Exists
+  stat:
+    path: /usr/bin/leapp
+  register: leapp_exists_result
+
+- name: Leapp Install
+  apt:
+    deb: "{{ leapp_url }}"
+  when when: leapp_exists_result.stat.exists == False or upgrade == True
