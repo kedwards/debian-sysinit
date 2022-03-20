@@ -1,14 +1,16 @@
 ---
 packages:
   - vim-nox
-  # - nautilus-dropbox
+  - nautilus-dropbox
   - apt-transport-https
   - curl
-  - gnupg2
+  - gnupg
   - gnupg-agent
   - python3-pip
   - unzip
   - libnss3-tools
+  - ca-certificates
+  - lsb-release
 
 pip_packages:
   - github3.py
@@ -19,4 +21,4 @@ pip_packages:
 
 git_lfs_repo: "deb https://packagecloud.io/github/git-lfs/ubuntu/ focal main"
 
-golang_url: https://golang.org/dl/go1.17.1.linux-amd64.tar.gz
+golang_url: https://go.dev/dl/go1.18.linux-amd64.tar.gz

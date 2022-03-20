@@ -1,9 +1,9 @@
 ---
 - name: Create a temporary directory
   tempfile:
-    state: "directory"
-    suffix: "tmp"
-  register: "tmpdir"
+    state: directory
+    suffix: tmp
+  register: tmpdir
 
 - name: Minikube Exists
   stat:
@@ -16,56 +16,4 @@
     dest: /usr/local/bin/minikube
     mode: 0755
     force: true
-  when: minikube_exists_result.stat.exists == false or upgrade == true
-
-- name: Kubectl Exists
-  stat:
-    path: /usr/local/bin/kubectl
-  register: kubectl_exists_result
-
-- block:
-    - name: Kubectl - Get installed version
-      command: kubectl version
-      register: kubectl_version_result
-      ignore_errors: true
-
-    - name: Kubectl - Set installed version
-      set_fact:
-        kubectl_installed_version: "{{ kubectl_version_result.stdout | regex_search(regexp,'\\1') }}"
-      vars:
-        regexp: '.*GitVersion:\"v([^\"]+)\".*$'
-
-    - name: "Kubectl - Debug: Installed version"
-      debug:
-        msg: "{{ kubectl_installed_version }}"
-      when: debug == true
-  when: kubectl_exists_result.stat.exists != false and upgrade == true
-
-- block:
-    - name: "Kubectl - Download version file"
-      get_url:
-        url: https://storage.googleapis.com/kubernetes-release/release/stable.txt
-        dest: "{{ tmpdir.path }}/minikube_version"
-
-    - name: "Kubectl - Read Latest version from file"
-      slurp:
-        src: "{{ tmpdir.path }}/minikube_version"
-      register: slurpfile
-
-    - name: Kubectl - Set latest version
-      set_fact:
-        kubectl_latest_version: "{{ slurpfile['content'] | b64decode }}"
-
-    - name: "Kubectl - Debug: latest version"
-      debug:
-        msg: "{{ kubectl_latest_version }}"
-      when: debug == true
-  when: kubectl_exists_result.stat.exists == false or upgrade == true
-
-- name: Kubectl - Install/Upgrade
-  get_url:
-    url: "https://storage.googleapis.com/kubernetes-release/release/{{ kubectl_latest_version }}/bin/linux/amd64/kubectl"
-    dest: /usr/local/bin/kubectl
-    mode: 0755
-    force: true
-  when: kubectl_exists_result.stat.exists == false or kubectl_installed_version != kubectl_latest_version
+  when: minikube_exists_result.stat.exists == False or upgrade == True

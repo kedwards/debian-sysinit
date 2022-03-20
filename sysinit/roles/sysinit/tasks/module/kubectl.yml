@@ -1,8 +1,8 @@
 - name: Create a temporary directory
   tempfile:
-    state: "directory"
-    suffix: "tmp"
-  register: "tmpdir"
+    state: directory
+    suffix: tmp
+  register: tmpdir
 
 - name: Kubectl Exists
   stat:
@@ -13,7 +13,7 @@
     - name: Kubectl - Get installed version
       command: kubectl version
       register: kubectl_version_result
-      ignore_errors: true
+      ignore_errors: True
 
     - name: Kubectl - Set installed version
       set_fact:
@@ -24,8 +24,8 @@
     - name: "Kubectl - Debug: Installed version"
       debug:
         msg: "{{ kubectl_installed_version }}"
-      when: debug == true
-  when: kubectl_exists_result.stat.exists != false and upgrade == true
+      when: debug == True
+  when: kubectl_exists_result.stat.exists != False and upgrade == True
 
 - block:
     - name: "Kubectl - Download version file"
@@ -45,21 +45,22 @@
     - name: "Kubectl - Debug: latest version"
       debug:
         msg: "{{ kubectl_latest_version }}"
-      when: debug == true
-  when: kubectl_exists_result.stat.exists == false or upgrade == true
+      when: debug == True
+  when: kubectl_exists_result.stat.exists == False or upgrade == True
 
 - name: Kubectl - Install/Upgrade
   get_url:
     url: "https://storage.googleapis.com/kubernetes-release/release/{{ kubectl_latest_version }}/bin/linux/amd64/kubectl"
     dest: /usr/local/bin/kubectl
     mode: 0755
-    force: true
-  when: kubectl_exists_result.stat.exists == false or kubectl_installed_version != kubectl_latest_version
+    force: True
+  when: kubectl_exists_result.stat.exists == False or kubectl_installed_version != kubectl_latest_version
 
 - name: Remove temporary directory
   file:
     path: "{{ tmpdir.path }}"
     state: "absent"
+
 # https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html
 # curl -o kubectl hhttps://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/kubectl
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 set -o errexit
-set -o nounset
+# set -o nounset
 set -o pipefail
 
 if (( EUID != 0 ))
@@ -24,13 +24,10 @@ CODENAME=$(lsb_release -cs)
 
 if [ -f /usr/bin/pkcon ]
 then
-  pkcon update && \
-  pkcon install ansible git
-else
-  apt-get update && \
-  apt-get upgrade && \
+#   pkcon update
   apt-get install -y ansible git
 fi
+
 
 if [ ! -d ${SYSINIT_PATH} ]
 then

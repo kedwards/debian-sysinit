@@ -3,7 +3,7 @@
   include_vars: "{{ ansible_distribution }}.yml"
 
 - import_tasks: debug.yml
-  when: debug == "true"
+  when: debug == True
 
 - import_tasks: deps.yml
 
@@ -38,7 +38,6 @@
 - import_tasks: module/dropbox.yml
   tags:
     - dropbox
-    - req
 
 - import_tasks: module/git-filter-repo.yml
   tags:
@@ -51,15 +50,24 @@
 - import_tasks: module/golang.yml
   tags:
     - golang
+    - gopass
+    - req
+
+- import_tasks: module/gopass.yml
+  tags:
+    - golang
+    - req
 
 - import_tasks: module/kubectl.yml
   tags:
     - kubectl
     - minikube
+    - req
 
 - import_tasks: module/minikube.yml
   tags:
     - minikube
+    - req
 
 - import_tasks: module/mkcert.yml
   tags:
@@ -88,6 +96,7 @@
   tags:
     - slack
     - comms
+    - req
 
 - import_tasks: module/teams.yml
   tags:
@@ -110,14 +119,12 @@
 
 - import_tasks: module/vagrant.yml
   tags:
-    - vagrant
     - virtualbox
-    - req
 
 - import_tasks: module/virtualbox.yml
   tags:
     - virtualbox
-    - req
+    - vagrant
 
 - import_tasks: module/vscode.yml
   tags:
@@ -128,3 +135,4 @@
   tags:
     - zoom
     - comms
+    - req
