@@ -1,0 +1,39 @@
+---
+- name: group exists
+  group:
+    name: "{{ golang_group }}"
+    state: present
+
+- name: Golang - Exists
+  stat:
+    path: "{{ golang_install_dir }}/go"
+  register: golang_exists_result
+
+- name: Register the current Go version
+  command: "{{ golang_install_dir }}/go version"
+  ignore_errors: yes
+  register: go_version
+  changed_when: false
+
+- name: delete existing go if it's different version
+  file:
+    path: "{{ golang_install_dir }}/go"
+    state: absent
+  when: (go_version.stdout is defined) and (go_version.stdout != golang_version_string )
+
+- name: Add user to go group"
+  user:
+    name: "{{ ansible_ssh_user }}"
+    state: present
+    groups: "{{ golang_group }}"
+    append: yes
+
+- block:
+    - name: Golang - Install/Upgrade
+      unarchive:
+        src: "{{ golang_url }}"
+        dest: /usr/local
+        remote_src: true
+      # when: (golang_exists_result.stat.exists == "false") or (golang_installed_version != golang_latest_version)
+  when:
+    - (golang_exists_result.stat.exists == False) or (golang_exists_result.stat.exists != False and upgrade == True)

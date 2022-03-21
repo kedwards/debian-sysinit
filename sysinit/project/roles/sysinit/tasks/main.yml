@@ -28,7 +28,6 @@
     - docker
     - docker-compose
     - docker-machine
-    - req
 
 - import_tasks: module/docker-compose.yml
   tags:
@@ -51,12 +50,10 @@
   tags:
     - golang
     - gopass
-    - req
 
 - import_tasks: module/gopass.yml
   tags:
     - golang
-    - req
 
 - import_tasks: module/kubectl.yml
   tags:
@@ -90,7 +87,6 @@
 - import_tasks: module/postman.yml
   tags:
     - postman
-    - req
 
 - import_tasks: module/skype.yml
   tags:
@@ -101,7 +97,6 @@
   tags:
     - slack
     - comms
-    - req
 
 - import_tasks: module/teams.yml
   tags:

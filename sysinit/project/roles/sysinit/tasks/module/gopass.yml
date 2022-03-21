@@ -1,0 +1,20 @@
+---
+- name: Gopass - Exists
+  stat:
+    path: /usr/local/bin/go
+  register: gopass_exists_result
+
+- block:
+    - name: GoPass - Install/Upgrade
+      shell: install github.com/gopasspw/gopass@latest
+      args:
+        executable:  /usr/local/bin/go
+  when:
+    - (gopass_exists_result.stat.exists == False) or (gopass_exists_result.stat.exists != False and upgrade == True)
+
+
+- name: Go packages are installed
+  command: go get {{ item }}
+  # creates: "{{ golang_gopath }}/src/{{ item }}"
+  environment: "{{ golang_fact_env }}"
+  loop: "{{ golang_packages }}"

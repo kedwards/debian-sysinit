@@ -1,0 +1,43 @@
+---
+packages:
+  - vim-nox
+  - nautilus-dropbox
+  - apt-transport-https
+  - curl
+  - gnupg
+  - gnupg-agent
+  - python3-pip
+  - unzip
+  - libnss3-tools
+  - ca-certificates
+  - lsb-release
+
+pip_packages:
+  - github3.py
+  - boto3
+  - botocore
+  - virtualenv
+  - checkov
+
+git_lfs_repo: "deb https://packagecloud.io/github/git-lfs/ubuntu/ focal main"
+
+golang_url: https://go.dev/dl/go1.18.linux-amd64.tar.gz
+
+leapp_url: https://asset.noovolari.com/latest/Leapp_0.10.0_amd64.deb
+
+# golang_version: 1.14
+# golang_gopath: /opt/gopath
+# golang_install_dir: /usr/local/bin
+# golang_tarball_repo: https://golang.org/dl
+# golang_group: go
+# golang_users: []
+# golang_packages: []
+
+# golang_tarball: "go{{ golang_version }}.linux-amd64.tar.gz"
+# golang_download_location: "{{ golang_tarball_repo }}/{{ golang_tarball }}"
+# golang_version_string: "go version go{{ golang_version }} linux/amd64"
+# golang_env:
+#   GOPATH: "{{ golang_gopath }}"
+#   GOROOT: "{{ golang_install_dir }}/go"
+#   PATH: "{{ golang_install_dir }}/go/bin:{{ ansible_env.PATH }}"
+# golang_cache_dir: /tmp/cacheansible
