@@ -1,0 +1,20 @@
+---
+plugin: aws_ec2
+regions:
+  - us-east-1
+aws_profile:
+strict: False
+keyed_groups:
+  - key: tags.Name
+    prefix: tag_Name_
+    separator: ''
+  - key: tags.Group
+    prefix: tag_Group_
+    separator: ''
+hostnames:
+  - tag:Name
+  - instance-id
+filters:
+  instance-state-name: running
+compose:
+  ansible_host: ip_address

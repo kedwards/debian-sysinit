@@ -11,6 +11,12 @@ packages:
   - libnss3-tools
   - ca-certificates
   - lsb-release
+  - gnome-terminal
+  - make
+  - ansible
+  - python3-venv
+  - python3-boto3
+  - zip
 
 pip_packages:
   - github3.py
@@ -19,11 +25,10 @@ pip_packages:
   - virtualenv
   - checkov
 
-git_lfs_repo: "deb https://packagecloud.io/github/git-lfs/ubuntu/ focal main"
-
-golang_url: https://go.dev/dl/go1.18.linux-amd64.tar.gz
-
 leapp_url: https://asset.noovolari.com/latest/Leapp_0.10.0_amd64.deb
+
+# git_lfs_repo: "deb https://packagecloud.io/github/git-lfs/ubuntu/ focal main"
+# golang_url: https://go.dev/dl/go1.18.linux-amd64.tar.gz
 
 # golang_version: 1.14
 # golang_gopath: /opt/gopath

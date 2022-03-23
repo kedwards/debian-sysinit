@@ -39,4 +39,4 @@ else
 fi
 
 sudo -u ${SUDO_USER} ansible-galaxy collection install community.general
-su -c "ansible-playbook -i inventory/local project/playbook.yml --tags req -e 'ansible_sudo_pass=${SUDO_PASS}'" ${SUDO_USER}
+su -c "ansible-playbook -i inventory/hosts.yml project/playbook.yml --tags req -e 'ansible_sudo_pass=${SUDO_PASS}'" ${SUDO_USER}

@@ -8,18 +8,16 @@
 - name: Install system packages
   apt:
     name: "{{ packages }}"
-    #force_apt_get: true
     state: present
-    #update_cache: true
 
-#- name: Install pip modules
-  #pip:
-    #name: "{{ pip_packages }}"
+- name: Install pip modules
+  pip:
+    name: "{{ pip_packages }}"
 
-# - name: Install required collections
-#   shell: "ansible-galaxy collection install {{ item }}"
-#   loop:
-#     - amazon.aws
-#     - community.general
-#     - community.docker
-#     - community.kubernetes
+- name: Install required collections
+  shell: "ansible-galaxy collection install {{ item }}"
+  loop:
+    - amazon.aws
+    - community.general
+    - community.docker
+    - community.kubernetes

@@ -6,6 +6,12 @@
   when: debug == True
 
 - import_tasks: deps.yml
+  tags:
+    - all
+
+- import_tasks: module/act.yml
+  tags:
+    - act
 
 - import_tasks: module/atlantis.yml
   tags:
@@ -45,6 +51,10 @@
 - import_tasks: module/git-lfs.yml
   tags:
     - git-lfs
+
+- import_tasks: module/github-cli.yml
+  tags:
+    - github-cli
 
 - import_tasks: module/golang.yml
   tags:
@@ -97,6 +107,11 @@
   tags:
     - slack
     - comms
+
+- import_tasks: module/ssm-manager-plugin.yml
+  tags:
+    - ssm-manager-plugin
+    - req
 
 - import_tasks: module/teams.yml
   tags:

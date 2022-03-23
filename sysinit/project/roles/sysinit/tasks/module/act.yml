@@ -1,0 +1,34 @@
+---
+- name: Act - Exists
+  stat:
+    path: /usr/local/bin/act
+  register: act_exists_result
+
+- block:
+    - name: Act - Get latest
+      community.general.github_release:
+        user: nektos
+        repo: act
+        action: latest_release
+        token: "{{ github_token }}"
+      register: act_latest_version
+  when: act_exists_result.stat.exists == False or upgrade == True
+
+- name: Act - Version
+  debug:
+    msg: "{{ act_latest_version }}"
+
+- block:
+    - name: Act - Install/Upgrade
+      get_url:
+        url: "https://github.com/nektos/act/releases/download/v0.2.25/act_Linux_x86_64.tar.gz"
+        dest: /home/kedwards/Downloads/act_Linux_x86_64.tar.gz
+        mode: 'u+x,g+x,o+x'
+        force: true
+  when: act_exists_result.stat.exists == False or upgrade == True
+
+# - name: Unarchive a file that is already on the remote machine
+#   ansible.builtin.unarchive:
+#     src: "/tmp/act_Linux_x86_64.tar.gz"
+#     dest: /usr/local/
+#     remote_src: yes
