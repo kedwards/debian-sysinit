@@ -31,7 +31,7 @@ fi
 
 if [ ! -d ${SYSINIT_PATH} ]
 then
-  git clone -b master --single-branch https://github.com/kedwards/sysinit.git ${SYSINIT_PATH}
+  git clone -b main --single-branch https://github.com/kedwards/sysinit.git ${SYSINIT_PATH}
   cd ${SYSINIT_PATH}
 else
   cd ${SYSINIT_PATH} && \
