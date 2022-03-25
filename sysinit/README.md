@@ -19,5 +19,5 @@ This release has been tested and should work on below listed distros, and most a
 1. Open a terminal and run the following
 
    ```sh
-   wget -O - https://raw.githubusercontent.com/kedwards/sysinit/master/install.sh | sudo bash -s <sudo_password>
+   wget -O - https://raw.githubusercontent.com/kedwards/sysinit/main/install.sh | sudo bash -s <sudo_password>
    ```
