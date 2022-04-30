@@ -3,15 +3,19 @@
   include_vars: "{{ ansible_distribution }}.yml"
 
 - import_tasks: debug.yml
-  when: debug == True
+  tags:
+    - debug
+    - req
 
 - import_tasks: deps.yml
   tags:
-    - all
+    - deps
+    - req
 
 - import_tasks: module/act.yml
   tags:
     - act
+    - req
 
 - import_tasks: module/atlantis.yml
   tags:
@@ -33,7 +37,7 @@
   tags:
     - docker
     - docker-compose
-    - docker-machine
+    - req
 
 - import_tasks: module/docker-compose.yml
   tags:
@@ -43,6 +47,7 @@
 - import_tasks: module/dropbox.yml
   tags:
     - dropbox
+    - req
 
 - import_tasks: module/git-filter-repo.yml
   tags:
@@ -55,15 +60,12 @@
 - import_tasks: module/github-cli.yml
   tags:
     - github-cli
-
-- import_tasks: module/golang.yml
-  tags:
-    - golang
-    - gopass
+    - req
 
 - import_tasks: module/gopass.yml
   tags:
-    - golang
+    - gopass
+    - req
 
 - import_tasks: module/kubectl.yml
   tags:
@@ -97,6 +99,7 @@
 - import_tasks: module/postman.yml
   tags:
     - postman
+    - req
 
 - import_tasks: module/skype.yml
   tags:

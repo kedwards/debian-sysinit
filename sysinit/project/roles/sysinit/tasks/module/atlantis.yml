@@ -19,7 +19,7 @@
       debug:
         msg: "{{ atlantis_installed_version }}"
       when: debug == "true"
-  when: atlantis_exists_result.stat.exists != "false" and upgrade == "true"
+  when: atlantis_exists_result.stat.exists != false and upgrade == true
 
 - block:
     - name: Atlantis - Get latest
@@ -34,16 +34,15 @@
       set_fact:
         atlantis_latest_version: "{{ atlantis_latest_version_result.tag[1:] }}"
 
-    - name: "Atlantis - Debug:  Latest version"
+    - name: "Atlantis - Version"
       debug:
-        msg: "{{ atlantis_latest_version }}"
-      when: debug == "true"
+        msg: "installed: {{ atlantis_latest_version }}, latest: {{ atlantis_latest_version }}"
 
     - name: Atlantis - Install/Upgrade
       unarchive:
         src: "https://github.com/runatlantis/atlantis/releases/download/{{ atlantis_latest_version_result.tag }}/atlantis_linux_amd64.zip"
         dest: /usr/local/bin
         remote_src: true
-      when: (atlantis_exists_result.stat.exists == "false") or (atlantis_installed_version != atlantis_latest_version)
+      when: (atlantis_exists_result.stat.exists == false) or (atlantis_installed_version != atlantis_latest_version)
   when:
-    - (atlantis_exists_result.stat.exists == "false") or (atlantis_exists_result.stat.exists != "false" and upgrade == "true")
+    - (atlantis_exists_result.stat.exists == false) or (atlantis_exists_result.stat.exists != false and upgrade == true)

@@ -1,7 +1,7 @@
 ---
 - name: Git-LFS - Exists
   stat:
-    path: /usr/bin/git-lfrs
+    path: /usr/bin/git-lfs
   register: git_lfs_exists_result
 
 - block:

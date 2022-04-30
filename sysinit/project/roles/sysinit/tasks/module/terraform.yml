@@ -9,25 +9,24 @@
       command: terraform --version
       register: terraform_version_result
 
-    - name: Terraform - Search installed version
+    # - name: Terraform - Search installed version
+    #   set_fact:
+    #     terraform_installed_version: "{{ terraform_installed_version_result | default([]) +  [item] }}"
+    #   when: item | regex_search(regexp,'\\1')
+    #   vars:
+    #     regexp: 'Terraform\s(.*)$'
+    #   with_items:
+    #     - "{{ terraform_version_result.stdout_lines }}"
+
+    - name: Terraform - found version
       set_fact:
-        terraform_installed_version_result: "{{ terraform_installed_version_result | default([]) +  [item] }}"
-      when: item | regex_search(regexp,'\\1')
+        terraform_found_version: "{{ terraform_version_result.stdout_lines[0] | regex_search(regexp,'\\1') }}"
       vars:
-        regexp: 'Terraform\sv(.*)$'
-      with_items:
-        - "{{ terraform_version_result.stdout_lines }}"
+        regexp: 'Terraform\s(.*)$'
 
     - name: Terraform - Set installed version
       set_fact:
-        terraform_installed_version: "{{ terraform_installed_version_result[0] | regex_search(regexp,'\\1') }}"
-      vars:
-        regexp: 'Terraform\sv(.*)$'
-
-    - name: "Terraform - Debug: Installed version"
-      debug:
-        msg: "{{ terraform_installed_version }}"
-      when: debug == true
+        terraform_installed_version: "{{ terraform_found_version[0] }}"
   when: terraform_exists_result.stat.exists != false and upgrade == true
 
 - block:
@@ -41,35 +40,12 @@
 
     - name: Terraform - Set latest version
       set_fact:
-        terraform_latest_version: "{{ terraform_latest_version_result.tag[1:] }}"
+        terraform_latest_version: "{{ terraform_latest_version_result.tag }}"
 
-    - name: "Terraform - Debug: latest version"
+    - name: "Terraform - Version"
       debug:
-        msg: "{{ terraform_latest_version }}"
-      when: debug == true
+        msg: "installed: {{ terraform_installed_version }}, latest: {{ terraform_latest_version }}"
   when: terraform_exists_result.stat.exists == false or upgrade == true
-
-# - block:
-#     - name: Terraform - Search latest version
-#       set_fact:
-#         terraform_latest_version_result: "{{ terraform_latest_version_result | default([]) +  [item] }}"
-#       when: "{{ item | regex_search(regexp,'\\1') }}"
-#       vars:
-#         regexp: 'is\s(\d+\.\d+\.\d+).*$'
-#       with_items:
-#         - "{{ terraform_version_result.stdout_lines }}"
-
-#     - name: Terraform - Set latest version
-#       set_fact:
-#         terraform_latest_version: "{{ terraform_latest_version_result[0] | regex_search(regexp,'\\1') }}"
-#       vars:
-#         regexp: 'is\s(\d+\.\d+\.\d+).*$'
-
-#     - name: "Terraform - Debug:  Latest version"
-#       debug:
-#         msg: "{{ terraform_latest_version }}"
-#       when: debug == true
-#   when: terraform_exists_result.stat.exists == false or upgrade == true
 
 - name: Terraform Install/Upgrade
   unarchive:
@@ -80,4 +56,4 @@
     terraform_exists_result.stat.exists == false or
     (terraform_exists_result.stat.exists != false and
     upgrade == true and
-    terraform_latest_version != terraform_installed_version[0])
+    terraform_latest_version != terraform_installed_version)

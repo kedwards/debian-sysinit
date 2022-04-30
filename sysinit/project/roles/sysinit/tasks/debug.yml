@@ -3,7 +3,7 @@
   debug:
     msg: "{{ ansible_user_id }}"
 
-- name: Real User
+- name: Sudo User
   debug:
     msg: "{{ lookup('env','USER') }}"
 
@@ -11,7 +11,7 @@
   debug:
     msg: "{{ ansible_system }}"
 
-- name: Arch
+- name: Architecture
   debug:
     msg: "{{ ansible_userspace_architecture }}"
 

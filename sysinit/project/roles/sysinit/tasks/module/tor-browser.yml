@@ -17,4 +17,4 @@
       become_user: "{{ lookup('env','USER') }}"
       args:
         chdir: /usr/local/tor-browser_en-US/
-  when: tor_browser_exists_result.stat.exists == "false" or upgrade == "true"
+  when: tor_browser_exists_result.stat.exists == false or upgrade == true

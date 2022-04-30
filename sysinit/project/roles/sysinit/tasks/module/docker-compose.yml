@@ -9,16 +9,15 @@
       command: docker-compose --version
       register: docker_compose_version_result
 
+    - name: Docker-Compose - Find installed version
+      set_fact:
+        docker_compose_found_version: "{{ docker_compose_version_result.stdout | regex_search(regexp,'\\1') }}"
+      vars:
+        regexp: 'Docker Compose version\s(.*)'
+
     - name: Docker-Compose - Set installed version
       set_fact:
-        docker_compose_installed_version: "{{ docker_compose_version_result.stdout | regex_search(regexp,'\\1') }}"
-      vars:
-        regexp: 'docker-compose version\s(.*),.*$'
-
-    - name: "Docker-Compose - Debug: Installed version"
-      debug:
-        msg: "{{ docker_compose_installed_version }}"
-      when: debug == true
+        docker_compose_installed_version: "{{ docker_compose_found_version[0] }}"
   when: docker_compose_exists_result.stat.exists != false and upgrade == true
 
 - block:
@@ -34,10 +33,9 @@
       set_fact:
         docker_compose_latest_version: "{{ docker_compose_latest_version.tag }}"
 
-    - name: "Docker-Compose - Debug:  Latest version"
+    - name: "Docker-Compose - Version"
       debug:
-        msg: "{{ docker_compose_latest_version }}"
-      when: debug == true
+        msg: "installed: {{ docker_compose_installed_version|default('N/A') }}, latest: {{ docker_compose_latest_version }}"
   when: docker_compose_exists_result.stat.exists == false or upgrade == true
 
 - name: Docker-Compose - Install/Upgrade

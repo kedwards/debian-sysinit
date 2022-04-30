@@ -1,3 +1,4 @@
+---
 - name: Create a temporary directory
   tempfile:
     state: directory
@@ -15,17 +16,16 @@
       register: kubectl_version_result
       ignore_errors: True
 
+    - name: Kubectl - Set found version
+      set_fact:
+        kubectl_found_version: "{{ kubectl_version_result.stdout | regex_search(regexp,'\\1') }}"
+      vars:
+        regexp: '.*GitVersion:\"(v[^\"]+)\".*$'
+
     - name: Kubectl - Set installed version
       set_fact:
-        kubectl_installed_version: "{{ kubectl_version_result.stdout | regex_search(regexp,'\\1') }}"
-      vars:
-        regexp: '.*GitVersion:\"v([^\"]+)\".*$'
-
-    - name: "Kubectl - Debug: Installed version"
-      debug:
-        msg: "{{ kubectl_installed_version }}"
-      when: debug == True
-  when: kubectl_exists_result.stat.exists != False and upgrade == True
+        kubectl_installed_version: "{{ kubectl_found_version[0] }}"
+  when: kubectl_exists_result.stat.exists != false and upgrade == true
 
 - block:
     - name: "Kubectl - Download version file"
@@ -42,11 +42,10 @@
       set_fact:
         kubectl_latest_version: "{{ slurpfile['content'] | b64decode }}"
 
-    - name: "Kubectl - Debug: latest version"
+    - name: "Kubectl - Version"
       debug:
-        msg: "{{ kubectl_latest_version }}"
-      when: debug == True
-  when: kubectl_exists_result.stat.exists == False or upgrade == True
+        msg: "installed: {{ kubectl_installed_version }}, latest: {{ kubectl_latest_version }}"
+  when: kubectl_exists_result.stat.exists == false or upgrade == true
 
 - name: Kubectl - Install/Upgrade
   get_url:
@@ -60,9 +59,3 @@
   file:
     path: "{{ tmpdir.path }}"
     state: "absent"
-
-# https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html
-# curl -o kubectl hhttps://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/kubectl
-
-# https://docs.aws.amazon.com/eks/latest/userguide/eksctl.html#installing-eksctl
-# curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp

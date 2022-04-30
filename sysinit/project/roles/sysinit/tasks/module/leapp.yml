@@ -5,5 +5,5 @@
 
 - name: Leapp Install
   apt:
-    deb: "{{ leapp_url }}"
-  when: leapp_exists_result.stat.exists == False or upgrade == True
+    deb: "https://asset.noovolari.com/latest/Leapp_{{ leapp_version }}_amd64.deb"
+  when: leapp_exists_result.stat.exists == false or upgrade == true

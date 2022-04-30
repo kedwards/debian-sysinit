@@ -1,21 +1,21 @@
 ---
-# - name: Docker - Get signing key
-#   apt_key:
-#     url: "https://download.docker.com/linux/ubuntu/gpg"
-#     state: present
-
-# - name: Docker - Add apt repository
-#   apt_repository:
-#     repo: "deb [signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
-#     state: present
-#     filename: docker.list
+- name: Docker - Get signing key
+  apt_key:
+    url: "https://download.docker.com/linux/ubuntu/gpg"
+    state: present
 
 #  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+
+- name: Docker - Add apt repository
+  apt_repository:
+    update_cache: no
+    repo: "deb [signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+    state: present
+    filename: docker.list
 
 #  echo \
 #   "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
 #   $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-
 
 - name: Docker - Install
   apt:
@@ -24,7 +24,7 @@
       - docker-ce-cli
       - containerd.io
 
-- name: Docker - Add user to docker group
+- name: Docker - Add docker group
   group:
     name: docker
     state: present

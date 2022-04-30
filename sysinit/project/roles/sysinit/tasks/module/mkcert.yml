@@ -12,12 +12,7 @@
     - name: mkcert - Set installed version
       set_fact:
         mkcert_installed_version: "{{ mkcert_version_result.stdout }}"
-
-    - name: "mkcert - Debug: Installed version"
-      debug:
-        msg: "{{ mkcert_installed_version }}"
-      when: debug == "true"
-  when: mkcert_exists_result.stat.exists != "false" and upgrade == "true"
+  when: mkcert_exists_result.stat.exists != false and upgrade == true
 
 - block:
     - name: mkcert - Get latest
@@ -32,11 +27,10 @@
       set_fact:
         mkcert_latest_version: "{{ mkcert_latest_version.tag }}"
 
-    - name: "mkcert - Debug:  Latest version"
+    - name: "mkcert - Version"
       debug:
-        msg: "{{ mkcert_latest_version }}"
-      when: debug == "true"
-  when: mkcert_exists_result.stat.exists == "false" or upgrade == "true"
+        msg: "installed: {{ mkcert_installed_version|default('N/A') }}, latest: {{ mkcert_latest_version }}"
+  when: mkcert_exists_result.stat.exists == false or upgrade == true
 
 - name: mkcert - Install/Upgrade
   get_url:
@@ -44,4 +38,4 @@
     dest: /usr/local/bin/mkcert
     mode: 'u+x,g+x,o+x'
     force: true
-  when: (mkcert_exists_result.stat.exists == "false") or upgrade == "true" and (mkcert_installed_version != mkcert_latest_version)
+  when: (mkcert_exists_result.stat.exists == false) or upgrade == true and (mkcert_installed_version != mkcert_latest_version)

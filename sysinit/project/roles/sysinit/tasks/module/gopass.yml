@@ -1,20 +1,52 @@
 ---
-- name: Gopass - Exists
+- name: GoPass - Exists
   stat:
-    path: /usr/local/bin/go
+    path: /usr/local/bin/gopass
   register: gopass_exists_result
 
 - block:
-    - name: GoPass - Install/Upgrade
-      shell: install github.com/gopasspw/gopass@latest
-      args:
-        executable:  /usr/local/bin/go
-  when:
-    - (gopass_exists_result.stat.exists == False) or (gopass_exists_result.stat.exists != False and upgrade == True)
+    - name: GoPass - Get installed version
+      command: gopass --version
+      register: gopass_version_result
 
+    - name: GoPass - Find installed version
+      set_fact:
+        gopass_version_found: "{{ gopass_version_result.stdout | regex_search(regexp,'\\1') }}"
+      vars:
+        regexp: 'gopass\s([^\s]+)'
 
-- name: Go packages are installed
-  command: go get {{ item }}
-  # creates: "{{ golang_gopath }}/src/{{ item }}"
-  environment: "{{ golang_fact_env }}"
-  loop: "{{ golang_packages }}"
+    - name: GoPass - Set installed version
+      set_fact:
+        gopass_installed_version: "{{ gopass_version_found[0] }}"
+  when: gopass_exists_result.stat.exists != false and upgrade == true
+
+- block:
+    - name: GoPass - Get latest
+      community.general.github_release:
+        user: gopasspw
+        repo: gopass
+        action: latest_release
+        token: "{{ github_token }}"
+      register: gopass_latest_version
+
+    - name: GoPass - Find installed version
+      set_fact:
+        gopass_version_found: "{{ gopass_latest_version.tag[1:] }}"
+
+    - name: GoPass - Set latest version
+      set_fact:
+        gopass_latest_version: "{{ gopass_latest_version.tag }}"
+
+    - name: GoPass - Versions
+      debug:
+        msg: "installed: {{ gopass_installed_version|default('N/A') }}, latest: {{ gopass_latest_version[1:] }}"
+  when: gopass_exists_result.stat.exists == false or upgrade == true
+
+- name: GoPass - Install/Upgrade
+  unarchive:
+    src: "https://github.com/gopasspw/gopass/releases/download/{{ gopass_latest_version }}/gopass-{{ gopass_latest_version[1:] }}-linux-amd64.tar.gz"
+    dest: /usr/local/bin
+    mode: 'u+x,g+x,o+x'
+    remote_src: yes
+    force: true
+  when: (gopass_exists_result.stat.exists == false) or upgrade == true and (gopass_installed_version != gopass_latest_version[1:])

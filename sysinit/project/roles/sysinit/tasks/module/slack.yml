@@ -2,10 +2,10 @@
 - name: Slack - Exists
   stat:
     path: /usr/bin/slack
-  register: slack_result
+  register: slack_exists_result
 
 - name: Slack
   community.general.snap:
     name: slack
     classic: true
-  when: slack_result.stat.exists == False or upgrade == True
+  when: slack_exists_result.stat.exists == false or upgrade == true

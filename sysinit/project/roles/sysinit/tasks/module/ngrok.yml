@@ -16,15 +16,15 @@
       vars:
         regexp: '^ngrok version (.*)$'
 
-    - name: "Ngrok - Debug: Installed version"
+    - name: "Ngrok - Version"
       debug:
         msg: "{{ ngrok_installed_version }}"
       when: debug == "true"
-  when: ngrok_exists_result.stat.exists != "false" and upgrade == "true"
+  when: ngrok_exists_result.stat.exists != false and upgrade == true
 
 - name: Ngrok Install/Upgrade
   unarchive:
     src: "https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip"
     dest: /usr/local/bin
     remote_src: true
-  when: ngrok_exists_result.stat.exists == "false" or upgrade == "true"
+  when: ngrok_exists_result.stat.exists == false or upgrade == true

@@ -5,6 +5,22 @@
   register: act_exists_result
 
 - block:
+    - name: Act - Get installed version
+      command: act --version
+      register: act_version_result
+
+    - name: Act - Find installed version
+      set_fact:
+        act_version_found: "{{ act_version_result.stdout | regex_search(regexp,'\\1') }}"
+      vars:
+        regexp: 'act\sversion\s(.*)$'
+
+    - name: Act - Set installed version
+      set_fact:
+        act_installed_version: "{{ act_version_found[0] }}"
+  when: act_exists_result.stat.exists != false and upgrade == true
+
+- block:
     - name: Act - Get latest
       community.general.github_release:
         user: nektos
@@ -12,23 +28,21 @@
         action: latest_release
         token: "{{ github_token }}"
       register: act_latest_version
-  when: act_exists_result.stat.exists == False or upgrade == True
 
-- name: Act - Version
-  debug:
-    msg: "{{ act_latest_version }}"
+    - name: Act - Set latest version
+      set_fact:
+        act_latest_version: "{{ act_latest_version.tag[1:] }}"
 
-- block:
-    - name: Act - Install/Upgrade
-      get_url:
-        url: "https://github.com/nektos/act/releases/download/v0.2.25/act_Linux_x86_64.tar.gz"
-        dest: /home/kedwards/Downloads/act_Linux_x86_64.tar.gz
-        mode: 'u+x,g+x,o+x'
-        force: true
-  when: act_exists_result.stat.exists == False or upgrade == True
+    - name: "Act - Versions"
+      debug:
+        msg: "installed: {{ act_installed_version|default('N/A') }}, latest: {{ act_latest_version }}"
+  when: act_exists_result.stat.exists == false or upgrade == true
 
-# - name: Unarchive a file that is already on the remote machine
-#   ansible.builtin.unarchive:
-#     src: "/tmp/act_Linux_x86_64.tar.gz"
-#     dest: /usr/local/
-#     remote_src: yes
+- name: Act - Install/Upgrade
+  unarchive:
+    src: "https://github.com/nektos/act/releases/download/v{{ act_latest_version }}/act_{{ ansible_system }}_{{ ansible_userspace_architecture }}.tar.gz"
+    dest: /usr/local/bin
+    mode: 'u+x,g+x,o+x'
+    remote_src: yes
+    force: true
+  when: (act_exists_result.stat.exists == false) or upgrade == true and (act_installed_version != act_latest_version)

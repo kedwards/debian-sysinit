@@ -1,8 +1,4 @@
 ---
-- name: Install githubpy3 module
-  pip:
-    name: github3.py
-
 - name: AWS-Vault - Exists
   stat:
     path: /usr/local/bin/aws-vault
@@ -16,11 +12,6 @@
     - name: AWS-Vault - Set installed version
       set_fact:
         aws_vault_installed_version: "{{ aws_vault_version_result.stderr[1:] }}"
-
-    - name: "AWS-Vault - Debug: Installed version"
-      debug:
-        msg: "{{ aws_vault_installed_version }}"
-      when: debug == true
   when: aws_vault_exists_result.stat.exists != false and upgrade == true
 
 - block:
@@ -36,11 +27,10 @@
       set_fact:
         aws_vault_latest_version: "{{ aws_vault_latest_version_result.tag[1:] }}"
 
-    - name: "AWS-Vault - Debug:  Latest version"
+    - name: "AWS-Vault - Version"
       debug:
-        msg: "{{ aws_vault_latest_version }}"
-      when: debug == true
-  when: (aws_vault_exists_result.stat.exists == false) or upgrade == true
+        msg: "installed: {{ aws_vault_installed_version|default('N/A') }}, latest: {{ aws_vault_latest_version }}"
+  when: aws_vault_exists_result.stat.exists != false and upgrade == true
 
 - name: AWS-Vault Install/Upgrade
   get_url:
