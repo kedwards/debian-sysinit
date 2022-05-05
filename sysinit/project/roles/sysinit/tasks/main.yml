@@ -92,6 +92,10 @@
     - atlantis
     - ngrok
 
+- import_tasks: module/opass.yml
+  tags:
+    - opass
+
 - import_tasks: module/packer.yml
   tags:
     - packer
@@ -138,11 +142,11 @@
 - import_tasks: module/vagrant.yml
   tags:
     - virtualbox
+    - vagrant
 
 - import_tasks: module/virtualbox.yml
   tags:
     - virtualbox
-    - vagrant
 
 - import_tasks: module/vscode.yml
   tags:

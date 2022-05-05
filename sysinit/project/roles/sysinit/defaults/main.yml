@@ -1,6 +1,7 @@
 ---
 packages:
-  # - vim-nox
+  - vim-nox
+  - xsel
   # - nautilus-dropbox
   - apt-transport-https
   - curl
@@ -12,6 +13,7 @@ packages:
   - libnss3-tools
   - ca-certificates
   - lsb-release
+  - meld
   # - gnome-terminal
   - make
   - ansible
