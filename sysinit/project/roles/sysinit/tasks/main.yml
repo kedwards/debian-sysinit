@@ -133,7 +133,6 @@
 - import_tasks: module/terraform.yml
   tags:
     - terraform
-    - req
 
 - import_tasks: module/tor-browser.yml
   tags:

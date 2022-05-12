@@ -22,11 +22,7 @@ SYSINIT_PATH=/home/${SUDO_USER}/sysinit
 RELEASE=$(cat /etc/os-release | grep '^ID=' | awk '{ split($0, a, "="); print a[2]}')
 CODENAME=$(lsb_release -cs)
 
-if [ -f /usr/bin/pkcon ]
-then
-#   pkcon update
-  apt-get install -y ansible git
-fi
+apt-get install -y ansible git
 
 
 if [ ! -d ${SYSINIT_PATH} ]
@@ -35,8 +31,13 @@ then
   cd ${SYSINIT_PATH}
 else
   cd ${SYSINIT_PATH} && \
+  git reset --hard && \
+  git checkout main && \
   git pull
 fi
 
 sudo -u ${SUDO_USER} ansible-galaxy collection install community.general
+
 su -c "ansible-playbook -i inventory/hosts.yml project/playbook.yml --tags req -e 'ansible_sudo_pass=${SUDO_PASS}'" ${SUDO_USER}
+
+#su -c "ansible-runner run ./ -p playbook.yml"

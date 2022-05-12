@@ -12,15 +12,15 @@
 
 - block:
     - name: Kubectl - Get installed version
-      command: kubectl version
+      command: kubectl version --output yaml
       register: kubectl_version_result
       ignore_errors: True
 
     - name: Kubectl - Set found version
       set_fact:
-        kubectl_found_version: "{{ kubectl_version_result.stdout | regex_search(regexp,'\\1') }}"
+        kubectl_found_version: "{{ kubectl_version_result.stdout_lines[5] | regex_search(regexp,'\\1') }}"
       vars:
-        regexp: '.*GitVersion:\"(v[^\"]+)\".*$'
+        regexp: 'gitVersion:\sv([^\"]+)'
 
     - name: Kubectl - Set installed version
       set_fact:
@@ -44,7 +44,7 @@
 
     - name: "Kubectl - Version"
       debug:
-        msg: "installed: {{ kubectl_installed_version }}, latest: {{ kubectl_latest_version }}"
+        msg: "installed: {{ kubectl_installed_version|default('N/A') }}, latest: {{ kubectl_latest_version }}"
   when: kubectl_exists_result.stat.exists == false or upgrade == true
 
 - name: Kubectl - Install/Upgrade

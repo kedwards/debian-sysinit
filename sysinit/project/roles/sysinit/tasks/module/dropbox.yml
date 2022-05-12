@@ -1,16 +1,15 @@
 ---
-- name: Dropbox Signing key
-  apt_key:
-    keyserver: keyserver.ubuntu.com
-    id: 1C61A2656FB57B7E4DE0F4C1FC918B335044912E
-    state: present
+# - name: Dropbox Signing key
+#   apt_key:
+#     keyserver: keyserver.ubuntu.com
+#     id: 1C61A2656FB57B7E4DE0F4C1FC918B335044912E
+#     state: present
 
-- name: Dropbox Repository
-  apt_repository:
-    repo: deb [arch=i386,amd64] http://linux.dropbox.com/ubuntu bionic main
-    state: present
+# - name: Dropbox Repository
+#   apt_repository:
+#     repo: deb [arch=i386,amd64] http://linux.dropbox.com/ubuntu bionic main
+#     state: present
 
 - name: Dropbox Install
   apt:
-    pkg:
-      - dropbox
+    deb: https://www.dropbox.com/download?dl=packages/ubuntu/dropbox_2020.03.04_amd64.deb
