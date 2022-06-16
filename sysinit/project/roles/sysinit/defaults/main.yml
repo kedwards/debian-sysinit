@@ -1,32 +1,26 @@
 ---
 packages:
-  - vim-nox
-  - xsel
-  # - nautilus-dropbox
+  - ansible
   - apt-transport-https
+  - ca-certificates
   - curl
   - gnupg
   - gnupg-agent
   - golang-go
-  - python3-pip
-  - unzip
   - libnss3-tools
-  - ca-certificates
   - lsb-release
-  - meld
-  # - gnome-terminal
   - make
-  - ansible
-  # - python3-venv
-  # - python3-boto3
-  # - zip
+  - meld
+  - python3-pip
+  - python3-venv
+  - unzip
+  - vim-nox
+  - xsel
 
 pip_packages:
   - github3.py
   - boto3
   - botocore
-  # - virtualenv
-  # - checkov
 
 leapp_version: 0.12.0
 
