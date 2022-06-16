@@ -1,9 +1,9 @@
 ---
 - name: AWS-Cli - Install
-  unarchive:
+  ansible.builtin.unarchive:
     src: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
     dest: /usr/local
-    remote_src: true
+    remote_src: yes
 
 - name: AWS-Cli - Configure
-  command: sh /usr/local/aws/install --update
+  ansible.builtin.command: sh /usr/local/aws/install --update

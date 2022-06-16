@@ -13,9 +13,3 @@
 - name: Install pip modules
   pip:
     name: "{{ pip_packages }}"
-
-- name: Install collections
-  community.general.ansible_galaxy_install:
-    ack_ansible29: yes
-    type: collection
-    requirements_file: "{{ role_path }}/files/requirements.yml"

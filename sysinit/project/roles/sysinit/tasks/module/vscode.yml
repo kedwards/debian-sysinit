@@ -1,10 +1,10 @@
 ---
 - name: VSCode - Exists
-  stat:
+  ansible.builtin.stat:
     path: /usr/bin/code
   register: vscode_result
 
 - name: VSCode
-  apt:
+  ansible.builtin.apt:
     deb: https://go.microsoft.com/fwlink/?LinkID=760868
   when: vscode_result.stat.exists == false or upgrade == true

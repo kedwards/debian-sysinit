@@ -1,6 +1,5 @@
 ---
 packages:
-  - ansible
   - apt-transport-https
   - ca-certificates
   - curl
@@ -19,8 +18,8 @@ packages:
 
 pip_packages:
   - github3.py
-  - boto3
   - botocore
+  - boto3
 
 leapp_version: 0.12.0
 

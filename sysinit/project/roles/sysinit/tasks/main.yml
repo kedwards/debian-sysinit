@@ -15,7 +15,6 @@
 - import_tasks: module/act.yml
   tags:
     - act
-    - req
 
 - import_tasks: module/atlantis.yml
   tags:
@@ -37,12 +36,10 @@
   tags:
     - docker
     - docker-compose
-    - req
 
 - import_tasks: module/docker-compose.yml
   tags:
     - docker-compose
-    - req
 
 - import_tasks: module/dropbox.yml
   tags:
@@ -71,17 +68,14 @@
   tags:
     - kubectl
     - minikube
-    - req
 
 - import_tasks: module/leapp.yml
   tags:
     - leapp
-    - req
 
 - import_tasks: module/minikube.yml
   tags:
     - minikube
-    - req
 
 - import_tasks: module/mkcert.yml
   tags:
@@ -95,6 +89,7 @@
 - import_tasks: module/opass.yml
   tags:
     - opass
+    - req
 
 - import_tasks: module/packer.yml
   tags:
@@ -103,7 +98,6 @@
 - import_tasks: module/postman.yml
   tags:
     - postman
-    - req
 
 - import_tasks: module/skype.yml
   tags:
@@ -156,4 +150,3 @@
   tags:
     - zoom
     - comms
-    - req
