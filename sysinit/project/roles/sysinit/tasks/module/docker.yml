@@ -4,14 +4,6 @@
     url: "https://download.docker.com/linux/ubuntu/gpg"
     state: present
 
-- name: Delete armor file
-  file:
-    state: absent
-    path: /usr/share/keyrings/docker-archive-keyring.gpg
-
-- name: Docker - Get signing key
-  shell: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-
 - name: Docker - Add apt repository
   apt_repository:
     update_cache: no

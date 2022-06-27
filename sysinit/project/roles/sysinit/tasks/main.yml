@@ -7,9 +7,12 @@
     - import_tasks: deps.yml
     - import_tasks: module/aws-cli.yml
     - import_tasks: module/aws-vault.yml
+    - import_tasks: module/docker.yml
+    - import_tasks: module/docker-compose.yml
     - import_tasks: module/dropbox.yml
     - import_tasks: module/github-cli.yml
     - import_tasks: module/gopass.yml
+    - import_tasks: module/leapp.yml
     - import_tasks: module/opass.yml
     - import_tasks: module/ssm-manager-plugin.yml
     - import_tasks: module/vscode.yml
@@ -24,15 +27,6 @@
   tags:
     - atlantis
 
-- import_tasks: module/docker.yml
-  tags:
-    - docker
-    - docker-compose
-
-- import_tasks: module/docker-compose.yml
-  tags:
-    - docker-compose
-
 - import_tasks: module/git-filter-repo.yml
   tags:
     - git-filter-repo
@@ -45,10 +39,6 @@
   tags:
     - kubectl
     - minikube
-
-- import_tasks: module/leapp.yml
-  tags:
-    - leapp
 
 - import_tasks: module/minikube.yml
   tags:
