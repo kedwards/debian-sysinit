@@ -16,6 +16,8 @@
     - import_tasks: module/opass.yml
     - import_tasks: module/ssm-manager-plugin.yml
     - import_tasks: module/vscode.yml
+    - import_tasks: module/terragrunt.yml
+    - import_tasks: module/terraform.yml
   tags:
     - core
 
@@ -80,10 +82,6 @@
   tags:
     - comms
     - teamviewer
-
-- import_tasks: module/terraform.yml
-  tags:
-    - terraform
 
 - import_tasks: module/tor-browser.yml
   tags:

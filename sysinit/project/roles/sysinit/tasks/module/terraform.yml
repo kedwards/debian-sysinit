@@ -40,11 +40,11 @@
 
     - name: Terraform - Set latest version
       set_fact:
-        terraform_latest_version: "{{ terraform_latest_version_result.tag }}"
+        terraform_latest_version: "{{ terraform_latest_version_result.tag[1:] }}"
 
     - name: "Terraform - Version"
       debug:
-        msg: "installed: {{ terraform_installed_version }}, latest: {{ terraform_latest_version }}"
+        msg: "installed: {{ terraform_installed_version|default('N/A') }}, latest: {{ terraform_latest_version }}"
   when: terraform_exists_result.stat.exists == false or upgrade == true
 
 - name: Terraform Install/Upgrade
