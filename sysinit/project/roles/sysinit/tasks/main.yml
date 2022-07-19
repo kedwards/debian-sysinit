@@ -6,6 +6,8 @@
     - import_tasks: debug.yml
     - import_tasks: deps.yml
     - import_tasks: module/aws-cli.yml
+      tags:
+        - aws-cli
     - import_tasks: module/aws-vault.yml
     - import_tasks: module/docker.yml
     - import_tasks: module/docker-compose.yml
