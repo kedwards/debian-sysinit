@@ -39,10 +39,9 @@
   when: act_exists_result.stat.exists == false or upgrade == true
 
 - name: Act - Install/Upgrade
-  unarchive:
+  ansible.builtin.unarchive:
     src: "https://github.com/nektos/act/releases/download/v{{ act_latest_version }}/act_{{ ansible_system }}_{{ ansible_userspace_architecture }}.tar.gz"
     dest: /usr/local/bin
     mode: 'u+x,g+x,o+x'
     remote_src: yes
-    force: true
   when: (act_exists_result.stat.exists == false) or upgrade == true and (act_installed_version != act_latest_version)
