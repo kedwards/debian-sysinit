@@ -1,0 +1,6 @@
+ansible==2.9.6
+botocore==1.24.18
+boto3==1.21.18
+boto==2.49.0
+configparser==5.2.0
+cfn-lint==0.59.0

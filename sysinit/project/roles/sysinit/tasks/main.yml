@@ -8,20 +8,49 @@
     - import_tasks: module/aws-cli.yml
       tags:
         - aws-cli
-    - import_tasks: module/aws-vault.yml
     - import_tasks: module/docker.yml
+      tags:
+        - aws-vault
+    - import_tasks: module/aws-vault.yml
     - import_tasks: module/docker-compose.yml
     - import_tasks: module/dropbox.yml
     - import_tasks: module/github-cli.yml
     - import_tasks: module/gopass.yml
     - import_tasks: module/leapp.yml
     - import_tasks: module/opass.yml
+    - import_tasks: module/packer.yml
+      tags:
+        - packer
     - import_tasks: module/ssm-manager-plugin.yml
     - import_tasks: module/vscode.yml
     - import_tasks: module/terragrunt.yml
     - import_tasks: module/terraform.yml
+    - block:
+        - import_tasks: module/kubectl.yml
+        - import_tasks: module/minikube.yml
+      tags:
+        - k8s
   tags:
     - core
+
+- block:
+    - import_tasks: module/skype.yml
+      tags:
+        - skype
+    - import_tasks: module/slack.yml
+      tags:
+        - slack
+    - import_tasks: module/teams.yml
+      tags:
+        - teams
+    - import_tasks: module/teamviewer.yml
+      tags:
+        - teamviewer
+    - import_tasks: module/zoom.yml
+      tags:
+        - zoom
+  tags:
+    - comms
 
 - import_tasks: module/act.yml
   tags:
@@ -39,15 +68,6 @@
   tags:
     - git-lfs
 
-- import_tasks: module/kubectl.yml
-  tags:
-    - kubectl
-    - minikube
-
-- import_tasks: module/minikube.yml
-  tags:
-    - minikube
-
 - import_tasks: module/mkcert.yml
   tags:
     - mkcert
@@ -57,33 +77,9 @@
     - atlantis
     - ngrok
 
-- import_tasks: module/packer.yml
-  tags:
-    - packer
-
 - import_tasks: module/postman.yml
   tags:
     - postman
-
-- import_tasks: module/skype.yml
-  tags:
-    - skype
-    - comms
-
-- import_tasks: module/slack.yml
-  tags:
-    - slack
-    - comms
-
-- import_tasks: module/teams.yml
-  tags:
-    - teams
-    - comms
-
-- import_tasks: module/teamviewer.yml
-  tags:
-    - comms
-    - teamviewer
 
 - import_tasks: module/tor-browser.yml
   tags:
@@ -98,7 +94,3 @@
   tags:
     - virtualbox
 
-- import_tasks: module/zoom.yml
-  tags:
-    - zoom
-    - comms

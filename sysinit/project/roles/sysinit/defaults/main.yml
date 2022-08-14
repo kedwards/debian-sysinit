@@ -21,6 +21,6 @@ pip_packages:
   - botocore
   - boto3
 
-leapp_version: 0.12.0
+leapp_version: 0.13.1
 
 git_lfs_repo: "deb https://packagecloud.io/github/git-lfs/ubuntu/ {{ ansible_distribution_release }} main"
