@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 
-set -o errexit
-# set -o nounset
-set -o pipefail
+set -e
 
 if (( EUID != 0 ))
 then
@@ -24,19 +22,19 @@ CODENAME=$(lsb_release -cs)
 
 apt-get install -y ansible git
 
-
 if [ ! -d ${SYSINIT_PATH} ]
 then
   git clone -b main --single-branch https://github.com/kedwards/sysinit.git ${SYSINIT_PATH}
   cd ${SYSINIT_PATH}
-else
-  cd ${SYSINIT_PATH} && \
-  git reset --hard && \
-  git checkout main && \
-  git pull
+#else
+#  cd ${SYSINIT_PATH} && \
+#  git reset --hard && \
+#  git checkout main && \
+#  git pull
 fi
 
-sudo -u ${SUDO_USER} ansible-galaxy collection install community.general
+#sudo -u ${SUDO_USER} ansible-galaxy collection install community.general
 
-su -c "ansible-playbook -i inventory/hosts.yml project/playbook.yml -K --ask-vault-pass --tags core -e 'ansible_sudo_pass=${SUDO_PASS}'" ${SUDO_USER}
+#su -c "ansible-playbook -i inventory/hosts.yml project/playbook.yml -K --ask-vault-pass --tags core -e 'ansible_sudo_pass=${SUDO_PASS}'" ${SUDO_USER}
+ansible-playbook playbook.yml -K --ask-vault-pass --tags core
 

@@ -10,8 +10,6 @@ packages:
   - lsb-release
   - make
   - meld
-  - python3-pip
-  - python3-venv
   - unzip
   - vim-nox
   - xsel
@@ -20,7 +18,3 @@ pip_packages:
   - github3.py
   - botocore
   - boto3
-
-leapp_version: 0.13.1
-
-git_lfs_repo: "deb https://packagecloud.io/github/git-lfs/ubuntu/ {{ ansible_distribution_release }} main"

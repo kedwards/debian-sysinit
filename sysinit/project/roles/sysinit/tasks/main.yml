@@ -1,51 +1,102 @@
 ---
-- name: include os vars
-  include_vars: "{{ ansible_distribution }}.yml"
 
 - block:
-    - import_tasks: debug.yml
-    - import_tasks: deps.yml
+    - name: Info
+      debug:
+        msg: |
+          User: "{{ ansible_user_id }}"
+          Sudo User: "{{ lookup('env','USER') }}"
+          System: "{{ ansible_system }}"
+          Architecture: "{{ ansible_userspace_architecture }}"
+          Distribution: "{{ ansible_distribution }}"
+          Release: "{{ ansible_distribution_release }}"
+
+    - name: include os vars
+      include_vars: "{{ ansible_distribution }}.yml"
+
+    - name: Add non-free official repository for Debian
+      apt_repository:
+        repo: "deb http://ftp.ca.debian.org/debian/ {{ ansible_distribution_release }} main non-free"
+        state: present
+      when: ansible_distribution == "Debian"
+
+    - name: Install system packages
+      apt:
+        name: "{{ packages }}"
+        state: present
+
+    - name: Install pip modules
+      pip:
+        name: "{{ pip_packages }}"
+        state: present
+  tags:
+    - always
+
+- block:
     - import_tasks: module/aws-cli.yml
       tags:
         - aws-cli
+
+    - import_tasks: module/ssm-manager-plugin.yml
+      tags:
+        - ssm-manager-plugin
+
     - import_tasks: module/docker.yml
       tags:
-        - aws-vault
-    - import_tasks: module/aws-vault.yml
-    - import_tasks: module/docker-compose.yml
+        - act
+        - docker
+        - docker-compose
+
     - import_tasks: module/dropbox.yml
+      tags:
+        - dropbox
+
     - import_tasks: module/github-cli.yml
+      tags:
+        - github-cli
+
     - import_tasks: module/gopass.yml
-    - import_tasks: module/leapp.yml
+      tags:
+        - gopass
+
     - import_tasks: module/opass.yml
-    - import_tasks: module/packer.yml
       tags:
-        - packer
-    - import_tasks: module/ssm-manager-plugin.yml
+        - opass
+
     - import_tasks: module/vscode.yml
-    - import_tasks: module/terragrunt.yml
-    - import_tasks: module/terraform.yml
-    - block:
-        - import_tasks: module/kubectl.yml
-        - import_tasks: module/minikube.yml
       tags:
-        - k8s
+        - vscode
   tags:
     - core
+
+- block:
+    - import_tasks: module/kubectl.yml
+      tags:
+        - kubectl
+
+    - import_tasks: module/minikube.yml
+      tags:
+        - minikube
+  tags:
+    - k8s
 
 - block:
     - import_tasks: module/skype.yml
       tags:
         - skype
+
     - import_tasks: module/slack.yml
       tags:
         - slack
+
     - import_tasks: module/teams.yml
       tags:
         - teams
+
     - import_tasks: module/teamviewer.yml
       tags:
         - teamviewer
+
     - import_tasks: module/zoom.yml
       tags:
         - zoom
@@ -60,6 +111,14 @@
   tags:
     - atlantis
 
+- import_tasks: module/aws-vault.yml
+  tags:
+    - aws-vault
+
+- import_tasks: module/docker-compose.yml
+  tags:
+    - docker-compose
+
 - import_tasks: module/git-filter-repo.yml
   tags:
     - git-filter-repo
@@ -67,6 +126,10 @@
 - import_tasks: module/git-lfs.yml
   tags:
     - git-lfs
+
+- import_tasks: module/leapp.yml
+  tags:
+    - leapp
 
 - import_tasks: module/mkcert.yml
   tags:
@@ -77,9 +140,22 @@
     - atlantis
     - ngrok
 
+- import_tasks: module/packer.yml
+  tags:
+    - packer
+
 - import_tasks: module/postman.yml
   tags:
     - postman
+
+- import_tasks: module/terraform.yml
+  tags:
+    - terraform
+
+- import_tasks: module/terragrunt.yml
+  tags:
+    - terragrunt
+    - terraform
 
 - import_tasks: module/tor-browser.yml
   tags:
@@ -87,10 +163,10 @@
 
 - import_tasks: module/vagrant.yml
   tags:
-    - virtualbox
     - vagrant
 
 - import_tasks: module/virtualbox.yml
   tags:
     - virtualbox
+    - vagrant
 
