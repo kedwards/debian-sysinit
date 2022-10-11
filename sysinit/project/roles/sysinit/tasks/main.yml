@@ -1,5 +1,4 @@
 ---
-
 - block:
     - name: Info
       debug:
@@ -36,6 +35,10 @@
     - import_tasks: module/aws-cli.yml
       tags:
         - aws-cli
+
+    - import_tasks: module/granted.yml
+      tags:
+        - granted
 
     - import_tasks: module/ssm-manager-plugin.yml
       tags:
