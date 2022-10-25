@@ -11,12 +11,12 @@
 
     - name: Virtualbox Repository
       apt:
-        deb: "https://download.virtualbox.org/virtualbox/{{ virtualbox_version_deb }}~Ubuntu~eoan_amd64.deb"
+        deb: "https://download.virtualbox.org/virtualbox/7.0.2/virtualbox-7.0_7.0.2-154219~Ubuntu~jammy_amd64.deb"
         state: present
 
     - name: Virtualbox Install
       apt:
         update_cache: true
         pkg:
-          - virtualbox-6.1
+          - virtualbox-7.0
   when: virtualbox_exists_result.stat.exists == false or upgrade == true
