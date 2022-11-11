@@ -38,11 +38,8 @@
 
 - name: Granted - Install/Upgrade
   ansible.builtin.unarchive:
-    src: "https://github.com/common-fate/granted/archive/refs/tags/v{{ granted_latest_version }}.zip"
+    src: "https://github.com/common-fate/granted/archive/refs/tags/v{{ granted_latest_version }}.tar.gz"
     dest: /usr/local/bin
     mode: 'u+x,g+x,o+x'
     remote_src: yes
   when: (granted_exists_result.stat.exists == false) or upgrade == true and (granted_installed_version != granted_latest_version)
-
-# curl -OL releases.commonfate.io/granted/v0.3.1/granted_0.3.1_linux_x86_64.tar.gz
-# sudo tar -zxvf ./granted_0.3.1_linux_x86_64.tar.gz -C /usr/local/bin/

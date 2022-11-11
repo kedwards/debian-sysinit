@@ -1,0 +1,11 @@
+---
+- name: System Initialization
+  hosts: localhost
+  connection: local
+  become: true
+  gather_facts: true
+  vars:
+    upgrade: true
+    github_token: "{{ vault_github_token }}"
+  roles:
+    - sysinit

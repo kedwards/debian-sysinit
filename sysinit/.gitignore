@@ -1,4 +1,3 @@
-artifacts/*
 cache/*
 logs/*
 !**/README.md
