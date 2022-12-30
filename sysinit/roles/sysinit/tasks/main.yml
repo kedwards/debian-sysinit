@@ -76,6 +76,10 @@
     - core
 
 - block:
+    - import_tasks: module/eksctl.yml
+      tags:
+        - eksctl
+
     - import_tasks: module/kubectl.yml
       tags:
         - kubectl
@@ -175,4 +179,3 @@
   tags:
     - virtualbox
     - vagrant
-
