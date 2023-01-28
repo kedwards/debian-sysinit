@@ -35,7 +35,6 @@
     - name: "Terragrunt - Debug:  Latest version"
       debug:
         msg: "{{ terragrunt_latest_version }}"
-      when: debug == "true"
   when: terragrunt_exists_result.stat.exists == "false" or upgrade == true
 
 - name: Terragrunt Install/Upgrade

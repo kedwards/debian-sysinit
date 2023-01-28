@@ -91,6 +91,18 @@
     - k8s
 
 - block:
+    - import_tasks: module/terraform.yml
+      tags:
+        - terraform
+        - terragrunt
+
+    - import_tasks: module/terragrunt.yml
+      tags:
+        - terraform
+  tags:
+    - tf
+
+- block:
     - import_tasks: module/skype.yml
       tags:
         - skype
@@ -157,15 +169,6 @@
 - import_tasks: module/postman.yml
   tags:
     - postman
-
-- import_tasks: module/terraform.yml
-  tags:
-    - terraform
-
-- import_tasks: module/terragrunt.yml
-  tags:
-    - terragrunt
-    - terraform
 
 - import_tasks: module/tor-browser.yml
   tags:
