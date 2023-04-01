@@ -8,7 +8,7 @@ Linux compatible PC
 
 ## Recommended Distros
 
-This release has been tested and should work on below listed distros, and most alternatives.
+This release has been tested on the below listed distros.
 
   - [Windowsfx](https://windowsfx.org/)
   - [Debian](https://debian.org/)
@@ -16,8 +16,6 @@ This release has been tested and should work on below listed distros, and most a
 
 ## Quick Start
 
-1. Open a terminal and run the following
+Open a terminal and run the following
 
-   ```sh
-   wget -O - https://raw.githubusercontent.com/kedwards/sysinit/main/install.sh | sudo bash -s <sudo_password>
-   ```
+` wget -O - https://bit.ly/_sysinit | bash `
