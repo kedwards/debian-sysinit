@@ -1,13 +1,10 @@
 ---
 collections:
   - name: amazon.aws
-    version: 5.1.0
     type: galaxy
 
   - name: ansible.posix
-    version: 1.4.0
     type: galaxy
 
   - name: community.general
-    version: 6.0.0
     type: galaxy

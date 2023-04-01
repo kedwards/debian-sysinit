@@ -1,34 +1,28 @@
-#!/usr/bin bash
+#!/usr/bin/env bash
 
 set -e
 
-if (( EUID != 0 ))
-then
-  echo "You must be root to run this file." 1>&2
-  exit 100
-fi
-
-if [ -z "$1" ]
-then
-  echo "You must provide a sudo password." 1>&2
-  exit 101
-else
-  SUDO_PASS=$1
-fi
-
-SYSINIT_PATH=/home/${SUDO_USER}/sysinit
+SYSINIT_PATH=~/sysinit
 RELEASE=$(cat /etc/os-release | grep '^ID=' | awk '{ split($0, a, "="); print a[2]}')
 CODENAME=$(lsb_release -cs)
 
-apt-get install -y git
+sudo apt-get install -y git
 
-if [ ! -d ${SYSINIT_PATH} ]
-then
-  git clone -b main --single-branch https://github.com/kedwards/sysinit.git ${SYSINIT_PATH}
-  cd ${SYSINIT_PATH}
-#else
- cd ${SYSINIT_PATH}
-fi
+[ ! -d ~/.pyenv ] && curl https://pyenv.run | bash
 
-su -c "ansible-playbook -i inventory/hosts.yml project/playbook.yml -K --ask-vault-pass --tags core -e 'ansible_sudo_pass=${SUDO_PASS}'" ${SUDO_USER}
+source ~/.bashrc
 
+pyenv virtualenv ansible && pyenv activate ansible
+
+[ -d "${SYSINIT_PATH}" ] || git clone -b main --single-branch https://github.com/kedwards/sysinit.git "${SYSINIT_PATH}"
+cd ${SYSINIT_PATH}
+
+pip install -r requirements.txt
+ansible-galaxy install -r requirements.yml
+
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+echo "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+ansible-playbook -i inventory/hosts.yml playbook.yml -K --ask-vault-pass --tags core
