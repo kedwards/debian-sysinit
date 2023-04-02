@@ -1,1 +1,0 @@
-vault_github_token: "{{ secret_vault_github_token }}"

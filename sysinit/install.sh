@@ -25,4 +25,4 @@ ansible-galaxy install -r requirements.yml
 echo "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
   "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-ansible-playbook -i inventory/hosts.yml playbook.yml -K --ask-vault-pass --tags core
+ansible-playbook playbook.yml -K --ask-vault-pass --tags core

@@ -9,6 +9,8 @@
           Architecture: "{{ ansible_userspace_architecture }}"
           Distribution: "{{ ansible_distribution }}"
           Release: "{{ ansible_distribution_release }}"
+          Group: "{{ var_group }}"
+          Host: "{{ var_host }}"
 
     - name: include os vars
       include_vars: "{{ ansible_distribution }}.yml"

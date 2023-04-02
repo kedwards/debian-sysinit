@@ -1,7 +1,6 @@
 ---
 - name: System Initialization
-  hosts: localhost
-  connection: local
+  hosts: "{{ host | default('localhost') }}"
   become: true
   gather_facts: true
   vars:
