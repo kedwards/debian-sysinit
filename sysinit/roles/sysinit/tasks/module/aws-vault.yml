@@ -11,7 +11,7 @@
         user: 99designs
         repo: aws-vault
         action: latest_release
-        token: "{{ github_token }}"
+        token: "{{ github_token | default('') }}"
       register: aws_vault_latest_version_result
 
     - name: AWS-Vault - Set latest version

@@ -11,7 +11,7 @@
         user: FiloSottile
         repo: mkcert
         action: latest_release
-        token: "{{ github_token }}"
+        token: "{{ github_token | default('') }}"
       register: mkcert_latest_version
 
     - name: mkcert - Set latest version

@@ -27,7 +27,7 @@
         user: kubernetes
         repo: minikube
         action: latest_release
-        token: "{{ github_token }}"
+        token: "{{ github_token | default('') }}"
       register: minikube_latest_version_result
 
     - name: Minikube - Set latest version

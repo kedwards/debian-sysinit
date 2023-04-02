@@ -11,7 +11,7 @@
         user: hashicorp
         repo: terraform
         action: latest_release
-        token: "{{ github_token }}"
+        token: "{{ github_token | default('') }}"
       register: terraform_latest_version_result
 
     - name: Terraform - Set latest version
