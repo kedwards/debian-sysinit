@@ -59,17 +59,9 @@
       tags:
         - github-cli
 
-    - import_tasks: module/gopass.yml
-      tags:
-        - gopass
-
     - import_tasks: module/opass.yml
       tags:
         - opass
-
-    - import_tasks: module/slack.yml
-      tags:
-        - slack
 
     - import_tasks: module/vscode.yml
       tags:
@@ -101,6 +93,11 @@
     - import_tasks: module/terragrunt.yml
       tags:
         - terraform
+
+    - import_tasks: module/terrascan.yml
+      tags:
+        - terraform
+        - terrascan
   tags:
     - tf
 
@@ -127,29 +124,9 @@
   tags:
     - comms
 
-- import_tasks: module/act.yml
-  tags:
-    - act
-
-- import_tasks: module/atlantis.yml
-  tags:
-    - atlantis
-
 - import_tasks: module/aws-vault.yml
   tags:
     - aws-vault
-
-- import_tasks: module/docker-compose.yml
-  tags:
-    - docker-compose
-
-- import_tasks: module/git-filter-repo.yml
-  tags:
-    - git-filter-repo
-
-- import_tasks: module/git-lfs.yml
-  tags:
-    - git-lfs
 
 - import_tasks: module/leapp.yml
   tags:
