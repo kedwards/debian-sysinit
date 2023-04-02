@@ -106,10 +106,6 @@
       tags:
         - skype
 
-    - import_tasks: module/slack.yml
-      tags:
-        - slack
-
     - import_tasks: module/teams.yml
       tags:
         - teams
