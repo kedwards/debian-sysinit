@@ -1,24 +1,11 @@
 ---
 - name: Granted - Exists
-  stat:
+  ansible.builtin.stat:
     path: /usr/local/bin/granted
   register: granted_exists_result
 
-- block:
-    - name: Granted - Get installed version
-      shell: granted | grep -A 1 'VERSION:' | awk NR==2' { print $1 }'
-      register: granted_version_result
-
-    - name: granted - Find installed version
-      set_fact:
-        granted_version_found: "{{ granted_version_result.stdout }}"
-
-    - name: granted - Set installed version
-      set_fact:
-        granted_installed_version: "{{ granted_version_found }}"
-  when: granted_exists_result.stat.exists != false and upgrade == true
-
-- block:
+- name: Granted - Install/Upgrade
+  block:
     - name: Granted - Get latest
       community.general.github_release:
         user: common-fate
@@ -31,15 +18,10 @@
       set_fact:
         granted_latest_version: "{{ granted_latest_version.tag[1:] }}"
 
-    - name: "Granted - Versions"
-      debug:
-        msg: "installed: {{ granted_installed_version|default('N/A') }}, latest: {{ granted_latest_version }}"
+    - name: Granted - Install/Upgrade
+      ansible.builtin.unarchive:
+        src: "https://github.com/common-fate/granted/archive/refs/tags/v{{ granted_latest_version }}.tar.gz"
+        dest: /usr/local/bin
+        mode: 'u+x,g+x,o+x'
+        remote_src: yes
   when: granted_exists_result.stat.exists == false or upgrade == true
-
-- name: Granted - Install/Upgrade
-  ansible.builtin.unarchive:
-    src: "https://github.com/common-fate/granted/archive/refs/tags/v{{ granted_latest_version }}.tar.gz"
-    dest: /usr/local/bin
-    mode: 'u+x,g+x,o+x'
-    remote_src: yes
-  when: (granted_exists_result.stat.exists == false) or upgrade == true and (granted_installed_version != granted_latest_version)

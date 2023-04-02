@@ -1,35 +1,11 @@
 ---
 - name: Terraform - Exists
-  stat:
+  ansible.builtin.stat:
     path: /usr/local/bin/terraform
   register: terraform_exists_result
 
-- block:
-    - name: Terraform - Get installed version
-      command: terraform --version
-      register: terraform_version_result
-
-    # - name: Terraform - Search installed version
-    #   set_fact:
-    #     terraform_installed_version: "{{ terraform_installed_version_result | default([]) +  [item] }}"
-    #   when: item | regex_search(regexp,'\\1')
-    #   vars:
-    #     regexp: 'Terraform\s(.*)$'
-    #   with_items:
-    #     - "{{ terraform_version_result.stdout_lines }}"
-
-    - name: Terraform - found version
-      set_fact:
-        terraform_found_version: "{{ terraform_version_result.stdout_lines[0] | regex_search(regexp,'\\1') }}"
-      vars:
-        regexp: 'Terraform\s(.*)$'
-
-    - name: Terraform - Set installed version
-      set_fact:
-        terraform_installed_version: "{{ terraform_found_version[0] }}"
-  when: terraform_exists_result.stat.exists != false and upgrade == true
-
-- block:
+- name: Terraform Install/Upgrade
+  block:
     - name: Terraform - Get latest
       community.general.github_release:
         user: hashicorp
@@ -39,21 +15,12 @@
       register: terraform_latest_version_result
 
     - name: Terraform - Set latest version
-      set_fact:
+      ansible.builtin.set_fact:
         terraform_latest_version: "{{ terraform_latest_version_result.tag[1:] }}"
 
-    - name: "Terraform - Version"
-      debug:
-        msg: "installed: {{ terraform_installed_version|default('N/A') }}, latest: {{ terraform_latest_version }}"
+    - name: Terraform Install/Upgrade
+      ansible.builtin.unarchive:
+        src: "https://releases.hashicorp.com/terraform/{{ terraform_latest_version }}/terraform_{{ terraform_latest_version }}_linux_amd64.zip"
+        dest: /usr/local/bin
+        remote_src: true
   when: terraform_exists_result.stat.exists == false or upgrade == true
-
-- name: Terraform Install/Upgrade
-  unarchive:
-    src: "https://releases.hashicorp.com/terraform/{{ terraform_latest_version }}/terraform_{{ terraform_latest_version }}_linux_amd64.zip"
-    dest: /usr/local/bin
-    remote_src: true
-  when: >-
-    terraform_exists_result.stat.exists == false or
-    (terraform_exists_result.stat.exists != false and
-    upgrade == true and
-    terraform_latest_version != terraform_installed_version)

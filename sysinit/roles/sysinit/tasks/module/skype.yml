@@ -1,10 +1,10 @@
 ---
 - name: Skype - Exists
-  stat:
+  ansible.builtin.stat:
     path: /usr/bin/skypeforlinux
   register: skype_result
 
 - name: Skype
-  apt:
+  ansible.builtin.apt:
     deb: https://go.skype.com/skypeforlinux-64.deb
   when: skype_result.stat.exists == false or upgrade == true

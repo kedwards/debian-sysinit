@@ -1,9 +1,9 @@
 - name: Leapp Exists
-  stat:
+  ansible.builtin.stat:
     path: /usr/bin/leapp
   register: leapp_exists_result
 
 - name: Leapp Install
-  apt:
+  ansible.builtin.apt:
     deb: "https://asset.noovolari.com/latest/Leapp_{{ leapp_version }}_amd64.deb"
   when: leapp_exists_result.stat.exists == false or upgrade == true

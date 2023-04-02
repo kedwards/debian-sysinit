@@ -1,9 +1,17 @@
 ---
-- name: AWS-Cli - Install
-  ansible.builtin.unarchive:
-    src: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
-    dest: /usr/local
-    remote_src: yes
+- name: AWS-Cli - Exists
+  ansible.builtin.stat:
+    path: /usr/local/bin/aws
+  register: aws_cli_exists_result
 
-- name: AWS-Cli - Configure
-  ansible.builtin.command: sh /usr/local/aws/install --update
+- name: AWS-Cli - Install
+  block:
+    - name: AWS-Cli - Install
+      ansible.builtin.unarchive:
+        src: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+        dest: /usr/local
+        remote_src: yes
+
+    - name: AWS-Cli - Configure
+      ansible.builtin.command: sh /usr/local/aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli --update
+  when: aws_cli_exists_result.stat.exists == false or upgrade == true

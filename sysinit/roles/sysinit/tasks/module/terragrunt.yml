@@ -1,25 +1,11 @@
 ---
 - name: Terragrunt - Exists
-  stat:
+  ansible.builtin.stat:
     path: /usr/local/bin/terragrunt
   register: terragrunt_exists_result
 
-- block:
-    - name: Terragrunt - Get installed version
-      command: terragrunt --version
-      register: terragrunt_version_result
-
-    - name: Terragrunt - Set installed version
-      set_fact:
-        terragrunt_installed_version: "{{ terragrunt_version_result.stderr[1:] }}"
-
-    - name: "Terragrunt - Debug: Installed version"
-      debug:
-        msg: "{{ terragrunt_installed_version }}"
-      when: debug == "true"
-  when: terragrunt_exists_result.stat.exists != "false" and upgrade == "true"
-
-- block:
+- name: Terragrunt Install/Upgrade
+  block:
     - name: Terragrunt - Get latest
       community.general.github_release:
         user: gruntwork-io
@@ -29,17 +15,12 @@
       register: terragrunt_latest_version_result
 
     - name: Terragrunt - Set latest version
-      set_fact:
+      ansible.builtin.set_fact:
         terragrunt_latest_version: "{{ terragrunt_latest_version_result.tag[1:] }}"
 
-    - name: "Terragrunt - Debug:  Latest version"
-      debug:
-        msg: "{{ terragrunt_latest_version }}"
-  when: terragrunt_exists_result.stat.exists == "false" or upgrade == true
-
-- name: Terragrunt Install/Upgrade
-  get_url:
-    url: "https://github.com/gruntwork-io/terragrunt/releases/download/{{ terragrunt_latest_version_result.tag }}/terragrunt_linux_amd64"
-    dest: /usr/local/bin/terragrunt
-    mode: 'u+x,g+x,o+x'
-  when: terragrunt_exists_result.stat.exists == false or upgrade == "true" and terragrunt_installed_version != terragrunt_latest_version
+    - name: Terragrunt Install/Upgrade
+      ansible.builtin.get_url:
+        url: "https://github.com/gruntwork-io/terragrunt/releases/download/{{ terragrunt_latest_version_result.tag }}/terragrunt_linux_amd64"
+        dest: /usr/local/bin/terragrunt
+        mode: 'u+x,g+x,o+x'      
+  when: terragrunt_exists_result.stat.exists == false or upgrade == true

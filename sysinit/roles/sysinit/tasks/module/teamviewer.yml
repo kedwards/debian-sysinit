@@ -1,10 +1,10 @@
 ---
 - name: Team Viewer - Exists
-  stat:
+  ansible.builtin.stat:
     path: /usr/bin/teamviewer
   register: teamviewer_result
 
 - name: Team Viewer
-  apt:
+  ansible.builtin.apt:
     deb: https://download.teamviewer.com/download/linux/teamviewer_amd64.deb
   when: teamviewer_result.stat.exists == false or upgrade == true

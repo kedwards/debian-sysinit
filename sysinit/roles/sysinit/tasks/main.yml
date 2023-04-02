@@ -1,7 +1,8 @@
 ---
-- block:
+- name: Install, configure base system
+  block:
     - name: Info
-      debug:
+      ansible.builtin.debug:
         msg: |
           User: "{{ ansible_user_id }}"
           Sudo User: "{{ lookup('env','USER') }}"
@@ -13,147 +14,128 @@
           Host: "{{ var_host }}"
 
     - name: include os vars
-      include_vars: "{{ ansible_distribution }}.yml"
+      ansible.builtin.include_vars: "{{ ansible_distribution }}.yml"
 
     - name: Add non-free official repository for Debian
-      apt_repository:
+      ansible.builtin.apt_repository:
         repo: "deb http://ftp.ca.debian.org/debian/ {{ ansible_distribution_release }} main non-free"
       when: ansible_distribution == "Debian"
 
     - name: Install system packages
-      apt:
+      ansible.builtin.apt:
         name: "{{ packages }}"
         state: present
 
     - name: Install pip modules
-      pip:
+      ansible.builtin.pip:
         name: "{{ pip_packages }}"
         state: present
   tags:
     - always
 
-- block:
-    - import_tasks: module/aws-cli.yml
+- name: Core tools
+  block:
+    - name: AWS-Cli
+      ansible.builtin.import_tasks: module/aws-cli.yml
       tags:
         - aws-cli
 
-    - import_tasks: module/granted.yml
+    - name: AWS Vault
+      ansible.builtin.import_tasks: module/aws-vault.yml
       tags:
-        - granted
+        - aws-vault
 
-    - import_tasks: module/ssm-manager-plugin.yml
+    - name: Docker
+      ansible.builtin.import_tasks: module/docker.yml
       tags:
-        - ssm-manager-plugin
-
-    - import_tasks: module/docker.yml
-      tags:
-        - act
         - docker
         - docker-compose
 
-    - import_tasks: module/dropbox.yml
+    - name: Dropbox
+      ansible.builtin.import_tasks: module/dropbox.yml
       tags:
         - dropbox
 
-    - import_tasks: module/github-cli.yml
+    - name: Github Cli
+      ansible.builtin.import_tasks: module/github-cli.yml
       tags:
         - github-cli
 
-    - import_tasks: module/opass.yml
+    - name: Granted
+      ansible.builtin.import_tasks: module/granted.yml
+      tags:
+        - granted
+
+    - name: 1Password
+      ansible.builtin.import_tasks: module/opass.yml
       tags:
         - opass
 
-    - import_tasks: module/vscode.yml
+    - ansible.builtin.import_tasks: module/postman.yml
+      tags:
+        - postman
+
+    - name: SSM Manager
+      ansible.builtin.import_tasks: module/ssm-manager-plugin.yml
+      tags:
+        - ssm-manager-plugin
+
+    - name: VSCode
+      ansible.builtin.import_tasks: module/vscode.yml
       tags:
         - vscode
   tags:
     - core
 
-- block:
-    - import_tasks: module/eksctl.yml
+- name: K8s
+  block:
+    - ansible.builtin.import_tasks: module/eksctl.yml
       tags:
         - eksctl
 
-    - import_tasks: module/kubectl.yml
+    - ansible.builtin.import_tasks: module/kubectl.yml
       tags:
         - kubectl
 
-    - import_tasks: module/minikube.yml
+    - ansible.builtin.import_tasks: module/minikube.yml
       tags:
         - minikube
   tags:
     - k8s
 
-- block:
-    - import_tasks: module/terraform.yml
+- name: Terraform tools
+  block:
+    - ansible.builtin.import_tasks: module/terraform.yml
       tags:
         - terraform
         - terragrunt
 
-    - import_tasks: module/terragrunt.yml
+    - ansible.builtin.import_tasks: module/terragrunt.yml
       tags:
         - terraform
-
-    - import_tasks: module/terrascan.yml
-      tags:
-        - terraform
-        - terrascan
   tags:
     - tf
 
-- block:
-    - import_tasks: module/skype.yml
+- name: Communications
+  block:
+    - name: Skype
+      ansible.builtin.import_tasks: module/skype.yml
       tags:
         - skype
 
-    - import_tasks: module/teams.yml
+    - name: Teams
+      ansible.builtin.import_tasks: module/teams.yml
       tags:
         - teams
 
-    - import_tasks: module/teamviewer.yml
+    - name: Teamviewer
+      ansible.builtin.import_tasks: module/teamviewer.yml
       tags:
         - teamviewer
 
-    - import_tasks: module/zoom.yml
+    - name: Zoom
+      ansible.builtin.import_tasks: module/zoom.yml
       tags:
         - zoom
   tags:
     - comms
-
-- import_tasks: module/aws-vault.yml
-  tags:
-    - aws-vault
-
-- import_tasks: module/leapp.yml
-  tags:
-    - leapp
-
-- import_tasks: module/mkcert.yml
-  tags:
-    - mkcert
-
-- import_tasks: module/ngrok.yml
-  tags:
-    - atlantis
-    - ngrok
-
-- import_tasks: module/packer.yml
-  tags:
-    - packer
-
-- import_tasks: module/postman.yml
-  tags:
-    - postman
-
-- import_tasks: module/tor-browser.yml
-  tags:
-    - tor
-
-- import_tasks: module/vagrant.yml
-  tags:
-    - vagrant
-
-- import_tasks: module/virtualbox.yml
-  tags:
-    - virtualbox
-    - vagrant

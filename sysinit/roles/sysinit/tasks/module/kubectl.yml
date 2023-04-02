@@ -1,61 +1,40 @@
 ---
 - name: Create a temporary directory
-  tempfile:
+  ansible.builtin.tempfile:
     state: directory
     suffix: tmp
   register: tmpdir
 
 - name: Kubectl Exists
-  stat:
+  ansible.builtin.stat:
     path: /usr/local/bin/kubectl
   register: kubectl_exists_result
 
-- block:
-    - name: Kubectl - Get installed version
-      command: kubectl version --output yaml
-      register: kubectl_version_result
-      ignore_errors: True
-
-    - name: Kubectl - Set found version
-      set_fact:
-        kubectl_found_version: "{{ kubectl_version_result.stdout_lines[5] | regex_search(regexp,'\\1') }}"
-      vars:
-        regexp: 'gitVersion:\sv([^\"]+)'
-
-    - name: Kubectl - Set installed version
-      set_fact:
-        kubectl_installed_version: "{{ kubectl_found_version[0] }}"
-  when: kubectl_exists_result.stat.exists != false and upgrade == true
-
-- block:
+- name: Kubectl - Install/Upgrade
+  block:
     - name: "Kubectl - Download version file"
-      get_url:
+      ansible.builtin.get_url:
         url: https://storage.googleapis.com/kubernetes-release/release/stable.txt
         dest: "{{ tmpdir.path }}/minikube_version"
 
     - name: "Kubectl - Read Latest version from file"
-      slurp:
+      ansible.builtin.slurp:
         src: "{{ tmpdir.path }}/minikube_version"
       register: slurpfile
 
     - name: Kubectl - Set latest version
-      set_fact:
+      ansible.builtin.set_fact:
         kubectl_latest_version: "{{ slurpfile['content'] | b64decode }}"
 
-    - name: "Kubectl - Version"
-      debug:
-        msg: "installed: {{ kubectl_installed_version|default('N/A') }}, latest: {{ kubectl_latest_version }}"
+    - name: Kubectl - Install/Upgrade
+      ansible.builtin.get_url:
+        url: "https://storage.googleapis.com/kubernetes-release/release/{{ kubectl_latest_version }}/bin/linux/amd64/kubectl"
+        dest: /usr/local/bin/kubectl
+        mode: 0755
+        force: True
   when: kubectl_exists_result.stat.exists == false or upgrade == true
 
-- name: Kubectl - Install/Upgrade
-  get_url:
-    url: "https://storage.googleapis.com/kubernetes-release/release/{{ kubectl_latest_version }}/bin/linux/amd64/kubectl"
-    dest: /usr/local/bin/kubectl
-    mode: 0755
-    force: True
-  when: kubectl_exists_result.stat.exists == False or kubectl_installed_version != kubectl_latest_version
-
 - name: Remove temporary directory
-  file:
+  ansible.builtin.file:
     path: "{{ tmpdir.path }}"
     state: "absent"

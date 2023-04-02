@@ -1,20 +1,11 @@
 ---
 - name: mkcert - Exists
-  stat:
+  ansible.builtin.stat:
     path: /usr/local/bin/mkcert
   register: mkcert_exists_result
 
-- block:
-    - name: mkcert - Get installed version
-      command: mkcert --version
-      register: mkcert_version_result
-
-    - name: mkcert - Set installed version
-      set_fact:
-        mkcert_installed_version: "{{ mkcert_version_result.stdout }}"
-  when: mkcert_exists_result.stat.exists != false and upgrade == true
-
-- block:
+- name: mkcert - Install/Upgrade
+  block:
     - name: mkcert - Get latest
       community.general.github_release:
         user: FiloSottile
@@ -24,18 +15,13 @@
       register: mkcert_latest_version
 
     - name: mkcert - Set latest version
-      set_fact:
+      ansible.builtin.set_fact:
         mkcert_latest_version: "{{ mkcert_latest_version.tag }}"
 
-    - name: "mkcert - Version"
-      debug:
-        msg: "installed: {{ mkcert_installed_version|default('N/A') }}, latest: {{ mkcert_latest_version }}"
+    - name: mkcert - Install/Upgrade
+      ansible.builtin.get_url:
+        url: "https://github.com/FiloSottile/mkcert/releases/download/{{ mkcert_latest_version }}/mkcert-{{ mkcert_latest_version }}-linux-amd64"
+        dest: /usr/local/bin/mkcert
+        mode: 'u+x,g+x,o+x'
+        force: true
   when: mkcert_exists_result.stat.exists == false or upgrade == true
-
-- name: mkcert - Install/Upgrade
-  get_url:
-    url: "https://github.com/FiloSottile/mkcert/releases/download/{{ mkcert_latest_version }}/mkcert-{{ mkcert_latest_version }}-linux-amd64"
-    dest: /usr/local/bin/mkcert
-    mode: 'u+x,g+x,o+x'
-    force: true
-  when: (mkcert_exists_result.stat.exists == false) or upgrade == true and (mkcert_installed_version != mkcert_latest_version)
