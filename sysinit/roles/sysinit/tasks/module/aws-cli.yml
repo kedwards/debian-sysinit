@@ -13,5 +13,5 @@
         remote_src: yes
 
     - name: AWS-Cli - Configure
-      ansible.builtin.command: sh /usr/local/aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli --update
+      ansible.builtin.command: sh /usr/local/aws/install --update
   when: aws_cli_exists_result.stat.exists == false or upgrade == true

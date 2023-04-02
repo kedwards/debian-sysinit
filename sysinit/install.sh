@@ -8,18 +8,7 @@ sudo apt-get install -y git
 
 [ ! -d ~/.pyenv ] && curl https://pyenv.run | bash
 
-if [ ! "$(grep '# Load pyenv automatically' ~/.bash_profile)" ]; then
-  cat << EOF >> ~/.bash_profile 
-  
-# Load pyenv automatically
-export PYENV_ROOT="\$HOME/.pyenv"
-export PATH="\$PYENV_ROOT/bin:\$LOCAL_BIN_PATH:\$PATH"
-eval "\$(pyenv init -)"
-eval "\$(pyenv virtualenv-init -)"
-EOF
-fi
-
-. ~/.bash_profile
+eval "$(pyenv init -)"
 
 [ -d "${SYSINIT_PATH}" ] || git clone -b main --single-branch https://github.com/kedwards/sysinit.git "${SYSINIT_PATH}"
 cd ${SYSINIT_PATH}
