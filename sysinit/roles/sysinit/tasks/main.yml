@@ -103,6 +103,14 @@
   tags:
     - k8s
 
+- name: Packer
+  block:
+    - ansible.builtin.import_tasks: module/packer.yml
+      tags:
+        - packer
+  tags:
+    - packer
+
 - name: Terraform tools
   block:
     - ansible.builtin.import_tasks: module/terraform.yml

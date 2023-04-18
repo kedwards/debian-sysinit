@@ -22,6 +22,7 @@ packages:
   - lsb-release
   - make
   - meld
+  - python3-venv
   - tk-dev
   - unzip
   - vim-nox
