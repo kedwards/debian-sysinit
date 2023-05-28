@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+export PATH=~/.local/bin:$PATH
+
 SYSINIT_PATH=~/sysinit
 RELEASE=$(cat /etc/os-release | grep '^ID=' | awk '{ split($0, a, "="); print a[2]}')
 CODENAME=$(lsb_release -cs)
@@ -8,12 +10,8 @@ sudo apt-get install -y git
 
 [ ! -d ~/.pyenv ] && curl https://pyenv.run | bash
 
-eval "$(pyenv init -)"
-
 [ -d "${SYSINIT_PATH}" ] || git clone -b main --single-branch https://github.com/kedwards/sysinit.git "${SYSINIT_PATH}"
 cd ${SYSINIT_PATH}
-
-pyenv virtualenv sysinit && pyenv activate sysinit
 
 pip install -r requirements.txt
 ansible-galaxy install -r requirements.yml
