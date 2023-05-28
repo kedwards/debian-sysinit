@@ -10,6 +10,15 @@ sudo apt-get install -y git
 
 [ ! -d ~/.pyenv ] && curl https://pyenv.run | bash
 
+if ! grep -Fxq "# sysinit: load custom bash settings" ~/.bashrc; then
+  cat << EOF >> ~/.bashrc
+# sysinit: load custom bash settings
+if [ -f ~/.bash_profile ]; then
+  . ~/.bash_profile
+fi
+EOF
+fi
+
 [ -d "${SYSINIT_PATH}" ] || git clone -b main --single-branch https://github.com/kedwards/sysinit.git "${SYSINIT_PATH}"
 cd ${SYSINIT_PATH}
 
@@ -24,3 +33,4 @@ echo "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docke
 sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get autoremove -y
 
 ansible-playbook playbook.yml -K --ask-vault-pass --tags core
+
