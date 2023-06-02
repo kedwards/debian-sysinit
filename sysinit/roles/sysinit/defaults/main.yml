@@ -5,6 +5,7 @@ packages:
   - build-essential
   - ca-certificates
   - curl
+  - firefox
   - gnupg
   - gnupg-agent
   - golang-go
@@ -36,3 +37,4 @@ pip_packages:
   - boto3
   - github3.py
   - git-remote-dropbox
+  - nodeenv
