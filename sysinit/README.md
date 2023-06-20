@@ -16,6 +16,6 @@ This release has been tested on the below listed distros.
 
 ## Quick Start
 
-Open a terminal and run the following for a core install
+Open a terminal and run the following:
 
 ` wget -O - https://bit.ly/_sysinit | bash `
