@@ -1,25 +1,27 @@
 #!/usr/bin/env bash
 
-export PATH=~/.local/bin:$PATH
+[[ ":$PATH:" != *":$HOME/.local/bin:"* ]] && PATH="$HOME/.local/bin:$PATH"
 
-SYSINIT_PATH=~/sysinit
+export PATH
+
+SYSINIT_PATH=$HOME/sysinit
 RELEASE=$(cat /etc/os-release | grep '^ID=' | awk '{ split($0, a, "="); print a[2]}')
 CODENAME=$(lsb_release -cs)
 
 sudo apt-get install -y git
 
-[ ! -d ~/.pyenv ] && curl https://pyenv.run | bash
+[ ! -d $HOME/.pyenv ] && curl https://pyenv.run | bash
 
-if ! grep -Fxq "# sysinit: load custom bash settings" ~/.bashrc; then
-  cat << EOF >> ~/.bashrc
+if ! grep -Fxq "# sysinit: load custom bash settings" $HOME/.bashrc; then
+  cat << EOF >> $HOME/.bashrc
 # sysinit: load custom bash settings
-if [ -f ~/.bash_profile ]; then
-  . ~/.bash_profile
+if [ -f $HOME/.bash_profile ]; then
+  . $HOME/.bash_profile
 fi
 EOF
 fi
 
-[ -d "${SYSINIT_PATH}" ] || git clone -b main --single-branch https://github.com/kedwards/sysinit.git "${SYSINIT_PATH}"
+[ -d "${SYSINIT_PATH}" ] || git clone -b main --single-branch https://github.com/kedwards/sysinit.git "$SYSINIT_PATH"
 cd ${SYSINIT_PATH}
 
 pip install -r requirements.txt
@@ -33,4 +35,3 @@ echo "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docke
 sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get autoremove -y
 
 ansible-playbook playbook.yml -K --ask-vault-pass --tags core
-

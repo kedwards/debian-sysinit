@@ -2,3 +2,6 @@ ansible
 awscli
 botocore
 boto3
+github3.py
+git-remote-dropbox
+nodeenv
