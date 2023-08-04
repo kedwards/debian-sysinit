@@ -1,10 +1,4 @@
 ---
 collections:
-  - name: amazon.aws
-    type: galaxy
-
-  - name: ansible.posix
-    type: galaxy
-
-  - name: community.general
+  - name: community.aws
     type: galaxy
