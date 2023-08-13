@@ -31,3 +31,10 @@ packages:
   - xsel
   - xz-utils
   - zlib1g-dev
+
+
+pip_packages:
+  - botocore
+  - boto3
+  - github3.py
+  - git-remote-dropbox

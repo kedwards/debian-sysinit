@@ -25,6 +25,11 @@
       ansible.builtin.apt:
         name: "{{ packages }}"
         state: present
+
+    - name: Install pip modules
+      pip:
+        name: "{{ pip_packages }}"
+        state: present
   tags:
     - always
 
@@ -34,6 +39,11 @@
       ansible.builtin.import_tasks: core/aws-cli.yml
       tags:
         - aws-cli
+
+    - name: Chrome
+      ansible.builtin.import_tasks: core/chrome.yml
+      tags:
+        - chrome
 
     - name: dbeaver
       ansible.builtin.import_tasks: core/dbeaver.yml

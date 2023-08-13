@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 [[ ":$PATH:" != *":$HOME/.local/bin:"* ]] && PATH="$HOME/.local/bin:$PATH"
+[[ ":$PATH:" != *":$HOME/.pyenv/bin:"* ]] && PATH="$HOME/.pyenv/bin:$PATH"
 
 export PATH
 
@@ -8,7 +9,9 @@ SYSINIT_PATH=$HOME/sysinit
 RELEASE=$(cat /etc/os-release | grep '^ID=' | awk '{ split($0, a, "="); print a[2]}')
 CODENAME=$(lsb_release -cs)
 
-sudo apt-get install -y git
+if [ ! $(which git) ]; then
+  sudo apt-get install -y git
+fi
 
 [ ! -d $HOME/.pyenv ] && curl https://pyenv.run | bash
 
@@ -21,11 +24,15 @@ fi
 EOF
 fi
 
-[ -d "${SYSINIT_PATH}" ] || git clone -b main --single-branch https://github.com/kedwards/sysinit.git "$SYSINIT_PATH"
-cd ${SYSINIT_PATH}
+eval "$(pyenv init -)"
+
+pyenv virtualenv sysinit && pyenv activate sysinit
 
 pip install -r requirements.txt
 ansible-galaxy install -r requirements.yml
+
+[ -d "${SYSINIT_PATH}" ] || git clone -b main --single-branch https://github.com/kedwards/sysinit.git "$SYSINIT_PATH"
+cd ${SYSINIT_PATH}
 
 [ -f /etc/apt/keyrings/docker.gpg ] || curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 

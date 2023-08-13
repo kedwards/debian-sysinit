@@ -6,5 +6,5 @@
 
 - name: VSCode - Install/Upgrade
   ansible.builtin.apt:
-    deb: https://go.microsoft.com/fwlink/?LinkID=760868
+    deb: https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64
   when: vscode_exists_result.stat.exists == false or upgrade == true
