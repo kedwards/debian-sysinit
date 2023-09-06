@@ -71,10 +71,20 @@
       tags:
         - granted
 
+    - name: Neovim
+      ansible.builtin.import_tasks: core/neovim.yml
+      tags:
+        - neovim
+    
     - name: 1Password
       ansible.builtin.import_tasks: core/opass.yml
       tags:
         - opass
+
+    - name: RipGrep
+      ansible.builtin.import_tasks: core/ripgrep.yml
+      tags:
+        - rg
 
     - name: SSM Manager
       ansible.builtin.import_tasks: core/ssm-manager-plugin.yml

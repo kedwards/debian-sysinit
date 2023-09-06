@@ -28,11 +28,11 @@ eval "$(pyenv init -)"
 
 pyenv virtualenv sysinit && pyenv activate sysinit
 
-pip install -r requirements.txt
-ansible-galaxy install -r requirements.yml
+pip install -r "${SYSINIT_PATH}/requirements.txt"
+ansible-galaxy install -r "${SYSINIT_PATH}/requirements.yml"
 
 [ -d "${SYSINIT_PATH}" ] || git clone -b main --single-branch https://github.com/kedwards/sysinit.git "$SYSINIT_PATH"
-cd ${SYSINIT_PATH}
+cd "${SYSINIT_PATH}"
 
 [ -f /etc/apt/keyrings/docker.gpg ] || curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 
