@@ -28,8 +28,7 @@ eval "$(pyenv init -)"
 
 pyenv virtualenv sysinit && pyenv activate sysinit
 
-pip install -r "${SYSINIT_PATH}/requirements.txt"
-ansible-galaxy install -r "${SYSINIT_PATH}/requirements.yml"
+pip install -r "${SYSINIT_PATH}/requirements.txt" && ansible-galaxy install -r "${SYSINIT_PATH}/requirements.yml"
 
 [ -d "${SYSINIT_PATH}" ] || git clone -b main --single-branch https://github.com/kedwards/sysinit.git "$SYSINIT_PATH"
 cd "${SYSINIT_PATH}"

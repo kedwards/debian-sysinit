@@ -90,11 +90,6 @@
       ansible.builtin.import_tasks: core/ssm-manager-plugin.yml
       tags:
         - ssm-manager-plugin
-
-    - name: VSCode
-      ansible.builtin.import_tasks: core/vscode.yml
-      tags:
-        - vscode
   tags:
     - core
 
@@ -115,44 +110,49 @@
       ansible.builtin.import_tasks: devops/terragrunt.yml
       tags:
         - terraform
-    
+
     - name: Packer
       ansible.builtin.import_tasks: devops/packer.yml
       tags:
         - packer
-    
+
     - name: Leaap
       ansible.builtin.import_tasks: devops/leapp.yml
       tags:
         - leapp
-    
+
     - name: Mkcert
       ansible.builtin.import_tasks: devops/mkcert.yml
       tags:
         - mkcert
-    
+
     - name: Postman
       ansible.builtin.import_tasks: devops/postman.yml
       tags:
         - postman
-
-    - name: K8s
-      block:
-        - ansible.builtin.import_tasks: devops/eksctl.yml
-          tags:
-            - eksctl
-
-        - ansible.builtin.import_tasks: devops/kubectl.yml
-          tags:
-            - kubectl
-
-        - ansible.builtin.import_tasks: devops/minikube.yml
-          tags:
-            - minikube
-      tags:
-        - k8s
   tags:
     - devops
+
+- name: K8s
+  block:
+    - ansible.builtin.import_tasks: devops/eksctl.yml
+      tags:
+        - eksctl
+
+    - ansible.builtin.import_tasks: devops/kubectl.yml
+      tags:
+        - kubectl
+
+    - ansible.builtin.import_tasks: devops/minikube.yml
+      tags:
+        - minikube
+  tags:
+    - k8s
+
+- name: VSCode
+  ansible.builtin.import_tasks: core/vscode.yml
+  tags:
+    - vscode
 
 - name: Communications
   block:
