@@ -2,39 +2,35 @@
 packages:
   - amazon-ecr-credential-helper
   - apt-transport-https
-  - build-essential
-  - ca-certificates
-  - curl
-  - firefox
-  - gnupg
-  - gnupg-agent
-  - golang-go
-  - libffi-dev
-  - libnss3-tools
-  - libbz2-dev
-  - liblzma-dev
-  - libncursesw5-dev
-  - libreadline-dev
-  - libssl-dev
-  - libsqlite3-dev
-  - libxml2-dev
-  - libxmlsec1-dev
-  - llvm
-  - lsb-release
-  - make
-  - meld
   - python3-venv
-  - tk-dev
-  - unzip
-  - vim-nox
-  - wget
-  - xsel
-  - xz-utils
-  - zlib1g-dev
-
-
-pip_packages:
-  - botocore
-  - boto3
-  - github3.py
-  - git-remote-dropbox
+  # - python3-botocore
+  # - python3-boto3
+  # - build-essential
+  # - ca-certificates
+  # - curl
+  # - firefox
+  # - gnupg
+  # - gnupg-agent
+  # - golang-go
+  # - libffi-dev
+  # - libnss3-tools
+  # - libbz2-dev
+  # - liblzma-dev
+  # - libncursesw5-dev
+  # - libreadline-dev
+  # - libssl-dev
+  # - libsqlite3-dev
+  # - libxml2-dev
+  # - libxmlsec1-dev
+  # - llvm
+  # - lsb-release
+  # - make
+  # - meld
+  # - python3-venv
+  # - tk-dev
+  # - unzip
+  # - vim-nox
+  # - wget --
+  # - xsel
+  # - xz-utils
+  # - zlib1g-dev

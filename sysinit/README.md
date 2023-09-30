@@ -2,17 +2,13 @@
 
 An opinionated script to initialize your Linux system.
 
-## Prerequisites
+## Distros
 
-Linux compatible PC
+This release has been tested on the below listed distros, and should work on most Debian based distros.
 
-## Recommended Distros
-
-This release has been tested on the below listed distros.
-
-  - [Windowsfx](https://windowsfx.org/)
   - [Debian](https://debian.org/)
   - [Ubuntu](https://ubuntu.com/)
+  - [Windowsfx](https://windowsfx.org/)
 
 ## Quick Start
 

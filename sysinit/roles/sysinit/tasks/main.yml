@@ -13,161 +13,141 @@
           Group: "{{ var_group }}"
           Host: "{{ var_host }}"
 
-    - name: include os vars
-      ansible.builtin.include_vars: "{{ ansible_distribution }}.yml"
-
     - name: Add non-free official repository for Debian
       ansible.builtin.apt_repository:
-        repo: "deb http://ftp.ca.debian.org/debian/ {{ ansible_distribution_release }} main non-free"
+        repo: "deb http://ftp.ca.debian.org/debian/ {{ ansible_distribution_release }} main non-free-firmware"
       when: ansible_distribution == "Debian"
+
+    - name: include os vars
+      ansible.builtin.include_vars: "{{ ansible_distribution }}.yml"
 
     - name: Install system packages
       ansible.builtin.apt:
         name: "{{ packages }}"
         state: present
-
-    - name: Install pip modules
-      pip:
-        name: "{{ pip_packages }}"
-        state: present
   tags:
     - always
 
-- name: Core tools
+- name: System tools
   block:
-    - name: Chrome
-      ansible.builtin.import_tasks: core/chrome.yml
-      tags:
-        - chrome
-
-    - name: dbeaver
-      ansible.builtin.import_tasks: core/dbeaver.yml
-      tags:
-        - dbeaver
-        
     - name: Docker
-      ansible.builtin.import_tasks: core/docker.yml
+      ansible.builtin.import_tasks: system/docker.yml
       tags:
         - docker
         - docker-compose
 
     - name: Dropbox
-      ansible.builtin.import_tasks: core/dropbox.yml
+      ansible.builtin.import_tasks: system/dropbox.yml
       tags:
         - dropbox
 
-    - name: Github Cli
-      ansible.builtin.import_tasks: core/github-cli.yml
-      tags:
-        - github-cli
-
-    - name: Granted
-      ansible.builtin.import_tasks: core/granted.yml
-      tags:
-        - granted
-
     - name: Neovim
-      ansible.builtin.import_tasks: core/neovim.yml
+      ansible.builtin.import_tasks: system/neovim.yml
       tags:
         - neovim
-    
+
     - name: 1Password
-      ansible.builtin.import_tasks: core/opass.yml
+      ansible.builtin.import_tasks: system/opass.yml
       tags:
         - opass
 
+  tags:
+    - system
+
+- name: DevOps Cli
+  block:
+    - name: Fzf
+      ansible.builtin.import_tasks: apps/fzf.yml
+      tags:
+        - fzf
+
     - name: RipGrep
-      ansible.builtin.import_tasks: core/ripgrep.yml
+      ansible.builtin.import_tasks: apps/ripgrep.yml
       tags:
         - rg
 
-    - name: SSM Manager
-      ansible.builtin.import_tasks: core/ssm-manager-plugin.yml
-      tags:
-        - ssm-manager-plugin
-  tags:
-    - core
-
-- name: Devops
-  block:
-    - name: AWS Vault
-      ansible.builtin.import_tasks: devops/aws-vault.yml
-      tags:
-        - aws-vault
-
     - name: terraform
-      ansible.builtin.import_tasks: devops/terraform.yml
+      ansible.builtin.import_tasks: apps/terraform.yml
       tags:
         - terraform
         - terragrunt
 
     - name: terragrunt
-      ansible.builtin.import_tasks: devops/terragrunt.yml
+      ansible.builtin.import_tasks: apps/terragrunt.yml
       tags:
-        - terraform
+        - terragrunt
 
     - name: Packer
-      ansible.builtin.import_tasks: devops/packer.yml
+      ansible.builtin.import_tasks: apps/packer.yml
       tags:
         - packer
 
-    - name: Leaap
-      ansible.builtin.import_tasks: devops/leapp.yml
-      tags:
-        - leapp
-
     - name: Mkcert
-      ansible.builtin.import_tasks: devops/mkcert.yml
+      ansible.builtin.import_tasks: apps/mkcert.yml
       tags:
         - mkcert
 
     - name: Postman
-      ansible.builtin.import_tasks: devops/postman.yml
+      ansible.builtin.import_tasks: apps/postman.yml
       tags:
         - postman
   tags:
-    - devops
+    - system-cli
+
+- name: Apps
+  block:
+    - name: Chrome
+      ansible.builtin.import_tasks: apps/chrome.yml
+      tags:
+        - chrome
+
+    - name: dbeaver
+      ansible.builtin.import_tasks: apps/dbeaver.yml
+      tags:
+        - dbeaver
+
+    - name: Leaap
+      ansible.builtin.import_tasks: apps/leapp.yml
+      tags:
+        - leapp
+  tags:
+    - apps
 
 - name: K8s
   block:
-    - ansible.builtin.import_tasks: devops/eksctl.yml
+    - ansible.builtin.import_tasks: apps/eksctl.yml
       tags:
         - eksctl
 
-    - ansible.builtin.import_tasks: devops/kubectl.yml
+    - ansible.builtin.import_tasks: apps/kubectl.yml
       tags:
         - kubectl
 
-    - ansible.builtin.import_tasks: devops/minikube.yml
+    - ansible.builtin.import_tasks: apps/minikube.yml
       tags:
         - minikube
   tags:
     - k8s
 
-- name: VSCode
-  ansible.builtin.import_tasks: core/vscode.yml
-  tags:
-    - vscode
-
 - name: Communications
   block:
     - name: Skype
-      ansible.builtin.import_tasks: comms/skype.yml
+      ansible.builtin.import_tasks: apps/skype.yml
       tags:
         - skype
 
     - name: Teams
-      ansible.builtin.import_tasks: comms/teams.yml
+      ansible.builtin.import_tasks: apps/teams.yml
       tags:
         - teams
 
     - name: Teamviewer
-      ansible.builtin.import_tasks: comms/teamviewer.yml
+      ansible.builtin.import_tasks: apps/teamviewer.yml
       tags:
         - teamviewer
 
     - name: Zoom
-      ansible.builtin.import_tasks: comms/zoom.yml
+      ansible.builtin.import_tasks: apps/zoom.yml
       tags:
         - zoom
   tags:

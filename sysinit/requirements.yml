@@ -1,4 +1,6 @@
 ---
 collections:
-  - name: community.aws
-    type: galaxy
+  - amazon.aws
+  - community.docker
+  - community.general
+  - community.kubernetes
