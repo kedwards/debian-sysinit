@@ -2,7 +2,7 @@
 packages:
   - amazon-ecr-credential-helper
   - apt-transport-https
-  - python3-venv
+  - curl
   # - python3-botocore
   # - python3-boto3
   # - build-essential

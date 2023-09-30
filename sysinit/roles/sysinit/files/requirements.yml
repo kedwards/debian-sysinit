@@ -1,6 +1,0 @@
----
-collections:
-  - amazon.aws
-  - community.general
-  - community.docker
-  - community.kubernetes

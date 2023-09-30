@@ -4,8 +4,7 @@ SYSINIT_PATH=$HOME/sysinit
 RELEASE=$(cat /etc/os-release | grep '^ID=' | awk '{ split($0, a, "="); print a[2]}')
 CODENAME=$(lsb_release -cs)
 
-(sudo apt update && sudo apt upgrade -y && sudo apt autoremove -y) || exit 1
-command -v git &> /dev/null || sudo apt-get install -y git
+(sudo apt update && sudo apt upgrade -y && sudo apt install git python3-venv - && sudo apt autoremove -y) || exit 1
 if [ ! -d $HOME/.sysinit ]; then
   python3 -m venv $HOME/.sysinit
 fi

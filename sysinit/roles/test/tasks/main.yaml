@@ -1,9 +1,0 @@
----
-- debug:
-    msg: "{{ var_group }}"
-
-- debug:
-    msg: "{{ var_host }}"
-
-- debug:
-    msg: "{{ github_token }}"
