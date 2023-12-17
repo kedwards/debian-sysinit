@@ -12,3 +12,9 @@ fi
 [ -d "${SYSINIT_PATH}" ] || git clone -b main --single-branch https://github.com/kedwards/sysinit.git "$SYSINIT_PATH"
 pip install -r "${SYSINIT_PATH}/requirements.txt" && ansible-galaxy install -r "${SYSINIT_PATH}/requirements.yml"
 ansible-playbook "${SYSINIT_PATH}/playbook.yml" -K --ask-vault-pass --tags system
+
+# AWSVPNClient requires deprecated libssl 1.0
+# wget http://snapshot.debian.org/archive/debian/20170705T160707Z/pool/main/o/openssl/libssl1.0.0_1.0.2l-1%7Ebpo8%2B1_amd64.deb
+# wget http://snapshot.debian.org/archive/debian/20190501T215844Z/pool/main/g/glibc/multiarch-support_2.28-10_amd64.deb
+# sudo dpkg -i multiarch-support*.deb libssl1.0.0*.deb
+

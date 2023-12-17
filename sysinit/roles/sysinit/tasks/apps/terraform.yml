@@ -1,26 +1,26 @@
 ---
-- name: Terraform - Exists
+- name: Check for terraform gpg file
   ansible.builtin.stat:
-    path: /usr/local/bin/terraform
-  register: terraform_exists_result
+    path: /etc/apt/keyrings/hashicorp-archive-keyring.gpg
+  register: terraform_gpg
 
-- name: Terraform Install/Upgrade
-  block:
-    - name: Terraform - Get latest
-      community.general.github_release:
-        user: hashicorp
-        repo: terraform
-        action: latest_release
-        token: "{{ github_token | default('') }}"
-      register: terraform_latest_version_result
+- name: "Add terraform offical GPG key for {{ ansible_distribution }}"
+  ansible.builtin.shell: >
+     curl -fsSL https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+     curl -FsSl https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/hashicorp-archive-keyring.gpg
+  when: not terraform_gpg.stat.exists
 
-    - name: Terraform - Set latest version
-      ansible.builtin.set_fact:
-        terraform_latest_version: "{{ terraform_latest_version_result.tag[1:] }}"
+- name: Touch the same file, but add/remove some permissions
+  ansible.builtin.file:
+    path: /etc/apt/keyrings/hashicorp-archive-keyring.gpg
+    mode: a+r
 
-    - name: Terraform Install/Upgrade
-      ansible.builtin.unarchive:
-        src: "https://releases.hashicorp.com/terraform/{{ terraform_latest_version }}/terraform_{{ terraform_latest_version }}_linux_amd64.zip"
-        dest: /usr/local/bin
-        remote_src: true
-  when: terraform_exists_result.stat.exists == false or upgrade == true
+- name: Add terraform repository
+  ansible.builtin.apt_repository:
+    repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/hashicorp-archive-keyring.gpg] https://download.terraform.com/linux/{{ ansible_distribution | lower }}/ {{ ansible_distribution_release }} stable"
+    state: present
+
+- name: Terraform - Install
+  ansible.builtin.apt:
+    pkg:
+      - terraform
