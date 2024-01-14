@@ -1,3 +1,0 @@
----
-- name: Dbeaver
-  ansible.builtin.import_tasks: apps/dbeaver.yml

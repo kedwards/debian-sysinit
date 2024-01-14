@@ -22,7 +22,7 @@ if [ ! -d $HOME/.sysinit ]; then
 fi
 . $HOME/.sysinit/bin/activate
 
-#[ -d "${SYSINIT_PATH}" ] || git clone -b main --single-branch https://github.com/kedwards/sysinit.git "$SYSINIT_PATH"
+[ -d "${SYSINIT_PATH}" ] || git clone -b main --single-branch https://github.com/kedwards/sysinit.git "$SYSINIT_PATH"
 
 pip install -r "${SYSINIT_PATH}/requirements.txt"
 
