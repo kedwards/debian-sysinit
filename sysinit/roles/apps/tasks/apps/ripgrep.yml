@@ -1,0 +1,13 @@
+---
+- name: RipGrep - Exists
+  ansible.builtin.stat:
+    path: /usr/local/bin/rg
+  register: ripgrep_exists_result
+
+- name: RipGrep - Install
+  block:
+    - name: RipGrep - Install
+      ansible.builtin.apt:
+        deb: https://github.com/BurntSushi/ripgrep/releases/download/13.0.0/ripgrep_13.0.0_amd64.deb
+        state: present
+  when: ripgrep_exists_result.stat.exists == false or upgrade == true

@@ -3,17 +3,10 @@ packages:
   - amazon-ecr-credential-helper
   - apt-transport-https
   - curl
-  # - python3-botocore
-  # - python3-boto3
   - build-essential
-  # - ca-certificates
-  # - curl
-  # - firefox
-  # - gnupg
-  # - gnupg-agent
-  # - golang-go
+  - ca-certificates
   - libffi-dev
-  # - libnss3-tools
+  - libnss3-tools
   - libbz2-dev
   - liblzma-dev
   - libncursesw5-dev
@@ -22,19 +15,10 @@ packages:
   - libsqlite3-dev
   - libxml2-dev
   - libxmlsec1-dev
-  # - llvm
-  # - lsb-release
-  # - make
-  # - meld
-  # - python3-venv
+  - make
   - tk-dev
-  # - unzip
-  # - vim-nox
-  # - wget --
-  # - xsel
+  - xsel
   - xz-utils
   - zlib1g-dev
-# Setting up python3-wrapt (1.14.1-2+b2) ...
-# Setting up python3-deprecated (1.2.13-3) ...
-# Setting up python3-github (1.55-3) ...
+  - thinkfan
 

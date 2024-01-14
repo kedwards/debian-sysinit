@@ -1,0 +1,12 @@
+---
+- name: Eksctl - Exists
+  ansible.builtin.stat:
+    path: /usr/local/bin/eksctl
+  register: eksctl_exists_result
+
+- name: Eksctl - Install
+  ansible.builtin.unarchive:
+    src: "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_{{ ansible_system }}_amd64.tar.gz"
+    dest: /usr/local/bin
+    remote_src: yes
+  when: eksctl_exists_result.stat.exists == false or upgrade == true

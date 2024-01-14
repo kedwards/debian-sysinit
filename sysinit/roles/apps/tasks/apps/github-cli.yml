@@ -1,0 +1,16 @@
+---
+- name: GH - Get signing key
+  ansible.builtin.apt_key:
+    url: https://cli.github.com/packages/githubcli-archive-keyring.gpg
+    state: present
+
+- name: GH - Add apt repository
+  ansible.builtin.apt_repository:
+    repo: "deb https://cli.github.com/packages stable main"
+    state: present
+    filename: gh
+
+- name: GitHub-Cli - Install
+  ansible.builtin.apt:
+    pkg:
+      - gh

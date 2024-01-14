@@ -1,0 +1,27 @@
+---
+- name: Thinkfan - Configure
+  block:
+    - name: Configure modprobe
+      ansible.builtin.lineinfile:
+        path:  /etc/modprobe.d/thinkfan.conf
+        state: present
+        line: 'options thinkpad_acpi fan_control=1'
+        create: yes
+        
+    - name: Configure default thinkfan
+      ansible.builtin.lineinfile:
+        path:  /etc/default/thinkfan
+        state: present
+        line: 'START=yes'
+        create: yes
+        
+    - name: Configure thinkfan
+      ansible.builtin.copy:
+        src:  "{{ role_path }}/files/thinkfan.conf"
+        dest: /etc/thinkfan.conf
+    
+    - name: Start service and enable
+      ansible.builtin.service:
+        name: thinkfan
+        state: started
+        enabled: yes

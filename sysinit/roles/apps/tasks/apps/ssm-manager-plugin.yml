@@ -1,0 +1,10 @@
+---
+- name: SSM Session Manager Plugin - Exists
+  ansible.builtin.stat:
+    path: /usr/bin/ssm_manager
+  register: ssm_manager_plugin_result
+
+- name: SSM Session Manager Plugin - Install/Upgrade
+  ansible.builtin.apt:
+    deb: https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb
+  when: ssm_manager_plugin_result.stat.exists == false or upgrade == true

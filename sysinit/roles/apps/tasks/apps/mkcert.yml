@@ -1,0 +1,27 @@
+---
+- name: mkcert - Exists
+  ansible.builtin.stat:
+    path: /usr/local/bin/mkcert
+  register: mkcert_exists_result
+
+- name: mkcert - Install/Upgrade
+  block:
+    - name: mkcert - Get latest
+      community.general.github_release:
+        user: FiloSottile
+        repo: mkcert
+        action: latest_release
+        token: "{{ github_token | default('') }}"
+      register: mkcert_latest_version
+
+    - name: mkcert - Set latest version
+      ansible.builtin.set_fact:
+        mkcert_latest_version: "{{ mkcert_latest_version.tag }}"
+
+    - name: mkcert - Install/Upgrade
+      ansible.builtin.get_url:
+        url: "https://github.com/FiloSottile/mkcert/releases/download/{{ mkcert_latest_version }}/mkcert-{{ mkcert_latest_version }}-linux-amd64"
+        dest: /usr/local/bin/mkcert
+        mode: 'u+x,g+x,o+x'
+        force: true
+  when: mkcert_exists_result.stat.exists == false or upgrade == true

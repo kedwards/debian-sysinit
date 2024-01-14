@@ -1,7 +1,7 @@
 ---
 - name: Install, configure base system
   block:
-    - name: Info
+    - name: System info
       ansible.builtin.debug:
         msg: |
           User: "{{ ansible_user_id }}"
@@ -12,15 +12,7 @@
           Release: "{{ ansible_distribution_release }}"
           Group: "{{ var_group }}"
           Host: "{{ var_host }}"
-
-    - name: Add non-free official repository for Debian
-      ansible.builtin.apt_repository:
-        repo: "deb http://ftp.ca.debian.org/debian/ {{ ansible_distribution_release }} main non-free-firmware"
-      when: ansible_distribution == "Debian"
-
-    - name: include os vars
-      ansible.builtin.include_vars: "{{ ansible_distribution }}.yml"
-
+          
     - name: Install system packages
       ansible.builtin.apt:
         name: "{{ packages }}"
@@ -50,105 +42,13 @@
       ansible.builtin.import_tasks: system/opass.yml
       tags:
         - opass
-
+    
+    - name: Thinkpad fan control
+      ansible.builtin.import_tasks: system/thinkfan.yml
+      tags:
+        - thinkfan
   tags:
     - system
 
-- name: DevOps Cli
-  block:
-    - name: Fzf
-      ansible.builtin.import_tasks: apps/fzf.yml
-      tags:
-        - fzf
-
-    - name: RipGrep
-      ansible.builtin.import_tasks: apps/ripgrep.yml
-      tags:
-        - rg
-
-    - name: terraform
-      ansible.builtin.import_tasks: apps/terraform.yml
-      tags:
-        - terraform
-        - terragrunt
-
-    - name: terragrunt
-      ansible.builtin.import_tasks: apps/terragrunt.yml
-      tags:
-        - terragrunt
-
-    - name: Packer
-      ansible.builtin.import_tasks: apps/packer.yml
-      tags:
-        - packer
-
-    - name: Mkcert
-      ansible.builtin.import_tasks: apps/mkcert.yml
-      tags:
-        - mkcert
-
-    - name: Postman
-      ansible.builtin.import_tasks: apps/postman.yml
-      tags:
-        - postman
-  tags:
-    - system-cli
-
-- name: Apps
-  block:
-    - name: Chrome
-      ansible.builtin.import_tasks: apps/chrome.yml
-      tags:
-        - chrome
-
-    - name: dbeaver
-      ansible.builtin.import_tasks: apps/dbeaver.yml
-      tags:
-        - dbeaver
-
-    - name: Leaap
-      ansible.builtin.import_tasks: apps/leapp.yml
-      tags:
-        - leapp
-  tags:
-    - apps
-
-- name: K8s
-  block:
-    - ansible.builtin.import_tasks: apps/eksctl.yml
-      tags:
-        - eksctl
-
-    - ansible.builtin.import_tasks: apps/kubectl.yml
-      tags:
-        - kubectl
-
-    - ansible.builtin.import_tasks: apps/minikube.yml
-      tags:
-        - minikube
-  tags:
-    - k8s
-
-- name: Communications
-  block:
-    - name: Skype
-      ansible.builtin.import_tasks: apps/skype.yml
-      tags:
-        - skype
-
-    - name: Teams
-      ansible.builtin.import_tasks: apps/teams.yml
-      tags:
-        - teams
-
-    - name: Teamviewer
-      ansible.builtin.import_tasks: apps/teamviewer.yml
-      tags:
-        - teamviewer
-
-    - name: Zoom
-      ansible.builtin.import_tasks: apps/zoom.yml
-      tags:
-        - zoom
-  tags:
-    - comms
+- name: Applications
+  ansible.builtin.import_tasks: "apps/{{ app }}.yml"

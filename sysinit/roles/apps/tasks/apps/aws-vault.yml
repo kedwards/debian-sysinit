@@ -1,0 +1,26 @@
+---
+- name: AWS-Vault - Exists
+  ansible.builtin.stat:
+    path: /usr/local/bin/aws-vault
+  register: aws_vault_exists_result
+
+- name: AWS-Vault Install/Upgrade
+  block:
+    - name: AWS-Vault - Get latest
+      community.general.github_release:
+        user: 99designs
+        repo: aws-vault
+        action: latest_release
+        token: "{{ github_token | default('') }}"
+      register: aws_vault_latest_version_result
+
+    - name: AWS-Vault - Set latest version
+      ansible.builtin.set_fact:
+        aws_vault_latest_version: "{{ aws_vault_latest_version_result.tag[1:] }}"
+
+    - name: AWS-Vault Install/Upgrade
+      ansible.builtin.get_url:
+        url: "https://github.com/99designs/aws-vault/releases/download/{{ aws_vault_latest_version_result.tag }}/aws-vault-linux-amd64"
+        dest: /usr/local/bin/aws-vault
+        mode: 'u+x,g+x,o+x'
+  when: aws_vault_exists_result.stat.exists == false or upgrade == true
