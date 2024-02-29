@@ -51,4 +51,6 @@
     - system
 
 - name: Applications
-  ansible.builtin.import_tasks: "apps/{{ app }}.yml"
+  ansible.builtin.include_tasks: "apps/{{ item  }}.yml"
+  loop: "{{ apps }}"
+  when: apps is defined

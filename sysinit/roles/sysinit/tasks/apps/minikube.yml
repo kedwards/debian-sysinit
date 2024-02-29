@@ -4,7 +4,9 @@
     path: /usr/local/bin/minikube
   register: minikube_exists_result
 
-- block:
+- name: Minikube - get latest version
+  when: minikube_exists_result.stat.exists != false and upgrade == true
+  block:
     - name: Minikube - Get installed version
       ansible.builtin.command: minikube version
       register: minikube_version_result
@@ -18,9 +20,9 @@
     - name: Minikube - Set installed version
       ansible.builtin.set_fact:
         minikube_installed_version: "{{  minikube_found_version[0] }}"
-  when: minikube_exists_result.stat.exists != false and upgrade == true
 
 - name: Minikube - Install/Upgrade
+  when: minikube_exists_result.stat.exists == false or upgrade == true
   block:
     - name: Minikube - Get latest
       community.general.github_release:
@@ -40,4 +42,3 @@
         dest: /usr/local/bin/minikube
         mode: 0755
         force: true
-  when: minikube_exists_result.stat.exists == false or upgrade == true
