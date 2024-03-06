@@ -9,7 +9,7 @@
      curl -fsSL https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
   when: not docker_gpg.stat.exists
 
-- name: Touch the same file, but add/remove some permissions
+- name: Fix keyring permissions
   ansible.builtin.file:
     path: /etc/apt/keyrings/docker.gpg
     mode: a+r
@@ -22,10 +22,11 @@
 - name: Docker - Install
   ansible.builtin.apt:
     pkg:
-      - docker-ce
-      - docker-ce-cli
+      - bash-completion
       - containerd.io
       - docker-buildx-plugin
+      - docker-ce
+      - docker-ce-cli
       - docker-compose-plugin
 
 - name: Docker - Add docker group
@@ -33,10 +34,16 @@
     name: docker
     state: present
 
-- name: Docker User
+- name: Docker - Configure user
   ansible.builtin.user:
     name: "{{ item }}"
     groups: docker
     append: true
   loop:
     - "{{ lookup('env','USER') }}"
+    
+- name: Docker - Install completion
+  ansible.builtin.get_url:
+    url: https://raw.githubusercontent.com/docker/docker-ce/master/components/cli/contrib/completion/bash/docker
+    dest: /etc/bash_completion.d/docker.sh
+    mode: +x

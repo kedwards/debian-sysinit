@@ -22,21 +22,27 @@
 
 - name: System tools
   block:
+    - name: Asdf
+      ansible.builtin.import_tasks: system/asdf.yml
+      tags:
+        - asdf
+    
+    - name: AWS
+      ansible.builtin.import_tasks: system/aws.yml
+      tags:
+        - aws
+    
     - name: Docker
       ansible.builtin.import_tasks: system/docker.yml
       tags:
         - docker
         - docker-compose
+        - docker-completion
 
     - name: Dropbox
       ansible.builtin.import_tasks: system/dropbox.yml
       tags:
         - dropbox
-
-    - name: Neovim
-      ansible.builtin.import_tasks: system/neovim.yml
-      tags:
-        - neovim
 
     - name: 1Password
       ansible.builtin.import_tasks: system/opass.yml
