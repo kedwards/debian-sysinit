@@ -1,0 +1,5 @@
+[env]
+_.python.venv = { path = "{{ env.HOME }}/.cache/venv/sysinit", create = true }
+
+[tools]
+python = "3.8"

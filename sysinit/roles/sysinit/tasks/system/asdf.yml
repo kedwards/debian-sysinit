@@ -25,10 +25,10 @@
         - github-cli
         - golang
         - granted
-        - kubectl
+        #- kubectl
         - minikube
         - neovim
-        - nodejs
+        #- nodejs
         - python
         - ripgrep
   become: true

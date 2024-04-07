@@ -22,10 +22,10 @@
 
 - name: System tools
   block:
-    - name: Asdf
-      ansible.builtin.import_tasks: system/asdf.yml
-      tags:
-        - asdf
+    - name: mise
+      ansible.builtin.include_tasks: system/{{ item }}.yml
+      loop:
+        - mise
     
     - name: AWS
       ansible.builtin.import_tasks: system/aws.yml

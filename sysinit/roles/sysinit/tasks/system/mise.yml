@@ -1,0 +1,45 @@
+---
+- name: Mise - Exists
+  ansible.builtin.stat:
+    path: "/home/{{ lookup('env','USER') }}/.local/bin/mise"
+  register: mise_exists_result
+
+- name: Mise - Install/Upgrade
+  block:
+    - name: Mise - Install/Upgrade
+      ansible.builtin.get_url:
+        url: https://mise.jdx.dev/mise-latest-linux-x64
+        dest: "/home/{{ lookup('env','USER') }}/.local/bin/mise"
+        mode: +x
+
+    - name: Mise - Install Plugins
+      ansible.builtin.shell: >
+        /home/{{ lookup('env','USER') }}/.local/bin/mise plugin add {{ plugin_item.plugin }} {{ plugin_item.src }}
+      loop_control:
+        loop_var: plugin_item
+      loop:
+        - { plugin: "git-worktree-wrapper", src: "https://github.com/kedwards/asdf-git-worktree-wrapper.git" }
+
+    - name: Mise - Install Plugins
+      ansible.builtin.shell: >
+        /home/{{ lookup('env','USER') }}/.local/bin/mise use -g -y {{ plugin_item }}
+      loop_control:
+        loop_var: plugin_item
+      loop:
+        - awscli
+        - direnv
+        - eksctl
+        - fzf
+        - github-cli
+        - golang
+        - granted
+        - kubectl
+        - minikube
+        - neovim
+        - nodejs
+        - python
+        - ripgrep
+        - git-worktree-wrapper
+  become: true
+  become_user: "{{ lookup('env','USER') }}"
+  when: mise_exists_result.stat.exists == false or upgrade == true
