@@ -14,7 +14,7 @@ cleanup() {
 sudo sh -c "apt-get update; apt-get upgrade -y; apt autoremove -y"
 
 curl -LsSf https://astral.sh/uv/install.sh | sh
-source "$HOME/.cargo/env
+source "$HOME/.cargo/env"
 
 uv venv $HOME/.sysinit
 source $HOME/.sysinit/bin/activate
