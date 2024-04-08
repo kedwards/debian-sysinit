@@ -22,3 +22,29 @@ packages:
   - zlib1g-dev
   - thinkfan
 
+system_tools:
+  - aws 
+  - docker
+  - dropbox
+  - mise
+  - opass
+  - starship
+  - thinkfan
+
+mise_plugins:
+  - awscli
+  - direnv
+  - eksctl
+  - fzf
+  - github-cli
+  - granted
+  - kubectl
+  - minikube
+  - neovim
+  - ripgrep
+  - uv
+  - git-worktree-wrapper
+  # - golang, nodejs, python  # default plugins
+
+mise_custom_plugins:
+  - { plugin: "git-worktree-wrapper", src: "https://github.com/kedwards/asdf-git-worktree-wrapper.git" }

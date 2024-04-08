@@ -22,24 +22,12 @@
 
     - name: Mise - Install Plugins
       ansible.builtin.shell: >
-        /home/{{ lookup('env','USER') }}/.local/bin/mise use -g -y {{ plugin_item }}
+        if [ ! -d "$HOME/.local/share/mise/plugins/{{ plugin_item }}" ]; then
+          /home/{{ lookup('env','USER') }}/.local/bin/mise use -g -y {{ plugin_item }}
+        fi
       loop_control:
         loop_var: plugin_item
-      loop:
-        - awscli
-        - direnv
-        - eksctl
-        - fzf
-        - github-cli
-        - golang
-        - granted
-        - kubectl
-        - minikube
-        - neovim
-        - nodejs
-        - python
-        - ripgrep
-        - git-worktree-wrapper
+      loop: "{{ mise_plugins }}"
   become: true
   become_user: "{{ lookup('env','USER') }}"
   when: mise_exists_result.stat.exists == false or upgrade == true

@@ -36,9 +36,11 @@
 
 - name: Docker - Configure user
   ansible.builtin.user:
-    name: "{{ item }}"
+    name: "{{ user_item }}"
     groups: docker
     append: true
+  loop_control:
+    loop_var: user_item
   loop:
     - "{{ lookup('env','USER') }}"
     
