@@ -11,11 +11,6 @@ cleanup() {
   fi
 }
 
-if [ "$EUID" -ne 0 ]
-  then echo "Please run as root"
-  exit
-fi
-
 sudo sh -c "apt-get update; apt-get upgrade -y; apt autoremove -y" || exit 1
 
 curl -LsSf https://astral.sh/uv/install.sh | sh
