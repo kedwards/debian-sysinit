@@ -27,4 +27,4 @@ fi
 
 uv pip install -r "${SYSINIT_PATH}/requirements.txt"
 
-ansible-playbook "${SYSINIT_PATH}/playbook.yml" -K --ask-vault-pass --tags system
+ansible-playbook -i "${SYSINIT_PATH}/inventory/" "${SYSINIT_PATH}/playbook.yml" -K --ask-vault-pass --tags system
