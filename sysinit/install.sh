@@ -16,7 +16,7 @@ if [ "$EUID" -ne 0 ]
   exit
 fi
 
-(apt update && apt upgrade -y && apt autoremove -y) || exit 1
+sudo sh -c "apt-get update; apt-get upgrade -y; apt autoremove -y" || exit 1
 
 curl -LsSf https://astral.sh/uv/install.sh | sh
 source "$HOME/.cargo/env
