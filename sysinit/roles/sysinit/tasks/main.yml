@@ -49,6 +49,11 @@
       tags:
         - opass
     
+    - name: Starship
+      ansible.builtin.import_tasks: system/starship.yml
+      tags:
+        - starship
+
     - name: Thinkpad fan control
       ansible.builtin.import_tasks: system/thinkfan.yml
       tags:

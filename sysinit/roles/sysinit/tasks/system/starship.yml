@@ -1,0 +1,18 @@
+---
+- name: Starship - Exists
+  ansible.builtin.stat:
+    path: "/home/{{ lookup('env','USER') }}/.local/bin/mise"
+  register: starship_exists_result
+
+- name: Starship - Install/Upgrade
+  block:
+    - name: Starship - Install/Upgrade
+      ansible.builtin.get_url:
+        url: https://starship.rs/install.sh
+        dest: /tmp/starship_install.sh
+        mode: +x
+
+    - name: Starship - Install
+      ansible.builtin.shell: >
+        cat /tmp/starship_install.sh | sh -s -- -y
+  when: starship_exists_result.stat.exists == false or upgrade == true
