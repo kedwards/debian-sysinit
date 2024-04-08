@@ -4,7 +4,7 @@ An opinionated script to initialize your Linux system.
 
 ## Distros
 
-This release has been tested on the below listed distros, and should work on Debian based distros.
+This release has been tested on Debian 12, and should work on Debian based distros.
 
 ## Quick Start
 
