@@ -11,7 +11,7 @@ cleanup() {
   fi
 }
 
-sudo sh -c "apt-get update; apt-get upgrade -y; apt autoremove -y" || exit 1
+sudo sh -c "apt-get update; apt-get upgrade -y; apt autoremove -y"
 
 curl -LsSf https://astral.sh/uv/install.sh | sh
 source "$HOME/.cargo/env
