@@ -19,6 +19,7 @@ fi
 (apt update && apt upgrade -y && apt autoremove -y) || exit 1
 
 curl -LsSf https://astral.sh/uv/install.sh | sh
+source "$HOME/.cargo/env
 
 uv venv $HOME/.sysinit
 source $HOME/.sysinit/bin/activate
