@@ -7,17 +7,17 @@ trap cleanup ERR EXIT
 cleanup() {
   if command -v deactivate &> /dev/null; then
   	deactivate
-    rm -fr $HOME/.sysinit
+    rm -fr "$HOME/.sysinit"
   fi
 }
 
 sudo sh -c "apt-get update; apt-get upgrade -y; apt autoremove -y"
 
 curl -LsSf https://astral.sh/uv/install.sh | sh
-source "$HOME/.cargo/env"
+# source "$HOME/.cargo/env"
 
-uv venv $HOME/.sysinit
-source $HOME/.sysinit/bin/activate
+uv venv "$HOME/.sysinit"
+source "$HOME/.sysinit/bin/activate"
 
 if [ -d "${SYSINIT_PATH}" ]; then
   git -C "${SYSINIT_PATH}" pull
