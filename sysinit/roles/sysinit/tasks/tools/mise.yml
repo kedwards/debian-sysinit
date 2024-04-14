@@ -6,6 +6,11 @@
 
 - name: Mise - Install/Upgrade
   block:
+    - name: Mise - Create bin direcitory
+      ansible.builtin.file:
+        path: "/home/{{ lookup('env','USER') }}/.local/bin"
+        state: directory
+
     - name: Mise - Install/Upgrade
       ansible.builtin.get_url:
         url: https://mise.jdx.dev/mise-latest-linux-x64

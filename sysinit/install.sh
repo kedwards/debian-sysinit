@@ -6,18 +6,19 @@ trap cleanup ERR EXIT
 
 cleanup() {
   if command -v deactivate &> /dev/null; then
-  	deactivate
-    rm -fr "$HOME/.sysinit"
+    deactivate
   fi
 }
 
-sudo sh -c "apt-get update; apt-get upgrade -y; apt autoremove -y"
+sudo sh -c "apt-get update; apt-get upgrade -y; apt-get install curl git; apt autoremove -y"
 
 curl -LsSf https://astral.sh/uv/install.sh | sh
-# source "$HOME/.cargo/env"
+source "$HOME/.cargo/env"
 
-uv venv "$HOME/.sysinit"
-source "$HOME/.sysinit/bin/activate"
+if [ ! -d "$HOME/.venv/sysinit" ];
+  uv venv "$HOME/.venv/sysinit"
+fi
+source "$HOME/.venv/sysinit/bin/activate"
 
 if [ -d "${SYSINIT_PATH}" ]; then
   git -C "${SYSINIT_PATH}" pull
@@ -27,4 +28,9 @@ fi
 
 uv pip install -r "${SYSINIT_PATH}/requirements.txt"
 
-ansible-playbook -i "${SYSINIT_PATH}/inventory/hosts.yml" "${SYSINIT_PATH}/playbook.yml" -K --ask-vault-pass --tags system
+cd "${SYSINIT_PATH}" || exit 1
+ansible-playbook playbook.yml -K --ask-vault-pass
+
+if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
+  git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+fi

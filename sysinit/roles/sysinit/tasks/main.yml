@@ -15,10 +15,10 @@
     state: present
 
 - name: Install required system tools
-  ansible.builtin.include_tasks: tasks/{{ item }}.yml
+  ansible.builtin.include_tasks: "tools/{{ item }}.yml"
   loop: "{{ system_tools }}"
 
 - name: Applications
-  ansible.builtin.include_tasks: "tasks/{{ item  }}.yml"
+  ansible.builtin.include_tasks: "tools/{{ item  }}.yml"
   loop: "{{ apps }}"
   when: apps is defined

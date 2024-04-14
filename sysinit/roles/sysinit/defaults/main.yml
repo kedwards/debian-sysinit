@@ -2,8 +2,10 @@
 packages:
   - amazon-ecr-credential-helper
   - apt-transport-https
-  - curl
+  - blueman
+  - bluetooth
   - build-essential
+  - curl
   - ca-certificates
   - libffi-dev
   - libnss3-tools
@@ -17,10 +19,10 @@ packages:
   - libxmlsec1-dev
   - make
   - tk-dev
+  - tmux
   - xsel
   - xz-utils
   - zlib1g-dev
-  - thinkfan
 
 system_tools:
   - aws 
@@ -37,14 +39,16 @@ mise_plugins:
   - eksctl
   - fzf
   - github-cli
+  - golang
   - granted
   - kubectl
   - minikube
   - neovim
+  - nodejs
+  - python
   - ripgrep
   - uv
   - git-worktree-wrapper
-  # - golang, nodejs, python  # default plugins
 
 mise_custom_plugins:
   - { plugin: "git-worktree-wrapper", src: "https://github.com/kedwards/asdf-git-worktree-wrapper.git" }
