@@ -15,7 +15,7 @@ sudo sh -c "apt-get update; apt-get upgrade -y; apt-get install curl git; apt au
 curl -LsSf https://astral.sh/uv/install.sh | sh
 source "$HOME/.cargo/env"
 
-if [ ! -d "$HOME/.venv/sysinit" ];
+if [ ! -d "$HOME/.venv/sysinit" ]; then
   uv venv "$HOME/.venv/sysinit"
 fi
 source "$HOME/.venv/sysinit/bin/activate"
