@@ -1,0 +1,14 @@
+---
+- name: Slack - Exists
+  ansible.builtin.stat:
+    path: /usr/local/bin/slack
+  register: slack_exists_result
+
+- name: Set slack version
+  set_fact:
+    slack_version: 4.37.101
+
+- name: Slack - Install/Upgrade
+  ansible.builtin.apt:
+    deb: "https://downloads.slack-edge.com/releases/linux/{{ slack_version }}/prod/x64/slack-desktop-{{ slack_version }}-amd64.deb"
+  when: slack_exists_result.stat.exists == false or upgrade == true

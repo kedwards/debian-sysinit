@@ -8,7 +8,7 @@
       Architecture: "{{ ansible_userspace_architecture }}"
       Distribution: "{{ ansible_distribution }}"
       Release: "{{ ansible_distribution_release }}"
-      
+
 - name: Install system packages
   ansible.builtin.apt:
     name: "{{ packages }}"
@@ -17,6 +17,7 @@
 - name: Install required system tools
   ansible.builtin.include_tasks: "tools/{{ item }}.yml"
   loop: "{{ system_tools }}"
+  when: not apps is defined
 
 - name: Applications
   ansible.builtin.include_tasks: "tools/{{ item  }}.yml"
