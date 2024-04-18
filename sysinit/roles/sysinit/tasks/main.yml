@@ -13,6 +13,7 @@
   ansible.builtin.apt:
     name: "{{ packages }}"
     state: present
+  when: ansible_distribution == 'Debian'
 
 - name: Install required system tools
   ansible.builtin.include_tasks: "tools/{{ item }}.yml"

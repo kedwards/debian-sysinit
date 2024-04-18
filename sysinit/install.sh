@@ -10,7 +10,14 @@ cleanup() {
   fi
 }
 
-sudo sh -c "apt-get update; apt-get upgrade -y; apt-get install curl git; apt autoremove -y"
+. /etc/os-release
+
+if [ "$ID" = "debian" ];
+then
+  sudo sh -c "apt-get update; apt-get upgrade -y; apt-get install curl git; apt autoremove -y"
+else
+  sudo sh -c "echo 'yes' | pacman -S curl git"
+fi
 
 curl -LsSf https://astral.sh/uv/install.sh | sh
 source "$HOME/.cargo/env"
@@ -29,7 +36,7 @@ fi
 uv pip install -r "${SYSINIT_PATH}/requirements.txt"
 
 cd "${SYSINIT_PATH}" || exit 1
-ansible-playbook playbook.yml -K --ask-vault-pass
+ansible-playbook playbook.yml -K --ask-vault-pass -e apps='["mise"]'
 
 if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
   git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
