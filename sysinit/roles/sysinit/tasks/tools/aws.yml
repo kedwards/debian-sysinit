@@ -1,13 +1,15 @@
 ---
-- name: AWS - SSM - Exists
-  ansible.builtin.stat:
-    path: /usr/local/bin/sessionmanagerplugin
-  register: awsssm_exists_result
+- block:
+    - name: AWS - SSM - Exists
+      ansible.builtin.stat:
+        path: /usr/local/bin/sessionmanagerplugin
+      register: awsssm_exists_result
 
-- name: AWS - SSM - Install/Upgrade
-  ansible.builtin.apt:
-    deb: https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb
-  when: awsssm_exists_result.stat.exists == false or upgrade == true
+    - name: AWS - SSM - Install/Upgrade
+      ansible.builtin.apt:
+        deb: https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb
+      when: awsssm_exists_result.stat.exists == false or upgrade == true
+  when: ansible_distribution == 'Debian'
 
 - name: AWS - BMA - Exists
   ansible.builtin.stat:
@@ -19,5 +21,5 @@
   become_user: "{{ lookup('env','USER') }}"
   when: bma_exists_result.stat.exists == false
   ansible.builtin.git:
-    repo:  https://github.com/bash-my-aws/bash-my-aws.git
+    repo: https://github.com/bash-my-aws/bash-my-aws.git
     dest: "/home/{{ lookup('env','USER') }}/.bash-my-aws"

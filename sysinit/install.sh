@@ -1,6 +1,7 @@
 #!/bin/bash
 
-SYSINIT_PATH=$HOME/sysinit
+sysinit_path="$HOME/sysinit"
+packages="curl git"
 
 trap cleanup ERR EXIT
 
@@ -27,17 +28,18 @@ if [ ! -d "$HOME/.venv/sysinit" ]; then
 fi
 source "$HOME/.venv/sysinit/bin/activate"
 
-if [ -d "${SYSINIT_PATH}" ]; then
-  git -C "${SYSINIT_PATH}" pull
+if [ -d "${sysinit_path}" ]; then
+  git -C "${sysinit_path}" pull
 else
-  git clone -b main --single-branch https://github.com/kedwards/sysinit.git "$SYSINIT_PATH"
+  git clone -b main --single-branch https://github.com/kedwards/sysinit.git "$sysinit_path"
 fi
 
-uv pip install -r "${SYSINIT_PATH}/requirements.txt"
+uv pip install -r "${sysinit_path}/requirements.txt"
 
-cd "${SYSINIT_PATH}" || exit 1
-ansible-playbook playbook.yml -K --ask-vault-pass -e apps='["mise"]'
+cd "${sysinit_path}" || exit 1
+ansible-playbook playbook.yml -K --ask-vault-pass
 
 if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
+  mkdir -p "$HOME/.tmux/plugins"
   git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 fi

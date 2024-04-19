@@ -15,12 +15,18 @@
     state: present
   when: ansible_distribution == 'Debian'
 
+- name: Install system packages
+  ansible.builtin.apt:
+    name: "{{ arch_packages }}"
+    state: present
+  when: ansible_distribution == 'Archlinux'
+
 - name: Install required system tools
   ansible.builtin.include_tasks: "tools/{{ item }}.yml"
   loop: "{{ system_tools }}"
-  when: not apps is defined
+  when: not apps is defined and ansible_distribution == 'Debian'
 
 - name: Applications
   ansible.builtin.include_tasks: "tools/{{ item  }}.yml"
   loop: "{{ apps }}"
-  when: apps is defined
+  when: apps is defined and ansible_distribution == 'Debian'

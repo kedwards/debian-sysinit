@@ -5,7 +5,6 @@ packages:
   - blueman
   - bluetooth
   - build-essential
-  - curl
   - ca-certificates
   - dnsutils
   - libffi-dev
@@ -25,14 +24,16 @@ packages:
   - xz-utils
   - zlib1g-dev
 
+arch_packages:
+
 system_tools:
-  - aws 
+  - aws
   - docker
   - dropbox
   - mise
   - opass
   - starship
-  - thinkfan
+  # - thinkfan
 
 mise_plugins:
   - awscli
