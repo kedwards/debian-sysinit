@@ -25,7 +25,7 @@
   when: ansible_distribution == 'Archlinux'
   
 - name: Install arch aur packages
-  ansible.builtin.shell: yay -S "{{ item }}"
+  ansible.builtin.shell: "yay -S --noconfirm --noprovides --answerclean None --answerdiff None {{ aur_packages | join(',') }}"
   loop: "{{ aur_packages }}"
   when: ansible_distribution == 'Archlinux'
 
