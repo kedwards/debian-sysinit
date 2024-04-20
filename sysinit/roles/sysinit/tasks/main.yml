@@ -10,7 +10,7 @@
       Release: "{{ ansible_distribution_release }}"
 
 - name: Load variables
-  ansible.builtin.include_vars: "{{ansible_distribution}}.yml"
+  ansible.builtin.include_vars: "{{ ansible_distribution }}.yml"
 
 - name: Install debian packages
   ansible.builtin.apt:
@@ -24,11 +24,11 @@
     state: present
   when: ansible_distribution == 'Archlinux'
   
-#- name: Install arch aur packages
-#  become_user: "{{ lookup('env','USER') }}"
-#  ansible.builtin.shell: "yay --noconfirm --answerclean None --answerdiff None -S {{ aur_packages | join(',') }}"
-#  loop: "{{ aur_packages }}"
-#  when: ansible_distribution == 'Archlinux'
+- name: Install arch aur packages
+  become_user: "{{ lookup('env','USER') }}"
+  ansible.builtin.shell: "yay --noconfirm --answerclean None --answerdiff None -S {{ item }}"
+  loop: "{{ aur_packages }}"
+  when: ansible_distribution == 'Archlinux'
 
 - name: Install tools
   ansible.builtin.include_tasks: "tools/{{ item }}.yml"

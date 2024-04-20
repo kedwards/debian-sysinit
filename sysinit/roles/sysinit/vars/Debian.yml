@@ -30,5 +30,6 @@ tools:
   - docker
   - dropbox
   - mise
+  - mise-plugins
   - opass
   - starship

@@ -13,4 +13,5 @@ aur_packages:
   
 tools:
   - bash-my-aws
+  - mise
   - starship

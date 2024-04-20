@@ -1,11 +1,10 @@
 ---
-- name: Mise - Exists
-  ansible.builtin.stat:
-    path: "/home/{{ lookup('env','USER') }}/.local/bin/mise"
-  register: mise_exists_result
+- block:
+    - name: Mise - Exists
+      ansible.builtin.stat:
+        path: "/home/{{ lookup('env','USER') }}/.local/bin/mise"
+      register: mise_exists_result
 
-- name: Mise - Install/Upgrade
-  block:
     - name: Mise - Create bin direcitory
       ansible.builtin.file:
         path: "/home/{{ lookup('env','USER') }}/.local/bin"
@@ -16,23 +15,43 @@
         url: https://mise.jdx.dev/mise-latest-linux-x64
         dest: "/home/{{ lookup('env','USER') }}/.local/bin/mise"
         mode: +x
+      when: mise_exists_result.stat.exists == false or upgrade == true
 
+    - name: Mise - set binary
+      ansible.builtin.set_fact:
+        mise_bin: "/home/{{ lookup('env','USER') }}/.local/bin/mise"
+  become_user: "{{ lookup('env','USER') }}"   
+  when: ansible_distribution == 'Debian'
+
+- block:
+    - name: Mise - Exists
+      ansible.builtin.stat:
+        path: "/usr/bin/mise"
+      register: mise_exists_result
+
+    - name: Mise - set binary
+      ansible.builtin.set_fact:
+        mise_bin: "/usr/bin/mise"
+      when: mise_exists_result.stat.exists == false or upgrade == true
+  become_user: "{{ lookup('env','USER') }}"   
+  when: ansible_distribution == 'Archlinux'
+
+- name: Mise - Install/Upgrade
+  block:
     - name: Mise - Install Plugins
       ansible.builtin.shell: >
-        /home/{{ lookup('env','USER') }}/.local/bin/mise plugin add {{ plugin_item.plugin }} {{ plugin_item.src }}
+        {{ mise_bin }} plugin add {{ plugin_item.plugin }} {{ plugin_item.src }}
       loop_control:
         loop_var: plugin_item
-      loop:
-        - { plugin: "git-worktree-wrapper", src: "https://github.com/kedwards/asdf-git-worktree-wrapper.git" }
+      loop: "{{ mise_custom_plugins }}"
 
     - name: Mise - Install Plugins
       ansible.builtin.shell: >
         if [ ! -d "$HOME/.local/share/mise/plugins/{{ plugin_item }}" ]; then
-          /home/{{ lookup('env','USER') }}/.local/bin/mise use -g -y {{ plugin_item }}
+          {{ mise_bin }} use -g -y {{ plugin_item }}
         fi
       loop_control:
         loop_var: plugin_item
       loop: "{{ mise_plugins }}"
-  become: true
   become_user: "{{ lookup('env','USER') }}"
-  when: mise_exists_result.stat.exists == false or upgrade == true
+  when: mise_bin
