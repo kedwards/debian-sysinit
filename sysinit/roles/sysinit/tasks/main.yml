@@ -24,11 +24,11 @@
     state: present
   when: ansible_distribution == 'Archlinux'
   
-- name: Install arch aur packages
-  become_user: "{{ lookup('env','USER') }}"
-  ansible.builtin.shell: "yay --noconfirm --answerclean None --answerdiff None -S {{ aur_packages | join(',') }}"
-  loop: "{{ aur_packages }}"
-  when: ansible_distribution == 'Archlinux'
+#- name: Install arch aur packages
+#  become_user: "{{ lookup('env','USER') }}"
+#  ansible.builtin.shell: "yay --noconfirm --answerclean None --answerdiff None -S {{ aur_packages | join(',') }}"
+#  loop: "{{ aur_packages }}"
+#  when: ansible_distribution == 'Archlinux'
 
 - name: Install tools
   ansible.builtin.include_tasks: "tools/{{ item }}.yml"
