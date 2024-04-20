@@ -20,7 +20,7 @@ else
   sudo sh -c "echo 'yes' | pacman -S $packages"
   git submodule init yay
   git submodule update
-  sudo ln -s ./lib/ansible-yay/yay ./library/yay
+  sudo ln -fs ./lib/ansible-yay/yay ./library/yay
 fi
 
 curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -40,7 +40,7 @@ fi
 uv pip install -r "${sysinit_path}/requirements.txt"
 
 cd "${sysinit_path}" || exit 1
-ansible-playbook playbook.yml -K --ask-vault-pass
+ANSIBLE_LIBRARY=./library ansible-playbook playbook.yml -K --ask-vault-pass
 
 if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
   mkdir -p "$HOME/.tmux/plugins"
