@@ -18,6 +18,9 @@ then
   sudo sh -c "apt-get update; apt-get upgrade -y; apt-get install $packages; apt autoremove -y"
 else
   sudo sh -c "echo 'yes' | pacman -S $packages"
+  git submodule init yay
+  git submodule update
+  sudo ln -s ./lib/ansible-yay/yay ./library/yay
 fi
 
 curl -LsSf https://astral.sh/uv/install.sh | sh

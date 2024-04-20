@@ -12,19 +12,25 @@
 - name: Load variables
   ansible.builtin.include_vars: "{{ansible_distribution}}.yml"
 
-- name: Install system packages
+- name: Install debian packages
   ansible.builtin.apt:
     name: "{{ packages }}"
     state: present
   when: ansible_distribution == 'Debian'
 
-- name: Install system packages
+- name: Install arch packages
   community.general.pacman:
     name: "{{ packages }}"
     state: present
   when: ansible_distribution == 'Archlinux'
+  
+- name: Install arch aur packages
+  yay:
+    name: "{{ aur_packages }}"
+    state: present
+  when: ansible_distribution == 'Archlinux'
 
-- name: Install required system tools
+- name: Install tools
   ansible.builtin.include_tasks: "tools/{{ item }}.yml"
-  loop: "{{ system_tools }}"
-  when: not apps is defined and ansible_distribution == 'Debian'
+  loop: "{{ tools }}"
+  when: not apps is defined

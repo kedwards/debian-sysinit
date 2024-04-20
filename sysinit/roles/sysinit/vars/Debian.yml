@@ -24,7 +24,7 @@ packages:
   - xz-utils
   - zlib1g-dev
 
-system_tools:
+tools:
   - aws-ssm
   - bash-my-aws
   - docker
