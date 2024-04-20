@@ -10,6 +10,7 @@ aur_packages:
   - amazon-ecr-credential-helper
   - dropbox
   - mise
+  - slack-desktop
   
 tools:
   - bash-my-aws

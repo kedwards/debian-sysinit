@@ -20,7 +20,7 @@ else
   sudo sh -c "echo 'yes' | pacman -S $packages"
 fi
 
-curl -LsSf https://astral.sh/uv/install.sh | sh
+command -v uv &> /dev/null || curl -LsSf https://astral.sh/uv/install.sh | sh
 source "$HOME/.cargo/env"
 
 if [ ! -d "$HOME/.venv/sysinit" ]; then
