@@ -15,9 +15,9 @@ cleanup() {
 
 if [ "$ID" = "debian" ];
 then
-  sudo sh -c "apt-get update; apt-get upgrade -y; apt-get install curl git; apt autoremove -y"
+  sudo sh -c "apt-get update; apt-get upgrade -y; apt-get install $packages; apt autoremove -y"
 else
-  sudo sh -c "echo 'yes' | pacman -S curl git"
+  sudo sh -c "echo 'yes' | pacman -S $packages"
 fi
 
 curl -LsSf https://astral.sh/uv/install.sh | sh
