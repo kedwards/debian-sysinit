@@ -26,7 +26,7 @@
   
 - name: Install arch aur packages
   become_user: "{{ lookup('env','USER') }}"
-  ansible.builtin.shell: "yay -S --noconfirm --answerclean None --answerdiff None {{ aur_packages | join(',') }}"
+  ansible.builtin.shell: "yay --noconfirm --answerclean None --answerdiff None -S {{ aur_packages | join(',') }}"
   loop: "{{ aur_packages }}"
   when: ansible_distribution == 'Archlinux'
 
