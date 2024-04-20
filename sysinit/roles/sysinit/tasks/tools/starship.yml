@@ -1,7 +1,7 @@
 ---
 - name: Starship - Exists
   ansible.builtin.stat:
-    path: "/home/{{ lookup('env','USER') }}/.local/bin/mise"
+    path: "/usr/local/bin/starship"
   register: starship_exists_result
 
 - name: Starship - Install/Upgrade

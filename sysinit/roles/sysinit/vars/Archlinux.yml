@@ -10,7 +10,7 @@ aur_packages:
   - amazon-ecr-credential-helper
   - dropbox
   - mise
-  - starship-git
   
 tools:
   - bash-my-aws
+  - starship
