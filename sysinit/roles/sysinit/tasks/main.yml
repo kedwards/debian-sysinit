@@ -25,7 +25,7 @@
   when: ansible_distribution == 'Archlinux'
   
 - name: Install arch aur packages
-  sudo_user: "{{ lookup('env','USER') }}"
+  become_user: "{{ lookup('env','USER') }}"
   ansible.builtin.shell: "yay -S --noconfirm --answerclean None --answerdiff None {{ aur_packages | join(',') }}"
   loop: "{{ aur_packages }}"
   when: ansible_distribution == 'Archlinux'
