@@ -40,7 +40,7 @@ fi
 uv pip install -r "${sysinit_path}/requirements.txt"
 
 cd "${sysinit_path}" || exit 1
-ANSIBLE_LIBRARY=./library ansible-playbook playbook.yml -K --ask-vault-pass
+ansible-playbook playbook.yml -K --ask-vault-pass
 
 if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
   mkdir -p "$HOME/.tmux/plugins"
