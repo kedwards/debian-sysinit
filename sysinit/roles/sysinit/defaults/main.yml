@@ -1,10 +1,13 @@
 ---
 mise_plugins:
+  - 1password-cli
+  - amazon-ecr-credential-helper
   - awscli
   - direnv
   - eksctl
   - fzf
   - github-cli
+  - git-worktree-wrapper
   - golang
   - granted
   - kubectl
@@ -13,8 +16,8 @@ mise_plugins:
   - nodejs
   - python
   - ripgrep
+  - starship
   - uv
-  - git-worktree-wrapper
 
 mise_custom_plugins:
   - { plugin: "git-worktree-wrapper", src: "https://github.com/kedwards/asdf-git-worktree-wrapper.git" }

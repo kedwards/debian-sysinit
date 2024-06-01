@@ -5,9 +5,6 @@ packages:
 
 aur_packages:
   - 1password
-  - 1password-cli
-  - aws-session-manager-plugin 
-  - amazon-ecr-credential-helper
   - dropbox
   - mise
   - slack-desktop
@@ -15,4 +12,3 @@ aur_packages:
 tools:
   - bash-my-aws
   - mise
-  - starship
