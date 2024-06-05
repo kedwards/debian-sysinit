@@ -1,14 +1,17 @@
 ---
 packages:
+  - clang
   - docker
+  - libxcrypt-compat
   - tmux
 
 aur_packages:
   - 1password
+  - aws-session-manager-plugin
   - dropbox
   - mise
   - slack-desktop
-  
+
 tools:
   - bash-my-aws
   - mise

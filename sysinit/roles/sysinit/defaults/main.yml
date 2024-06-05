@@ -17,7 +17,11 @@ mise_plugins:
   - python
   - ripgrep
   - starship
+  - usage
   - uv
 
 mise_custom_plugins:
-  - { plugin: "git-worktree-wrapper", src: "https://github.com/kedwards/asdf-git-worktree-wrapper.git" }
+  - {
+      plugin: "git-worktree-wrapper",
+      src: "https://github.com/kedwards/asdf-git-worktree-wrapper.git",
+    }
