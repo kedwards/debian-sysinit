@@ -12,6 +12,12 @@
 - name: Load variables
   ansible.builtin.include_vars: "{{ ansible_distribution }}.yml"
 
+- name: Install ubuntu packages
+  ansible.builtin.apt:
+    name: "{{ packages }}"
+    state: present
+  when: ansible_distribution == 'Ubuntu'
+
 - name: Install debian packages
   ansible.builtin.apt:
     name: "{{ packages }}"

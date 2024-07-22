@@ -21,7 +21,7 @@
       ansible.builtin.set_fact:
         mise_bin: "/home/{{ lookup('env','USER') }}/.local/bin/mise"
   become_user: "{{ lookup('env','USER') }}"   
-  when: ansible_distribution == 'Debian'
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
 
 - block:
     - name: Mise - Exists

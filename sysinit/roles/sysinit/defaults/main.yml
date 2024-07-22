@@ -10,6 +10,7 @@ mise_plugins:
   - git-worktree-wrapper
   - golang
   - granted
+  - jq
   - kubectl
   - minikube
   - neovim

@@ -13,9 +13,9 @@ cleanup() {
 
 . /etc/os-release
 
-if [ "$ID" = "debian" ];
+if [ "$ID" = "debian" -o "$ID" = "ubuntu" ];
 then
-  sudo sh -c "apt-get update; apt-get upgrade -y; apt-get install $packages; apt autoremove -y"
+  sudo sh -c "apt-get update; apt-get upgrade -y; apt-get install $packages -y; apt autoremove -y"
 else
   sudo sh -c "echo 'yes' | pacman -S $packages"
 fi
