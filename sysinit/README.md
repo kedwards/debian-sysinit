@@ -6,8 +6,8 @@ An opinionated script to initialize your Linux system.
 
 This release has been tested on the following distributions, and should work on all distros based from:
 
-- Debian 12
-- Arch Linux 2024.04.01
+- Debian
+- Arch
 
 ## Quick Start
 
