@@ -24,6 +24,12 @@
     state: present
   when: ansible_distribution == 'Debian'
 
+- name: Install rocky packages
+  ansible.builtin.dnf:
+    name: "{{ packages }}"
+    state: present
+  when: ansible_distribution == 'Rocky'
+
 - name: Install arch packages
   community.general.pacman:
     name: "{{ packages }}"

@@ -16,8 +16,10 @@ cleanup() {
 if [ "$ID" = "debian" -o "$ID" = "ubuntu" ];
 then
   sudo sh -c "apt-get update; apt-get upgrade -y; apt-get install $packages -y; apt autoremove -y"
-else
+elif [ "$ID" = "arch" ]; then
   sudo sh -c "echo 'yes' | pacman -S $packages"
+elif [ "$ID" = "rocky" ]; then
+  sudo dnf install -y $packages
 fi
 
 command -v uv &> /dev/null || curl -LsSf https://astral.sh/uv/install.sh | sh

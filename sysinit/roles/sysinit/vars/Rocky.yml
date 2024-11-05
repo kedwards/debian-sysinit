@@ -1,0 +1,7 @@
+---
+packages:
+  - tmux
+
+tools:
+  - bash-my-aws
+  - mise
