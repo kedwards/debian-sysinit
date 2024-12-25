@@ -12,40 +12,15 @@
 - name: Load variables
   ansible.builtin.include_vars: "{{ ansible_distribution }}.yml"
 
-- name: Install ubuntu packages
-  ansible.builtin.apt:
+- name: Install system packages
+  ansible.builtin.package:
     name: "{{ packages }}"
     state: present
-  when: ansible_distribution == 'Ubuntu'
-
-- name: Install debian packages
-  ansible.builtin.apt:
-    name: "{{ packages }}"
-    state: present
-  when: ansible_distribution == 'Debian'
-
-- name: Install rocky packages
-  ansible.builtin.dnf:
-    name: "{{ packages }}"
-    state: present
-  when: ansible_distribution == 'Rocky'
-
-- name: Install arch packages
-  community.general.pacman:
-    name: "{{ packages }}"
-    state: present
-  when: ansible_distribution == 'Archlinux'
   
-- name: Install arch aur packages
-  become_user: "{{ lookup('env','USER') }}"
-  ansible.builtin.shell: >
-    if ! yay -Q {{ item }}; then
-      yay --noconfirm --answerclean None --answerdiff None -S {{ item }}
-    fi
-  loop: "{{ aur_packages }}"
+- name: Install Arch aur packages
+  ansible.builtin.include_tasks: "tools/aur.yml"
   when: ansible_distribution == 'Archlinux'
 
 - name: Install tools
   ansible.builtin.include_tasks: "tools/{{ item }}.yml"
-  loop: "{{ tools }}"
-  when: not apps is defined
+  loop: "{{ tools|default([]) }}"

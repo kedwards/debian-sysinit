@@ -5,6 +5,7 @@ mise_plugins:
   - awscli
   - direnv
   - eksctl
+  - eza
   - fzf
   - github-cli
   - git-worktree-wrapper
@@ -16,10 +17,13 @@ mise_plugins:
   - neovim
   - nodejs
   - python
+  - rclone
   - ripgrep
   - starship
   - usage
+  - tmux
   - uv
+  - zellij
 
 mise_custom_plugins:
   - {

@@ -1,0 +1,8 @@
+---
+- name: Install Arch aur packages
+  become_user: "{{ lookup('env','USER') }}"
+  ansible.builtin.shell: >
+    if ! yay -Q {{ item }}; then
+      yay --noconfirm --answerclean None --answerdiff None -S {{ item }}
+    fi
+  loop: "{{ aur_packages }}"

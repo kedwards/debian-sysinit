@@ -17,9 +17,7 @@ packages:
   - libsqlite3-dev
   - libxml2-dev
   - libxmlsec1-dev
-  - make
   - tk-dev
-  - tmux
   - xsel
   - xz-utils
   - zlib1g-dev
@@ -30,6 +28,4 @@ tools:
   - docker
   - dropbox
   - mise
-  - mise-plugins
   - opass
-  - starship
