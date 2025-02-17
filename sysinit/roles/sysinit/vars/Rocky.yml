@@ -1,8 +1,0 @@
----
-packages:
-  - tmux
-  - xsel
-
-tools:
-  - bash-my-aws
-  - mise

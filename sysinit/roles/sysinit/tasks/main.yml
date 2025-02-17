@@ -16,6 +16,10 @@
   ansible.builtin.package:
     name: "{{ packages }}"
     state: present
+
+- name: Install Debian community or private matained packages
+  ansible.builtin.include_tasks: "tools/apt.yml"
+  when: ansible_distribution == 'Debian'
   
 - name: Install Arch aur packages
   ansible.builtin.include_tasks: "tools/aur.yml"

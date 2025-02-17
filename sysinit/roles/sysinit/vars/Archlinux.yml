@@ -9,8 +9,9 @@ aur_packages:
   - aws-session-manager-plugin
   - 1password
   - dropbox
-  - mise
   - slack-desktop
+  - ghostty
 
 tools:
   - bash-my-aws
+  - mise

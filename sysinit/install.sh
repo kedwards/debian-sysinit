@@ -62,4 +62,4 @@ fi
 uv pip install -r "${sysinit_path}/requirements.txt"
 
 cd "${sysinit_path}" || exit 1
-ansible-playbook playbook.yml -k --ask-vault-pass
+ansible-playbook playbook.yml -K --ask-vault-pass

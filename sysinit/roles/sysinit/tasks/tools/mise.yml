@@ -1,11 +1,11 @@
 ---
-- block:
-    - name: Mise - Exists
-      ansible.builtin.stat:
-        path: "/home/{{ lookup('env','USER') }}/.local/bin/mise"
-      register: mise_exists_result
+- name: Mise - Exists
+  ansible.builtin.stat:
+    path: "/home/{{ lookup('env','USER') }}/.local/bin/mise"
+  register: mise_exists_result
 
-    - name: Mise - Create bin direcitory
+- block:
+    - name: Mise - Bin directory exists
       ansible.builtin.file:
         path: "/home/{{ lookup('env','USER') }}/.local/bin"
         state: directory
@@ -15,26 +15,12 @@
         url: https://mise.jdx.dev/mise-latest-linux-x64
         dest: "/home/{{ lookup('env','USER') }}/.local/bin/mise"
         mode: +x
-      when: mise_exists_result.stat.exists == false or upgrade == true
 
     - name: Mise - set binary
       ansible.builtin.set_fact:
         mise_bin: "/home/{{ lookup('env','USER') }}/.local/bin/mise"
   become_user: "{{ lookup('env','USER') }}"   
-  when: ansible_distribution != 'ArchLinux'
-
-- block:
-    - name: Mise - Exists
-      ansible.builtin.stat:
-        path: "/usr/bin/mise"
-      register: mise_exists_result
-
-    - name: Mise - set binary
-      ansible.builtin.set_fact:
-        mise_bin: "/usr/bin/mise"
-      when: mise_exists_result.stat.exists == false or upgrade == true
-  become_user: "{{ lookup('env','USER') }}"   
-  when: ansible_distribution == 'Archlinux'
+  when: mise_exists_result.stat.exists == false or upgrade == true
 
 - name: Mise - Install/Upgrade
   block:

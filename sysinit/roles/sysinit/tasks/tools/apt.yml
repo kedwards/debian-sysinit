@@ -1,0 +1,31 @@
+---
+# curl -fsSL https://download.opensuse.org/repositories/home:clayrisser:bookworm/Debian_12/Release.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/home_clayrisser_bookworm.gpg > /dev/null
+# repo: "deb http://download.opensuse.org/repositories/home:/clayrisser:/bookworm/Debian_12/ /"
+- block:
+    - name: Check for gpg file
+      ansible.builtin.stat:
+        path: "/etc/apt/keyrings/{{ item.name }}.gpg"
+      register: "{{ item.name }}_gpg"
+
+    - name: "Add GPG key for {{ ansible_distribution }}"
+      ansible.builtin.shell: >
+        curl -fsSL {{ item.url }} | gpg --dearmor | sudo tee /etc/apt/keyrings/{{ item.name }}.gpg > /dev/null
+      when: not {{ item.name }}_gpg.stat.exists
+
+    - name: Fix keyring permissions
+      ansible.builtin.file:
+        path: "/etc/apt/keyrings/{{ item.name }}.gpg"
+        mode: a+r
+
+    - name: Add repository
+      ansible.builtin.apt_repository:
+        repo: "{{ item.repo }}"
+        state: present
+
+    - name: Install
+      ansible.builtin.apt:
+        pkg:
+          - "{{ item.name }}"
+  loop: "{{ apt_packages }}"
+  loop_control:
+    loop_var: item
