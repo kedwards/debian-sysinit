@@ -2,7 +2,10 @@
 packages:
   - clang
   - docker
+  - ghostty
+  - gnome-keyring
   - libxcrypt-compat
+  - seahorse
   - xsel
 
 aur_packages:
@@ -10,7 +13,6 @@ aur_packages:
   - 1password
   - dropbox
   - slack-desktop
-  - ghostty
 
 tools:
   - bash-my-aws
