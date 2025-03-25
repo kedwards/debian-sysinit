@@ -19,6 +19,7 @@
 
 - name: Install Debian community or private matained packages
   ansible.builtin.include_tasks: "tools/apt.yml"
+  loop: "{{ apt_packages|default([]) }}"
   when: ansible_distribution == 'Debian'
   
 - name: Install Arch aur packages

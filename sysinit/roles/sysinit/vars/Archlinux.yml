@@ -5,6 +5,8 @@ packages:
   - ghostty
   - gnome-keyring
   - libxcrypt-compat
+  - lua-language-server
+  - lynx
   - seahorse
   - xsel
 

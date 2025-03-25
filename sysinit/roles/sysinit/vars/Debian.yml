@@ -23,9 +23,9 @@ packages:
   - zlib1g-dev
 
 apt_packages:
-  - name: ghosttyu
-    url: https://download.opensuse.org/repositories/home:clayrisser:bookworm/Debian_12/Release.key
-    repo: "deb http://download.opensuse.org/repositories/home:/clayrisser:/bookworm/Debian_12/ /"
+  - name: ghostty
+    key_url: https://download.opensuse.org/repositories/home:clayrisser:bookworm/Debian_12/Release.key
+    repo: "http://download.opensuse.org/repositories/home:/clayrisser:/bookworm/Debian_12/ /"
 
 tools:
   - aws-ssm
