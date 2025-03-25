@@ -18,7 +18,7 @@ wget -O - https://bit.ly/_sysinit | bash
 ```
 
 ```bash
-https://links.kevinedwards.ca/sysinit | bash
+wget https://links.kevinedwards.ca/sysinit | bash
 ```
 
 Alternatively if you want to audit the script clone the repo, and run the install.sh script:
