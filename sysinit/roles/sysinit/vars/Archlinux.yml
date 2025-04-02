@@ -1,13 +1,16 @@
 ---
 packages:
+  - asciinema
   - clang
   - docker
+  - flameshot
   - ghostty
   - gnome-keyring
   - libxcrypt-compat
   - lua-language-server
   - lynx
   - seahorse
+  - warp-terminal-repo
   - xsel
 
 aur_packages:

@@ -2,11 +2,13 @@
 packages:
   - amazon-ecr-credential-helper
   - apt-transport-https
+  - asciinema
   - blueman
   - bluetooth
   - build-essential
   - ca-certificates
   - dnsutils
+  - flameshot
   - libffi-dev
   - libnss3-tools
   - libbz2-dev
@@ -34,3 +36,4 @@ tools:
   - dropbox
   - mise
   - opass
+  - warp-terminal

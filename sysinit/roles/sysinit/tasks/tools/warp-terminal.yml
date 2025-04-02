@@ -1,0 +1,10 @@
+---
+- name: Warp - Exists
+  ansible.builtin.stat:
+    path: /usr/bin/warp
+  register: warp_result
+
+- name: Install Warp-terminal
+  ansible.builtin.apt:
+    deb: https://app.warp.dev/get_warp?package=deb
+  when: warp_result.stat.exists == false or upgrade == true

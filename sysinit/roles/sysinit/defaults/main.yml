@@ -3,16 +3,21 @@ mise_plugins:
   - 1password-cli
   - amazon-ecr-credential-helper
   - awscli
+  - bat
   - direnv
   - eksctl
   - eza
+  - fd
   - fzf
   - github-cli
   - git-worktree-wrapper
   - golang
   - granted
   - jq
+  - k9s
   - kubectl
+  - kubectx
+  - kubens
   - minikube
   - neovim
   - nodejs
