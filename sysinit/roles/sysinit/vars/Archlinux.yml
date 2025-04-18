@@ -3,6 +3,7 @@ packages:
   - asciinema
   - clang
   - docker
+  - docker-buildx
   - flameshot
   - ghostty
   - gnome-keyring
