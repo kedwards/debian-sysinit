@@ -1,4 +1,10 @@
 ---
+- name: Create a temporary directory
+  ansible.builtin.tempfile:
+    state: directory
+    suffix: tmp
+  register: tmpdir
+
 - name: Warp - Exists
   ansible.builtin.stat:
     path: /usr/bin/warp
@@ -7,4 +13,22 @@
 - name: Install Warp-terminal
   ansible.builtin.apt:
     deb: https://app.warp.dev/get_warp?package=deb
-  when: warp_result.stat.exists == false or upgrade == true
+  when: ansible_distribution == 'Debian' and (warp_result.stat.exists == false or upgrade == true)
+
+- name: Download and install warp-terminal
+  when: ansible_distribution == 'Archlinux'
+  block:
+    - name: Download Warp-terminal
+      ansible.builtin.get_url:
+        url: https://releases.warp.dev/stable/v0.2025.04.16.08.11.stable_02/warp-terminal-v0.2025.04.16.08.11.stable_02-1-x86_64.pkg.tar.zst
+        dest: "{{ tmpdir.path }}/warp-termnal.pkg.tar.zst"
+        decompress: false
+
+    - name: Install Warp-terminal
+      ansible.builtin.shell: |
+        pacman -U --noconfirm  {{ tmpdir.path }}/warp-termnal.pkg.tar.zst
+
+- name: Remove temporary directory
+  ansible.builtin.file:
+    path: "{{ tmpdir.path }}"
+    state: "absent"

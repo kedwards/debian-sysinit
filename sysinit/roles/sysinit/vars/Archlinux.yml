@@ -11,7 +11,7 @@ packages:
   - lua-language-server
   - lynx
   - seahorse
-  - warp-terminal-repo
+  - stow
   - xsel
 
 aur_packages:
@@ -19,6 +19,7 @@ aur_packages:
   - 1password
   - dropbox
   - slack-desktop
+  - warp-terminal
 
 tools:
   - bash-my-aws

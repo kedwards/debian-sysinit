@@ -19,6 +19,7 @@ packages:
   - libsqlite3-dev
   - libxml2-dev
   - libxmlsec1-dev
+  - stow
   - tk-dev
   - xsel
   - xz-utils
