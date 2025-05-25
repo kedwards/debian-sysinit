@@ -12,15 +12,14 @@ cleanup() {
 }
 
 function getPackageManager() {
-  local pm;
+  local pm
 
-  declare -A osInfo;
-  osInfo[/etc/redhat-release]=yum
-  osInfo[/etc/arch-release]=pacman
-  osInfo[/etc/debian_version]=apt-get
+  declare -A osInfo
+  osInfo['/etc/redhat-release']=yum
+  osInfo['/etc/arch-release']=pacman
+  osInfo['/etc/debian_version']=apt-get
 
-  for f in "${!osInfo[@]}"
-  do
+  for f in "${!osInfo[@]}"; do
     if [[ -f $f ]]; then
       pm="${osInfo[$f]}"
     fi
@@ -29,19 +28,19 @@ function getPackageManager() {
 }
 
 case $(getPackageManager) in
-  "apt-get")
-    sudo sh -c "apt-get update; apt-get upgrade -y; apt-get install $packages -y; apt autoremove -y"
-    ;;
-  "pacman")
-    sudo sh -c "pacman -Syu; echo 'yes' | pacman -S --noconfirm $packages"
-    ;;
-  "yum")
-    sudo ish -c "yum update; yum install -y $packages"
-    ;;
-  *)
-    echo "Unsupported package manager"
-    exit 1
-    ;;
+"apt-get")
+  sudo sh -c "apt-get update; apt-get upgrade -y; apt-get install $packages -y; apt autoremove -y"
+  ;;
+"pacman")
+  sudo sh -c "pacman -Syu; echo 'yes' | pacman -S --noconfirm $packages"
+  ;;
+"yum")
+  sudo ish -c "yum update; yum install -y $packages"
+  ;;
+*)
+  echo "Unsupported package manager"
+  exit 1
+  ;;
 esac
 
 curl https://mise.run | sh
