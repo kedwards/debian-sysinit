@@ -12,6 +12,7 @@ packages:
   - lynx
   - seahorse
   - stow
+  - xfce-indicator-plugin
   - xsel
 
 aur_packages:
