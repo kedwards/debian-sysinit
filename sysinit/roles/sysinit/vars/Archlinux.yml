@@ -1,5 +1,6 @@
 ---
 packages:
+  - android-tools
   - asciinema
   - clang
   - docker
