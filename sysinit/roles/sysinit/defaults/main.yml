@@ -1,8 +1,10 @@
 ---
-mise_plugins:
+sysinit_mise_plugins:
+  - 1password
   - 1password-cli
   - amazon-ecr-credential-helper
   - awscli
+  - aws-vault
   - bat
   - direnv
   - eksctl
@@ -19,19 +21,25 @@ mise_plugins:
   - kubectx
   - kubens
   - minikube
+  - mkcert
   - neovim
   - nodejs
-  - python
+  - packer
+  - python@3.11
   - rclone
   - ripgrep
   - starship
+  - terraform
+  - terragrunt
   - usage
   - tmux
   - uv
   - zellij
 
-mise_custom_plugins:
+sysinit_mise_custom_plugins:
   - {
-      plugin: "git-worktree-wrapper",
-      src: "https://github.com/kedwards/asdf-git-worktree-wrapper.git",
-    }
+    plugin: "git-worktree-wrapper",
+    src: "https://github.com/kedwards/asdf-git-worktree-wrapper.git",
+  }
+
+sysinit_slack_version: 4.45.64

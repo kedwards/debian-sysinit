@@ -1,0 +1,48 @@
+# Pre-commit hooks configuration
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+  # General hooks for file formatting and validation
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: ['--unsafe']  # Allow custom YAML tags used by Ansible
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: mixed-line-ending
+
+  # Secret detection
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: |
+          (?x)^(
+            \.secrets\.baseline$|
+            .*\.lock$|
+            .*\.min\.js$
+          )$
+
+  # Ansible linting
+  - repo: https://github.com/ansible/ansible-lint
+    rev: v25.7.0
+    hooks:
+      - id: ansible-lint
+        files: \.(yaml|yml)$
+        exclude: |
+          (?x)^(
+            \.secrets\.baseline$|
+            requirements\.yml$|
+            .*\.min\.yml$
+          )$
+
+  # Shell script linting
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        args: ['-e', 'SC1091']  # Exclude sourcing non-constant files warning

@@ -7,4 +7,4 @@
 - name: Skype
   ansible.builtin.apt:
     deb: https://go.skype.com/skypeforlinux-64.deb
-  when: skype_result.stat.exists == false or upgrade == true
+  when: not skype_result.stat.exists or upgrade

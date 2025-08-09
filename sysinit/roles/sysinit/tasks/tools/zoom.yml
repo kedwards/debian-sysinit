@@ -7,4 +7,4 @@
 - name: Zoom
   ansible.builtin.apt:
     deb: https://zoom.us/client/latest/zoom_amd64.deb
-  when: zoom_result.stat.exists == false or upgrade == true
+  when: not zoom_result.stat.exists or upgrade | bool

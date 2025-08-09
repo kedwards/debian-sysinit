@@ -9,11 +9,11 @@
     src: https://dl.pstmn.io/download/latest/linux64
     dest: /usr/local
     remote_src: true
-  when: postman_exists_result.stat.exists == false or upgrade == true
+  when: not postman_exists_result.stat.exists or upgrade
 
 - name: Postman Configure
   ansible.builtin.file:
     src: /usr/local/Postman/app/Postman
     dest: /usr/local/bin/postman
     state: link
-  when: postman_exists_result.stat.exists == false or upgrade == true
+  when: not postman_exists_result.stat.exists or upgrade

@@ -1,5 +1,5 @@
 ---
-packages:
+sysinit_packages:
   - android-tools
   - asciinema
   - clang
@@ -16,13 +16,13 @@ packages:
   - xfce-indicator-plugin
   - xsel
 
-aur_packages:
+sysinit_aur_packages:
   - aws-session-manager-plugin
   - 1password
   - dropbox
   - slack-desktop
   - warp-terminal
 
-tools:
+sysinit_tools:
   - bash-my-aws
   - mise

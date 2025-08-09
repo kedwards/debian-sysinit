@@ -1,3 +1,4 @@
+---
 - name: Leapp Exists
   ansible.builtin.stat:
     path: /usr/bin/leapp
@@ -6,4 +7,4 @@
 - name: Leapp Install
   ansible.builtin.apt:
     deb: "https://asset.noovolari.com/latest/Leapp_{{ leapp_version }}_amd64.deb"
-  when: leapp_exists_result.stat.exists == false or upgrade == true
+  when: not leapp_exists_result.stat.exists or upgrade

@@ -5,8 +5,24 @@
   register: sidenoder_exists_result
 
 - name: Sidenoder - Install
-  ansible.builtin.get_url:
-    url: https://github.com/VRPirates/sidenoder/releases/download/v0.9.1/sidenoder-0.9.1-amd64.AppImage
-    dest: /usr/local/bin/sidenoder
-    mode: 0755
-  when: sidenoder_exists_result.stat.exists == false or upgrade == true
+  when: not sidenoder_exists_result.stat.exists or (upgrade | default(false))
+  block:
+    - name: Sidenoder - Get latest
+      community.general.github_release:
+        user: VRPirates
+        repo: sidenoder
+        action: latest_release
+        token: "{{ github_token | default(omit) }}"
+      register: sidenoder_latest_version_result
+
+    - name: Sidenoder - Set latest version
+      ansible.builtin.set_fact:
+        sidenoder_latest_version: "{{ sidenoder_latest_version_result.tag[1:] }}"
+
+    - name: Sidenoder - Install/Upgrade
+      ansible.builtin.get_url:
+        url: >
+          https://github.com/VRPirates/sidenoder/releases/download/{{ sidenoder_latest_version_result.tag }}/
+          sidenoder-{{ sidenoder_latest_version_result.tag }}-amd64.AppImage
+        dest: /usr/local/bin/sidenoder
+        mode: '0755'

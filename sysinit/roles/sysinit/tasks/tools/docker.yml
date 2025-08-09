@@ -1,13 +1,28 @@
 ---
-- name: Check for docker gpg file
+- name: "Check if docker GPG keyring exists"
   ansible.builtin.stat:
     path: /etc/apt/keyrings/docker.gpg
-  register: docker_gpg
+  register: docker_keyring_exists
 
-- name: "Add docker offical GPG key for {{ ansible_distribution }}"
-  ansible.builtin.shell: >
-     curl -fsSL https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-  when: not docker_gpg.stat.exists
+- name: "Add docker official GPG key for {{ ansible_distribution }}"
+  ansible.builtin.get_url:
+    url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
+    dest: /tmp/docker.gpg
+    mode: '0644'
+  register: docker_gpg_download
+  when: not docker_keyring_exists.stat.exists
+
+- name: "Import docker GPG key for {{ ansible_distribution }}"
+  ansible.builtin.command:
+    cmd: gpg --dearmor -o /etc/apt/keyrings/docker.gpg /tmp/docker.gpg
+    creates: /etc/apt/keyrings/docker.gpg
+  when: not docker_keyring_exists.stat.exists and docker_gpg_download is succeeded
+
+- name: Remove temporary GPG key file
+  ansible.builtin.file:
+    path: /tmp/docker.gpg
+    state: absent
+  when: not docker_keyring_exists.stat.exists and docker_gpg_download is defined
 
 - name: Fix keyring permissions
   ansible.builtin.file:
@@ -16,7 +31,10 @@
 
 - name: Add docker repository
   ansible.builtin.apt_repository:
-    repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/{{ ansible_distribution | lower }}/ {{ ansible_distribution_release }} stable"
+    repo: >
+      deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg]
+      https://download.docker.com/linux/{{ ansible_distribution | lower }}/
+      {{ ansible_distribution_release }} stable
     state: present
 
 - name: Docker - Install
@@ -42,8 +60,8 @@
   loop_control:
     loop_var: user_item
   loop:
-    - "{{ lookup('env','USER') }}"
-    
+    - "{{ lookup('env', 'USER') }}"
+
 - name: Docker - Install completion
   ansible.builtin.get_url:
     url: https://raw.githubusercontent.com/docker/docker-ce/master/components/cli/contrib/completion/bash/docker

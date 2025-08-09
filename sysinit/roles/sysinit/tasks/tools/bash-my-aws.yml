@@ -1,13 +1,14 @@
 ---
 - name: AWS - BMA - Exists
   ansible.builtin.stat:
-    path: "/home/{{ lookup('env','USER') }}/.bash-my-aws"
+    path: "/home/{{ lookup('env', 'USER') }}/.bash-my-aws"
   register: bma_exists_result
 
 - name: AWS - BMA - Install/Upgrade
   become: true
-  become_user: "{{ lookup('env','USER') }}"
-  when: bma_exists_result.stat.exists == false
+  become_user: "{{ lookup('env', 'USER') }}"
+  when: not bma_exists_result.stat.exists
   ansible.builtin.git:
     repo: https://github.com/bash-my-aws/bash-my-aws.git
-    dest: "/home/{{ lookup('env','USER') }}/.bash-my-aws"
+    dest: "/home/{{ lookup('env', 'USER') }}/.bash-my-aws"
+    version: master

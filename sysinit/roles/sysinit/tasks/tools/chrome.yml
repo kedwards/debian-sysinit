@@ -1,7 +1,8 @@
 ---
 - name: Install apt-transport-https
   ansible.builtin.apt:
-    state: latest
+    name: apt-transport-https
+    state: present
     update_cache: true
 
 - name: Add Apt signing key
@@ -17,6 +18,6 @@
 
 - name: Install google-chrome-stable
   ansible.builtin.apt:
-    name: "google-chrome-stable"
-    state: latest
+    name: google-chrome-stable
+    state: present
     update_cache: true

@@ -2,12 +2,14 @@
 - name: Check for gpg file
   ansible.builtin.stat:
     path: "/etc/apt/keyrings/{{ item.name }}.gpg"
-  register: gpg_files
+  register: sysinit_gpg_files
 
 - name: "Add GPG key for {{ ansible_distribution }}"
-  ansible.builtin.shell: >
-    curl -fsSL {{ item.key_url }} | gpg --dearmor | sudo tee /etc/apt/keyrings/{{ item.name }}.gpg > /dev/null
-  when: gpg_filesstat.exist is not defined or not gpg_files.stat.exists
+  ansible.builtin.apt_key:
+    url: "{{ item.key_url }}"
+    state: present
+    keyring: "/etc/apt/keyrings/{{ item.name }}.gpg"
+  when: sysinit_gpg_filesstat.exist is not defined or not sysinit_gpg_files.stat.exists
 
 - name: Fix keyring permissions
   ansible.builtin.file:

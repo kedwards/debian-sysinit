@@ -1,0 +1,35 @@
+[project]
+name = "sysinit"
+version = "0.1.0"
+description = "Linux system initialization"
+authors = [{name = "Kevin Edwards", email = "kedwards@kevinedwards.ca"}]
+keywords = ["cli"]
+readme = {file = "README.md", content-type = "text/markdown"}
+requires-python = ">=3.11"
+dependencies = [
+  "ansible==11.8.0",
+  "github3-py==4.0.1"
+]
+
+# Tell setuptools this is not a Python package to install
+[tool.setuptools]
+packages = []
+
+[dependency-groups]
+test = [
+  "molecule == 25.7.0",
+  "molecule-plugins[docker] == 23.7.0"
+]
+
+lint = [
+  "pre-commit == 4.2.0",
+  "cfn-lint == 1.38.0",
+  "detect-secrets == 1.5.0",
+  "ansible-lint == 25.7.0",
+  "yamllint == 1.37.0",
+]
+
+dev = [
+  {include-group = "test"},
+  {include-group = "lint"},
+]

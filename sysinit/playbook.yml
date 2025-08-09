@@ -4,7 +4,9 @@
   become: true
   gather_facts: true
   vars:
-    upgrade: true
-    github_token:
+    upgrade: false
+    github_token: "{{ vault_github_token | default('') }}"
+    extra_tools: "{{ (tools | default('') | split(',')) | select('match', '.+') | list }}"
+    combined_tools: "{{ sysinit_tools | default([]) + extra_tools }}"
   roles:
     - sysinit

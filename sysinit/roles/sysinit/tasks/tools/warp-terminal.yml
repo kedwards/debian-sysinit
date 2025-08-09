@@ -13,20 +13,23 @@
 - name: Install Warp-terminal
   ansible.builtin.apt:
     deb: https://app.warp.dev/get_warp?package=deb
-  when: ansible_distribution == 'Debian' and (warp_result.stat.exists == false or upgrade == true)
+  when: (ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu') and (not warp_result.stat.exists or upgrade)
 
-- name: Download and install warp-terminal
+- name: Download and install warp-terminal and (not warp_result.stat.exists or upgrade)
   when: ansible_distribution == 'Archlinux'
   block:
     - name: Download Warp-terminal
       ansible.builtin.get_url:
-        url: https://releases.warp.dev/stable/v0.2025.04.16.08.11.stable_02/warp-terminal-v0.2025.04.16.08.11.stable_02-1-x86_64.pkg.tar.zst
+        url: "{{ sysinit_warp_url }}"
         dest: "{{ tmpdir.path }}/warp-termnal.pkg.tar.zst"
+        mode: "0644"
         decompress: false
 
     - name: Install Warp-terminal
       ansible.builtin.shell: |
         pacman -U --noconfirm  {{ tmpdir.path }}/warp-termnal.pkg.tar.zst
+      register: warp_install_result
+      changed_when: warp_install_result.rc != 0
 
 - name: Remove temporary directory
   ansible.builtin.file:

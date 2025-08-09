@@ -1,0 +1,94 @@
+version: '3'
+
+tasks:
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list-all
+
+  # Build tasks
+  build:
+    desc: Build the project
+    cmds:
+      - echo "Building..."
+
+  clean:
+    desc: Remove build artifacts
+    cmds:
+      - rm -rf dist
+      - find . -name "*.pyc" -delete
+      - find . -name "*__pycache__" -delete
+      - find . -name "*.tmp" -delete
+
+  lint:
+    desc: Run all linters
+    cmds:
+      - pre-commit run --all-files
+
+  lint-ansible:
+    desc: Lint the Ansible code
+    cmds:
+      - ansible-lint playbook.yml roles/
+
+  lint-shell:
+    desc: Lint shell code
+    cmds:
+      - find . -name "*.sh" -type f -not -path "./.venv/*" | xargs shellcheck -e SC1091
+
+  # Testing tasks
+  test:
+    desc: Run tests
+    cmds:
+      - ansible-playbook --syntax-check playbook.yml
+
+  molecule-test:
+    desc: Run Molecule tests for default scenario, no destroy
+    cmds:
+      - cd roles/sysinit && molecule test --destroy=never
+
+  molecule-converge:
+    desc: Run Molecule converge for development
+    cmds:
+      - cd roles/sysinit && molecule converge
+
+  molecule-verify:
+    desc: Run Molecule verify only
+    cmds:
+      - cd roles/sysinit && molecule verify
+
+  molecule-destroy:
+    desc: Destroy Molecule test instances
+    cmds:
+      - cd roles/sysinit && molecule destroy
+
+  # Secrets
+  scan-secrets:
+    desc: Scan for secrets
+    cmds:
+      - detect-secrets scan --baseline .secrets.baseline --force-use-all-plugins
+
+  update-secrets:
+    desc: Update secrets baseline
+    cmds:
+      - git ls-files -z | xargs -0 detect-secrets-hook --baseline .secrets.baseline
+
+  audit-secrets:
+    desc: Audit secrets baseline
+    cmds:
+      - detect-secrets audit .secrets.baseline
+
+  # Utility tasks
+  install-deps:
+    desc: Install dependencies
+    silent: true
+    cmds:
+      - uv pip install -e . --group dev
+      - echo -e "Please also install shellcheck using your system package manager:\n
+         Ubuntu/Debian -> sudo apt install shellcheck\n
+         macOS -> brew install shellcheck\n
+         Arch Linux -> sudo pacman -S shellcheck"
+
+  install-hooks:
+    desc: Install pre-commit hooks
+    cmds:
+      - pre-commit install

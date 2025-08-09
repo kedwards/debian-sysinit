@@ -7,4 +7,4 @@
 - name: Microsoft Teams
   ansible.builtin.apt:
     deb: https://go.microsoft.com/fwlink/p/?linkid=2112886
-  when: teams_exists_result.stat.exists == false or upgrade == true
+  when: not teams_exists_result.stat.exists or upgrade

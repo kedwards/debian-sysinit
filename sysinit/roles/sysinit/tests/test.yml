@@ -1,8 +1,0 @@
----
-- hosts: localhost
-  remote_user: root
-  vars:
-    upgrade: true
-    github_token: "{{ vault_github_token }}"
-  roles:
-    - sysinit

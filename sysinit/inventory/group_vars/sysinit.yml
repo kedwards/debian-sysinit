@@ -1,1 +1,1 @@
-var_group: variable override from group_vars/sysinit
+sysinit_var: variable from group_vars/sysinit.yml
