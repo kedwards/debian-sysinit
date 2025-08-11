@@ -31,6 +31,5 @@ sysinit_tools:
   - docker
   - dropbox
   - mise
-  - opass
 
 apt_packages: []
