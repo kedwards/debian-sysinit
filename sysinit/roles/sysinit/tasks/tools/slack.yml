@@ -4,6 +4,10 @@
     path: /usr/local/bin/slack
   register: slack_exists_result
 
+- name: Set slack version
+  set_fact:
+    slack_version: 4.45.64
+
 - name: Slack - Install/Upgrade
   ansible.builtin.apt:
     deb: "https://downloads.slack-edge.com/releases/linux/{{ sysinit_slack_version }}/prod/x64/slack-desktop-{{ sysinit_slack_version }}-amd64.deb"

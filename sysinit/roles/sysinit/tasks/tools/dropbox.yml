@@ -3,13 +3,22 @@
   ansible.builtin.stat:
     path: /usr/bin/dropbox
   register: dropbox_exists_result
+  
+- name: Fetch Dropbox Ubuntu packages directory listing
+  ansible.builtin.uri:
+    url: https://linux.dropbox.com/packages/ubuntu/
+    return_content: yes
+  register: dropbox_listing
+  
+- name: Extract all amd64 .deb filenames
+  ansible.builtin.set_fact:
+    dropbox_files: "{{ dropbox_listing.content | regex_findall('dropbox_[0-9\\.]+_amd64\\.deb') }}"
 
-- name: Dropbox - Install/Upgrade
-  ansible.builtin.apt:
-    deb: https://www.dropbox.com/download?dl=packages/debian/dropbox_2024.01.22_amd64.deb
-  when: ansible_distribution == 'Debian' and (not dropbox_exists_result.stat.exists or upgrade)
+- name: Select the latest version file
+  ansible.builtin.set_fact:
+    dropbox_latest: "{{ dropbox_files | sort | last }}"
 
-- name: Dropbox - Install/Upgrade
+- name: Dropbox – Install/Upgrade
   ansible.builtin.apt:
-    deb: https://www.dropbox.com/download?dl=packages/ubuntu/dropbox_2020.03.04_amd64.deb
-  when: ansible_distribution == 'Ubuntu' and (not dropbox_exists_result.stat.exists or upgrade)
+    deb: "https://linux.dropbox.com/packages/ubuntu/{{ dropbox_latest }}"
+  when: ansible_distribution == 'Ubuntu' and (dropbox_exists_result.stat.exists == false or upgrade | default(false))
