@@ -23,7 +23,7 @@ cleanup() {
   if command -v deactivate >/dev/null 2>&1; then
     deactivate || true
   fi
-  rm -rf "$script_dir/.venv" "${mise_installer:-/tmp}/mise_install.sh" || true
+  sudo rm -rf "$script_dir/.venv" "${mise_installer:-/tmp}/mise_install.sh" || true
 }
 trap cleanup ERR EXIT
 
