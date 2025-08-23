@@ -22,7 +22,7 @@ sysinit_mise_plugins:
   - minikube
   - mkcert
   - neovim
-  - nodejs
+  - node
   - packer
   - pre-commit
   - python@3.11
