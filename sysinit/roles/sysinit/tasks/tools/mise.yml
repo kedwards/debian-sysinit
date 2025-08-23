@@ -63,21 +63,33 @@
       loop:
         - "/tmp/mise-install.sh.sig"
         - "/tmp/mise-install.sh"
-
-
+        
 - name: Mise - Check if mise exists after installation
   ansible.builtin.stat:
     path: "{{ mise_bin }}"
-  register: mise_final_exists
+  register: mise_exists_result
 
-- name: Mise - Install/Upgrade
+- name: Check if mise bin is installed and found.
+  ansible.builtin.fail:
+    msg: Mise binary cannot be found and is required.
+  when: not mise_exists_result.stat.exists
+
+- name: Mise - Install
+  become: true
+  become_user: "{{ lookup('env', 'USER') }}"
+  when: mise_exists_result.stat.exists
   block:
-    - name: Mise - Install Plugins
+    - name: Mise - Install custom plugins
       ansible.builtin.shell: >
-        {{ mise_bin }} plugin add {{ plugin_item.plugin }} {{ plugin_item.src }}
+        {{ mise_bin }} plugin add {{ custom_plugin_item.plugin }} {{ custom_plugin_item.src }}
+      args:
+        creates: "$HOME/.local/share/mise/plugins/{{ custom_plugin_item.plugin }}"
       loop_control:
-        loop_var: plugin_item
+        loop_var: custom_plugin_item
       loop: "{{ sysinit_mise_custom_plugins }}"
+      when: sysinit_mise_custom_plugins is defined and sysinit_mise_custom_plugins | length > 0
+      # register: custom_plugin_result
+      # change_when: custom_plugin_result.rc == 0 and 'already exists' not in custom_plugin_result.stderr
 
     - name: Mise - Install Plugins
       ansible.builtin.shell: >
@@ -87,45 +99,5 @@
       loop_control:
         loop_var: plugin_item
       loop: "{{ sysinit_mise_plugins }}"
-  become_user: "{{ lookup('env','USER') }}"
-  when: mise_bin
-
-#- name: Mise - Install plugins
-#  become: true
-#  become_user: "{{ lookup('env', 'USER') }}"
-#  when: mise_final_exists.stat.exists
-#  block:
-#    - name: Mise - Install custom plugins
-#      ansible.builtin.shell: >
-#        {{ mise_bin }} plugin add {{ custom_plugin_item.plugin }} {{ custom_plugin_item.src }}
-#      args:
-#        creates: "$HOME/.local/share/mise/plugins/{{ custom_plugin_item.plugin }}"
-#      loop_control:
-#        loop_var: custom_plugin_item
-#      loop: "{{ sysinit_mise_custom_plugins }}"
-#      when: sysinit_mise_custom_plugins is defined and sysinit_mise_custom_plugins | length > 0
-#
-#    - name: Mise - Install default plugins
-#      ansible.builtin.shell:
-#        cmd: |
-#          set -o pipefail
-#          # Extract the base plugin name for version-specific plugins
-#          PLUGIN_BASE=$(echo '{{ plugin_item }}' | cut -d'@' -f1)
-#          # Try multiple detection methods
-#          if {{ mise_bin }} which $PLUGIN_BASE >/dev/null 2>&1 || \
-#            {{ mise_bin }} current $PLUGIN_BASE >/dev/null 2>&1 || \
-#            ([ -f "$HOME/.config/mise/config.toml" ] && grep -q "$PLUGIN_BASE" "$HOME/.config/mise/config.toml") || \
-#            {{ mise_bin }} ls --installed | grep -q "^$PLUGIN_BASE"; then
-#            echo "already_present"
-#          else
-#            {{ mise_bin }} use -g -y {{ plugin_item }}
-#            echo "installed"
-#          fi
-#        executable: /bin/bash
-#      register: plugin_install_result
-#      changed_when: "'installed' in plugin_install_result.stdout"
-#      failed_when: plugin_install_result.rc != 0
-#      loop_control:
-#        loop_var: plugin_item
-#      loop: "{{ sysinit_mise_plugins }}"
-#      when: sysinit_mise_plugins is defined and sysinit_mise_plugins | length > 0
+      # register: standard_plugin_result
+      # changed_when: standard_plugin_result.rc == 0 and standard_plugin_result.stdout != ""
