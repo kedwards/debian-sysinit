@@ -2,11 +2,9 @@
 
 set -euo pipefail
 
-# === Variables ===
-packages="curl git gpg"
-script_dir=""
+SYSINIT_REPO=https://github.com/withreach/sysinit.git
 
-# === Determine script directory ===
+# Determine script directory
 if [[ -p /dev/stdin ]]; then
   # If run via stdin (e.g., curl ... | bash)
   script_dir="$HOME/sysinit"
@@ -18,7 +16,6 @@ else
   script_dir="$(dirname "$(realpath "$0")")"
 fi
 
-# === Cleanup function ===
 cleanup() {
   if command -v deactivate >/dev/null 2>&1; then
     deactivate || true
@@ -27,7 +24,26 @@ cleanup() {
 }
 trap cleanup ERR EXIT
 
-# === Detect Package Manager ===
+# Detect packages based on os type
+get_packages_for_pm() {
+  local pm="$1"
+  case "$pm" in
+  apt-get)
+    echo "curl git gpg"
+    ;;
+  pacman)
+    echo "curl git gnupg"
+    ;;
+  yum)
+    echo "curl git gnupg2"
+    ;;
+  *)
+    echo "curl git gnupg"
+    ;;
+  esac
+}
+
+# Detect package manager
 get_package_manager() {
   declare -A os_info=(
     ["/etc/redhat-release"]="yum"
@@ -43,34 +59,37 @@ get_package_manager() {
   echo "unknown"
 }
 
-# === Install Required Packages ===
+# Install required packages
 install_packages() {
   local pm
   pm=$(get_package_manager)
+  local packages
+  packages=$(get_packages_for_pm "$pm")
 
   case "$pm" in
-    apt-get)
-      sudo apt-get update
-      sudo apt-get upgrade -y
-      sudo apt-get install -y $packages
-      sudo apt-get autoremove -y
-      ;;
-    pacman)
-      sudo pacman -Syu --noconfirm
-      sudo pacman -S --noconfirm $packages
-      ;;
-    yum)
-      sudo yum update -y
-      sudo yum install -y $packages
-      ;;
-    *)
-      echo "Unsupported or unknown package manager"
-      exit 1
-      ;;
+  apt-get)
+    sudo apt-get update
+    sudo apt-get upgrade -y
+    sudo apt-get install -y $packages
+    sudo apt-get autoremove -y
+    ;;
+  pacman)
+    sudo pacman -Syu --noconfirm
+    sudo pacman -S --noconfirm $packages
+    ;;
+  yum)
+    sudo yum update -y
+    sudo yum install -y $packages
+    ;;
+  *)
+    echo "Unsupported or unknown package manager"
+    exit 1
+    ;;
   esac
 }
 
-# === Install mise ===
+# Install mise and add
+# mise to PATH and activate
 install_mise() {
   mise_installer="$(mktemp -d)"
   gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys 0x7413A06D
@@ -81,117 +100,55 @@ install_mise() {
   eval "$("$HOME/.local/bin/mise" activate bash)"
 }
 
-# === Clone or Pull sysinit repo ===
+# Clone or pull sysinit repo
 sync_repo() {
   if [[ -d "$script_dir" ]]; then
+    # @TODO: save users changes if any
     git -C "$script_dir" pull
   else
-    git clone -b main --single-branch https://github.com/kedwards/sysinit.git "$script_dir"
+    git clone -b main --single-branch $SYSINIT_REPO "$script_dir"
   fi
 }
 
-# === Set up virtual environment and install dependencies ===
+# Setup and activate virtual environment
+# Install required dependencies
 setup_python_env() {
   cd "$script_dir"
+
+  # Ensure mise is in PATH and activated
+  export PATH="$HOME/.local/bin:$PATH"
+  if command -v mise >/dev/null 2>&1; then
+    eval "$(mise activate bash)"
+  else
+    echo "Error: mise not found in PATH"
+    exit 1
+  fi
+
   mise trust -a
   mise use --global uv
+  eval "$(mise activate bash)"
+  export PATH="$HOME/.local/share/mise/shims:$PATH"
+  sleep 2
+  mise reshim
   uv venv --clear
   # shellcheck disable=SC1091
   source ".venv/bin/activate"
   uv pip install -e .
 }
 
-# === Run Ansible Playbook ===
+# Run ansible playbook
 run_ansible() {
   ansible-playbook playbook.yml -K --ask-vault-pass
 }
 
-# === Main Execution ===
-install_packages
-install_mise
-sync_repo
-setup_python_env
-run_ansible
+# Main execution with better error handling
+main() {
+  install_packages
+  install_mise
+  # sync_repo
+  setup_python_env
+  run_ansible
+}
 
-
-# #!/bin/bash
-
-# set -euo pipefail
-
-# packages="curl git gpg"
-
-# if [[ -p /dev/stdin ]] && [[ "${BASH_SOURCE[0]}" == "stdin" ]]; then
-#   script_dir="$HOME/sysinit"
-# else
-#   script_dir="$(dirname "$(realpath "$0")")"
-# fi
-
-# trap cleanup ERR EXIT
-
-# cleanup() {
-#   if command -v deactivate >/dev/null; then
-#     deactivate
-#   fi
-#   sudo rm -rf "$script_dir/.venv" "$mise_installer/mise_install.sh"
-# }
-
-# function getPackageManager() {
-#   local pm
-
-#   declare -A osInfo
-#   osInfo['/etc/redhat-release']=yum
-#   osInfo['/etc/arch-release']=pacman
-#   osInfo['/etc/debian_version']=apt-get
-
-#   for f in "${!osInfo[@]}"; do
-#     if [[ -f $f ]]; then
-#       pm="${osInfo[$f]}"
-#     fi
-#   done
-#   echo "$pm"
-# }
-
-# case $(getPackageManager) in
-# "apt-get")
-#   sudo sh -c "apt-get update; apt-get upgrade -y; apt-get install $packages -y; apt autoremove -y"
-#   ;;
-# "pacman")
-#   sudo sh -c "pacman -Syu; echo 'yes' | pacman -S --noconfirm $packages"
-#   ;;
-# "yum")
-#   sudo ish -c "yum update; yum install -y $packages"
-#   ;;
-# *)
-#   echo "Unsupported package manager"
-#   exit 1
-#   ;;
-# esac
-
-# # Install mise
-# mise_installer=$(mktemp -d)
-# gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys 0x7413A06D
-# curl https://mise.jdx.dev/install.sh.sig | gpg --decrypt >"$mise_installer/mise_install.sh"
-# sh "$mise_installer/mise_install.sh"
-
-# # Add mise to PATH and activate it
-# export PATH="$HOME/.local/bin:$PATH"
-# echo "eval \"\$($HOME/.local/bin/mise activate bash)\"" >>~/.bashrc
-# eval "$("$HOME"/.local/bin/mise activate bash)"
-
-# if [ -d "$script_dir" ]; then
-#   git -C "$script_dir" pull
-# else
-#   git clone -b main --single-branch https://github.com/kedwards/sysinit.git "$script_dir"
-# fi
-
-# # Install uv
-# cd "$script_dir"
-# mise trust -a
-# mise use --global uv
-# uv venv --clear
-
-# # shellcheck disable=SC1091
-# source ".venv/bin/activate"
-# uv pip install -e .
-
-# ansible-playbook playbook.yml -K --ask-vault-pass
+# Run main function
+main "$@"
