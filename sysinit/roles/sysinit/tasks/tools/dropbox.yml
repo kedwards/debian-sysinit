@@ -11,14 +11,14 @@
   register: dropbox_listing
 
 - name: Extract _amd64.deb Dropbox filenames
-  when: (ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian') and (dropbox_exists_result.stat.exists == false or upgrade)
+  when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'
   block:
     - name: Extract all amd64 .deb filenames
       ansible.builtin.set_fact:
         dropbox_files: "{{ dropbox_listing.content | regex_findall('dropbox_[0-9\\.]+_amd64\\.deb') | unique }}" 
 
 - name: Extract .fedora.x86_64.rpm Dropbox filenames
-  when: ansible_distribution == 'Fedora' and (dropbox_exists_result.stat.exists == false or upgrade)
+  when: ansible_distribution == 'Fedora'
   ansible.builtin.set_fact:
     dropbox_files: "{{ dropbox_listing.content | regex_findall('nautilus-dropbox-[\\d.]+-\\d+\\.fedora\\.x86_64\\.rpm') | unique }}"
 
@@ -31,10 +31,10 @@
     name: "http://linux.dropbox.com/packages/{{ ansible_distribution | lower }}/{{ dropbox_latest }}"
     state: present
     disable_gpg_check: true
-  when: ansible_distribution == 'Fedora' and (dropbox_exists_result.stat.exists == false or upgrade)
+  when: ansible_distribution == 'Fedora'
 
 - name: Dropbox – Install/Upgrade (Debian/Ubuntu)
   ansible.builtin.apt:
     deb: "http://linux.dropbox.com/packages/{{ ansible_distribution | lower }}/{{ dropbox_latest }}"
     state: present
-  when: (ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu') and (dropbox_exists_result.stat.exists == false or upgrade)
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
