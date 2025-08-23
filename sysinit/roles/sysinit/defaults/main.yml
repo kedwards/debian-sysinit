@@ -1,6 +1,5 @@
 ---
 sysinit_mise_plugins:
-  - 1password
   - 1password-cli
   - amazon-ecr-credential-helper
   - awscli
@@ -25,6 +24,7 @@ sysinit_mise_plugins:
   - neovim
   - nodejs
   - packer
+  - pre-commit
   - python@3.11
   - rclone
   - ripgrep

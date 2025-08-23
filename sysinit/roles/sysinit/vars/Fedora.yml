@@ -1,0 +1,12 @@
+---
+sysinit_packages:
+  - flameshot
+  - stow
+  - xsel
+
+sysinit_tools:
+  - aws-ssm
+  - docker
+  - mise
+
+sysinit_custom_apt_packages: []
