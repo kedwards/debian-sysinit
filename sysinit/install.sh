@@ -20,7 +20,8 @@ cleanup() {
   if command -v deactivate >/dev/null 2>&1; then
     deactivate || true
   fi
-  sudo rm -rf "$script_dir/.venv" "${mise_installer:-/tmp}/mise_install.sh" || true
+  # Only clean up temp files, preserve .venv for idempotency
+  rm -rf "${mise_installer:-/tmp}/mise_install.sh" || true
 }
 trap cleanup ERR EXIT
 
@@ -99,12 +100,24 @@ install_packages() {
 # Install mise and add
 # mise to PATH and activate
 install_mise() {
+  # Check if mise is already installed
+  if command -v "$HOME/.local/bin/mise" >/dev/null 2>&1; then
+    echo "mise already installed, skipping installation"
+    export PATH="$HOME/.local/bin:$PATH"
+    eval "$("$HOME/.local/bin/mise" activate bash)"
+    return
+  fi
+
   mise_installer="$(mktemp -d)"
   gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys 0x7413A06D
   curl https://mise.jdx.dev/install.sh.sig | gpg --decrypt >"$mise_installer/mise_install.sh"
   sh "$mise_installer/mise_install.sh"
   export PATH="$HOME/.local/bin:$PATH"
-  echo "eval \"\$($HOME/.local/bin/mise activate bash)\"" >>~/.bashrc
+  
+  # Only add to bashrc if not already present
+  if ! grep -q "mise activate bash" ~/.bashrc; then
+    echo "eval \"\$($HOME/.local/bin/mise activate bash)\"" >>~/.bashrc
+  fi
   eval "$("$HOME/.local/bin/mise" activate bash)"
 }
 
@@ -138,10 +151,19 @@ setup_python_env() {
   export PATH="$HOME/.local/share/mise/shims:$PATH"
   sleep 2
   mise reshim
-  uv venv --clear
-  # shellcheck disable=SC1091
-  source ".venv/bin/activate"
-  uv pip install -e .
+  
+  # Only create venv if it doesn't exist or if sysinit package isn't installed
+  if [[ ! -d ".venv" ]] || ! .venv/bin/python -c "import sysinit" 2>/dev/null; then
+    echo "Creating/updating virtual environment..."
+    uv venv --clear
+    # shellcheck disable=SC1091
+    source ".venv/bin/activate"
+    uv pip install -e .
+  else
+    echo "Virtual environment exists and sysinit is installed, activating..."
+    # shellcheck disable=SC1091
+    source ".venv/bin/activate"
+  fi
 }
 
 # Run ansible playbook
