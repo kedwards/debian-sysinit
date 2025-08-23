@@ -1,43 +1,46 @@
 ---
-- name: "Check if docker GPG keyring exists"
+- name: "Check if docker GPG keyring exists (APT)"
   ansible.builtin.stat:
     path: /etc/apt/keyrings/docker.gpg
   register: docker_keyring_exists
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
 
-- name: "Add docker official GPG key for {{ ansible_distribution }}"
+- name: "Add docker official GPG key for {{ ansible_distribution }} (APT)"
   ansible.builtin.get_url:
     url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
     dest: /tmp/docker.gpg
     mode: '0644'
   register: docker_gpg_download
-  when: not docker_keyring_exists.stat.exists
+  when: (ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu') and not docker_keyring_exists.stat.exists
 
-- name: "Import docker GPG key for {{ ansible_distribution }}"
+- name: "Import docker GPG key for {{ ansible_distribution }} (APT)"
   ansible.builtin.command:
     cmd: gpg --dearmor -o /etc/apt/keyrings/docker.gpg /tmp/docker.gpg
     creates: /etc/apt/keyrings/docker.gpg
-  when: not docker_keyring_exists.stat.exists and docker_gpg_download is succeeded
+  when: (ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu') and not docker_keyring_exists.stat.exists and docker_gpg_download is succeeded
 
-- name: Remove temporary GPG key file
+- name: Remove temporary GPG key file (APT)
   ansible.builtin.file:
     path: /tmp/docker.gpg
     state: absent
-  when: not docker_keyring_exists.stat.exists and docker_gpg_download is defined
+  when: (ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu') and not docker_keyring_exists.stat.exists and docker_gpg_download is defined
 
-- name: Fix keyring permissions
+- name: Fix keyring permissions (APT)
   ansible.builtin.file:
     path: /etc/apt/keyrings/docker.gpg
     mode: a+r
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
 
-- name: Add docker repository
+- name: Add docker repository (APT)
   ansible.builtin.apt_repository:
     repo: >
       deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg]
       https://download.docker.com/linux/{{ ansible_distribution | lower }}/
       {{ ansible_distribution_release }} stable
     state: present
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
 
-- name: Docker - Install
+- name: Docker - Install (APT)
   ansible.builtin.apt:
     pkg:
       - bash-completion
@@ -46,6 +49,29 @@
       - docker-ce
       - docker-ce-cli
       - docker-compose-plugin
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+- name: Add Docker repository (Fedora)
+  ansible.builtin.yum_repository:
+    name: docker-ce
+    description: Docker CE Stable - $basearch
+    baseurl: https://download.docker.com/linux/fedora/$releasever/$basearch/stable
+    enabled: true
+    gpgcheck: true
+    gpgkey: https://download.docker.com/linux/fedora/gpg
+  when: ansible_distribution == 'Fedora'
+
+- name: Docker - Install (Fedora)
+  ansible.builtin.dnf:
+    name:
+      - bash-completion
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-ce
+      - docker-ce-cli
+      - docker-compose-plugin
+    state: present
+  when: ansible_distribution == 'Fedora'
 
 - name: Docker - Add docker group
   ansible.builtin.group:
@@ -62,8 +88,23 @@
   loop:
     - "{{ lookup('env', 'USER') }}"
 
-- name: Docker - Install completion
-  ansible.builtin.get_url:
-    url: https://raw.githubusercontent.com/docker/docker-ce/master/components/cli/contrib/completion/bash/docker
-    dest: /etc/bash_completion.d/docker.sh
-    mode: +x
+- name: Docker - Install docker completion
+  block:
+    - name: Docker - Get completion script content for checksum calculation
+      ansible.builtin.uri:
+        url: https://raw.githubusercontent.com/docker/docker-ce/master/components/cli/contrib/completion/bash/docker
+        method: GET
+        return_content: true
+      register: docker_completion_content
+
+    - name: Docker - Calculate checksum of completion script
+      ansible.builtin.set_fact:
+        docker_completion_sha256: "{{ docker_completion_content.content | hash('sha256') }}"
+      when: docker_completion_content is succeeded
+
+    - name: Docker - Download completion script
+      ansible.builtin.get_url:
+        url: https://raw.githubusercontent.com/docker/docker-ce/master/components/cli/contrib/completion/bash/docker
+        dest: /etc/bash_completion.d/docker.sh
+        mode: +x
+        checksum: "{{ 'sha256:' + docker_completion_sha256 if docker_completion_sha256 is defined else omit }}"
