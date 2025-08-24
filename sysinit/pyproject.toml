@@ -17,6 +17,7 @@ packages = []
 
 [dependency-groups]
 test = [
+  "pytest == 8.4.1",
   "molecule == 25.7.0",
   "molecule-plugins[docker] == 23.7.0"
 ]

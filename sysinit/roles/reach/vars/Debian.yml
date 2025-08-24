@@ -1,0 +1,9 @@
+---
+sysinit_packages: []
+
+sysinit_tools:
+  - aws-ssm
+  - docker
+  - mise
+
+sysinit_custom_apt_packages: []

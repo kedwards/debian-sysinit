@@ -1,0 +1,17 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Verify system packages are installed
+      ansible.builtin.package_facts:
+
+    - name: Fail if required package is not installed
+      ansible.builtin.fail:
+        msg: "Required package '{{ item }}' is not installed."
+      when: item not in ansible_facts.packages
+      loop:
+        - curl
+        - git
+        - gpg

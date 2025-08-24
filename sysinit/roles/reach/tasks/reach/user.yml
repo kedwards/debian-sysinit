@@ -1,0 +1,204 @@
+---
+- name: Find all files in templates/skel to determine needed directories
+  ansible.builtin.find:
+    paths: "{{ role_path }}/templates/skel"
+    recurse: yes
+    file_type: file
+  register: skel_files
+  delegate_to: localhost
+
+- name: Create all necessary directories from file paths
+  ansible.builtin.file:
+    path: "/home/{{ lookup('env', 'USER') }}/{{ (item.path | regex_replace(role_path + '/templates/skel/', '') | dirname) }}"
+    state: directory
+    owner: "{{ lookup('env', 'USER') }}"
+    group: "{{ lookup('env', 'USER') }}"
+    mode: "{{ '0700' if ((item.path | regex_replace(role_path + '/templates/skel/', '') | dirname) | regex_search('(^|/)(\\.ssh|\\.gpg|\\.profile\\.d)(/|$)')) else '0755' }}"
+  loop: "{{ skel_files.files }}"
+  when: 
+    - (item.path | regex_replace(role_path + '/templates/skel/', '') | dirname) != '.'
+    - (item.path | regex_replace(role_path + '/templates/skel/', '') | dirname) != ''
+
+- name: Deploy configuration files from skel templates
+  ansible.builtin.template:
+    src: "skel/{{ item.path | regex_replace(role_path + '/templates/skel/', '') }}"
+    dest: "/home/{{ lookup('env', 'USER') }}/{{ item.path | regex_replace(role_path + '/templates/skel/', '') }}"
+    owner: "{{ lookup('env', 'USER') }}"
+    group: "{{ lookup('env', 'USER') }}"
+    mode: "{{ '0600' if (item.path | regex_replace(role_path + '/templates/skel/', '') | regex_search('(^|/)(\\.ssh|\\.gpg)/')) else '0644' }}"
+  with_filetree: "{{ role_path }}/templates/skel/"
+  when: item.state == "file"
+
+- name: Add profile.d loader to .bashrc
+  ansible.builtin.blockinfile:
+    path: "/home/{{ lookup('env', 'USER') }}/.bashrc"
+    marker: "# {mark} sysinit: load custom profile settings"
+    block: |
+      if [ -d "$HOME/.profile.d" ]; then
+        # Files to exclude from sourcing
+        exclude_list=(
+          "$HOME/.profile.d/secret"
+        )
+        
+        for profile_file in "$HOME"/.profile.d/*; do
+          # Skip if not a regular readable file
+          [ -f "$profile_file" ] && [ -r "$profile_file" ] || continue
+          
+          # Skip hidden files (.something)
+          [[ "$(basename "$profile_file")" == .* ]] && continue
+
+          # Skip if file is in exclude_list
+          if printf '%s\n' "${exclude_list[@]}" | grep -Fxq "$profile_file"; then
+            continue
+          fi
+
+          source "$profile_file"
+        done
+      fi
+    owner: "{{ lookup('env', 'USER') }}"
+    group: "{{ lookup('env', 'USER') }}"
+    mode: '0644'
+    create: yes
+
+- name: Ensure proper ownership of .profile.d directory and contents
+  ansible.builtin.file:
+    path: "/home/{{ lookup('env', 'USER') }}/.profile.d"
+    owner: "{{ lookup('env', 'USER') }}"
+    group: "{{ lookup('env', 'USER') }}"
+    recurse: yes
+    state: directory
+  when: ansible_facts is defined
+# ---
+# - name: Find all directories in templates/skel
+#   ansible.builtin.find:
+#     paths: "{{ role_path }}/templates/skel"
+#     file_type: directory
+#     recurse: yes
+#   register: skel_directories
+#   delegate_to: localhost
+
+# - name: Create directories dynamically from skel structure
+#   ansible.builtin.file:
+#     path: "/home/{{ lookup('env', 'USER') }}/{{ item.path | regex_replace(role_path + '/templates/skel/?', '') }}"
+#     state: directory
+#     owner: "{{ lookup('env', 'USER') }}"
+#     group: "{{ lookup('env', 'USER') }}"
+#     mode: "{{ '0700' if (item.path | regex_replace(role_path + '/templates/skel/?', '') | regex_search('(^|/)(\\.ssh|\\.gpg|\\.profile\\.d)(/|$)')) else '0755' }}"
+#   loop: "{{ skel_directories.files }}"
+#   when: item.path | regex_replace(role_path + '/templates/skel/?', '') != ''
+
+# - name: Deploy configuration files from skel templates
+#   ansible.builtin.template:
+#     src: "skel/{{ item.path | regex_replace(role_path + '/templates/skel/', '') }}"
+#     dest: "/home/{{ lookup('env', 'USER') }}/{{ item.path | regex_replace(role_path + '/templates/skel/', '') }}"
+#     owner: "{{ lookup('env', 'USER') }}"
+#     group: "{{ lookup('env', 'USER') }}"
+#     mode: "{{ '0600' if (item.path | regex_replace(role_path + '/templates/skel/', '') | regex_search('(^|/)(\\.ssh|\\.gpg)/')) else '0644' }}"
+#   with_filetree: "{{ role_path }}/templates/skel/"
+#   when: item.state == "file"
+
+# - name: Add profile.d loader to .bashrc
+#   ansible.builtin.blockinfile:
+#     path: "/home/{{ lookup('env', 'USER') }}/.bashrc"
+#     marker: "# {mark} sysinit: load custom profile settings"
+#     block: |
+#       if [ -d "$HOME/.profile.d" ]; then
+#         # Files to exclude from sourcing
+#         exclude_list=(
+#           "$HOME/.profile.d/secret"
+#         )
+        
+#         for profile_file in "$HOME"/.profile.d/*; do
+#           # Skip if not a regular readable file
+#           [ -f "$profile_file" ] && [ -r "$profile_file" ] || continue
+          
+#           # Skip hidden files (.something)
+#           [[ "$(basename "$profile_file")" == .* ]] && continue
+
+#           # Skip if file is in exclude_list
+#           if printf '%s\n' "${exclude_list[@]}" | grep -Fxq "$profile_file"; then
+#             continue
+#           fi
+
+#           source "$profile_file"
+#         done
+#       fi
+#     owner: "{{ lookup('env', 'USER') }}"
+#     group: "{{ lookup('env', 'USER') }}"
+#     mode: '0644'
+#     create: yes
+
+# - name: Ensure proper ownership of .profile.d directory and contents
+#   ansible.builtin.file:
+#     path: "/home/{{ lookup('env', 'USER') }}/.profile.d"
+#     owner: "{{ lookup('env', 'USER') }}"
+#     group: "{{ lookup('env', 'USER') }}"
+#     recurse: yes
+#     state: directory
+#   when: ansible_facts is defined
+# - name: Create user profile directory
+#   ansible.builtin.file:
+#     path: "/home/{{ ansible_env.USER | default(ansible_user_id) }}/.profile.d"
+#     state: directory
+#     mode: '0700'
+
+# - name: Create other necessary directories
+#   ansible.builtin.file:
+#     path: "/home/{{ ansible_env.USER | default(ansible_user_id) }}/{{ item }}"
+#     state: directory
+#     owner: "{{ ansible_env.USER | default(ansible_user_id) }}"
+#     group: "{{ ansible_env.USER | default(ansible_user_id) }}"
+#     mode: '0755'
+#   loop:
+#     - .aws
+#     - .config
+#     - .docker
+#     - .granted
+#     - .ssh
+
+# - name: Deploy profile.d files from skel templates
+#   ansible.builtin.template:
+#     src: "skel/.profile.d/{{ item }}"
+#     dest: "/home/{{ ansible_env.USER | default(ansible_user_id) }}/.profile.d/{{ item }}"
+#     owner: "{{ ansible_env.USER | default(ansible_user_id) }}"
+#     group: "{{ ansible_env.USER | default(ansible_user_id) }}"
+#     mode: '0644'
+#   loop:
+#     - _init
+#     - aliases
+#     - history
+#     - reach
+
+# - name: Copy aws profile file as-is (no templating)
+#   ansible.builtin.copy:
+#     src: "skel/.profile.d/aws"
+#     dest: "/home/{{ ansible_env.USER | default(ansible_user_id) }}/.profile.d/aws"
+#     owner: "{{ ansible_env.USER | default(ansible_user_id) }}"
+#     group: "{{ ansible_env.USER | default(ansible_user_id) }}"
+#     mode: '0644'
+
+# - name: Deploy user configuration files from skel templates
+#   ansible.builtin.template:
+#     src: "skel/{{ item }}"
+#     dest: "/home/{{ ansible_env.USER | default(ansible_user_id) }}/{{ item }}"
+#     owner: "{{ ansible_env.USER | default(ansible_user_id) }}"
+#     group: "{{ ansible_env.USER | default(ansible_user_id) }}"
+#     mode: '0644'
+#   loop:
+#     - .profile
+#     - .zprofile
+#     - .psqlrc
+#     - .gitconfig
+#     - .aws/config
+#     - .config/starship.toml
+#     - .granted/config
+#     - .ssh/config
+#     - .docker/config.json
+
+# - name: Ensure proper ownership of .profile.d directory and contents
+#   ansible.builtin.file:
+#     path: "/home/{{ ansible_env.USER | default(ansible_user_id) }}/.profile.d"
+#     owner: "{{ ansible_env.USER | default(ansible_user_id) }}"
+#     group: "{{ ansible_env.USER | default(ansible_user_id) }}"
+#     recurse: yes
+#     state: directory

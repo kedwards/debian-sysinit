@@ -22,16 +22,15 @@
     name: "{{ sysinit_packages }}"
     state: present
 
-- name: Install apt community or private packages
+- name: Install community or private packages
   ansible.builtin.include_tasks: "apt.yml"
-  loop: "{{ sysinit_apt_packages | default([]) }}"
+  loop: "{{ sysinit_custom_apt_packages | default([]) }}"
   when: ansible_distribution == 'Debian'
-
-- name: Install Arch aur packages
-  ansible.builtin.include_tasks: "aur.yml"
-  when: ansible_distribution == 'Archlinux'
 
 - name: Install tools
   ansible.builtin.include_tasks: "tools/{{ item }}.yml"
-  loop: "{{ sysinit_combined_tools | default([]) }}"
-  when: sysinit_combined_tools is defined and sysinit_combined_tools | length > 0
+  loop: "{{ combined_tools | default([]) }}"
+  when: combined_tools is defined and combined_tools | length > 0
+
+- name: Configure Reach local development
+  ansible.builtin.include_tasks: "reach/main.yml"

@@ -1,27 +1,15 @@
 ---
 sysinit_packages:
-  - android-tools
-  - asciinema
-  - clang
   - docker
   - docker-buildx
-  - flameshot
-  - ghostty
   - gnome-keyring
   - libxcrypt-compat
-  - lua-language-server
-  - lynx
   - seahorse
-  - stow
-  - xsel
 
 sysinit_aur_packages:
   - aws-session-manager-plugin
   - 1password
-  - dropbox
   - slack-desktop
-  - warp-terminal
 
 sysinit_tools:
-  - bash-my-aws
   - mise

@@ -1,0 +1,55 @@
+---
+- name: Side Effect - Test for unintended changes
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Check if critical system files are intact
+      stat:
+        path: "{{ item }}"
+      register: critical_files
+      loop:
+        - /etc/passwd
+        - /etc/shadow
+        - /etc/group
+        - /etc/hosts
+        - /etc/fstab
+    
+    - name: Ensure critical files still exist
+      assert:
+        that:
+          - item.stat.exists
+        fail_msg: "Critical system file {{ item.item }} is missing!"
+      loop: "{{ critical_files.results }}"
+    
+    - name: Verify /etc/hosts is accessible and not corrupted
+      stat:
+        path: /etc/hosts
+      register: hosts_check
+    
+    - name: Ensure hosts file is still accessible
+      assert:
+        that:
+          - hosts_check.stat.exists
+          - hosts_check.stat.readable
+        fail_msg: "/etc/hosts file is not accessible - possible corruption!"
+    
+    - name: Check for unexpected new users
+      getent:
+        database: passwd
+      register: current_users
+    
+    - name: Display current users for verification
+      debug:
+        msg: "Current system users: {{ current_users.ansible_facts.getent_passwd.keys() | list }}"
+    
+    - name: Create a test file to verify filesystem operations
+      file:
+        path: /tmp/molecule_side_effect_test
+        state: touch
+        mode: '0644'
+    
+    - name: Remove test file
+      file:
+        path: /tmp/molecule_side_effect_test
+        state: absent

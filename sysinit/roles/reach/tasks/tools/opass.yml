@@ -1,0 +1,10 @@
+---
+- name: 1Password - Install/Upgrade
+  ansible.builtin.apt:
+    deb: "{{ opass_item }}"
+    state: present
+  loop_control:
+    loop_var: opass_item
+  loop:
+    - https://downloads.1password.com/linux/debian/amd64/stable/1password-latest.deb
+    - https://downloads.1password.com/linux/debian/amd64/stable/1password-cli-amd64-latest.deb

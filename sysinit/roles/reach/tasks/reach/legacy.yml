@@ -1,0 +1,50 @@
+---
+---
+- name: Configure legacy application compatibility
+  ansible.builtin.shell: |
+    # Enable 32-bit architecture support if needed
+    if [ "{{ ansible_architecture }}" = "x86_64" ] && [ "{{ ansible_distribution }}" = "Debian" ]; then
+      dpkg --add-architecture i386 || true
+    fi
+  when: sysinit_enable_legacy | default(false)
+
+- name: Install legacy development tools
+  ansible.builtin.package:
+    name:
+      - gcc-multilib
+      - lib32z1
+      - lib32ncurses6
+      - lib32stdc++6
+    state: present
+  when: 
+    - sysinit_enable_legacy | default(false)
+    - ansible_distribution in ['Debian', 'Ubuntu']
+    - ansible_architecture == 'x86_64'
+# Legacy system support and compatibility tasks
+- name: Install legacy tools and applications
+  ansible.builtin.include_tasks: "{{ ansible_search_path[0] }}/tasks/tools/{{ item }}.yml"
+  loop:
+    - thinkfan
+    - teamviewer
+  when: item in sysinit_combined_tools and sysinit_enable_legacy | default(false)
+
+- name: Configure legacy application compatibility
+  ansible.builtin.shell: |
+    # Enable 32-bit architecture support if needed
+    if [ "{{ ansible_architecture }}" = "x86_64" ] && [ "{{ ansible_distribution }}" = "Debian" ]; then
+      dpkg --add-architecture i386 || true
+    fi
+  when: sysinit_enable_legacy | default(false)
+
+- name: Install legacy development tools
+  ansible.builtin.package:
+    name:
+      - gcc-multilib
+      - lib32z1
+      - lib32ncurses6
+      - lib32stdc++6
+    state: present
+  when: 
+    - sysinit_enable_legacy | default(false)
+    - ansible_distribution in ['Debian', 'Ubuntu']
+    - ansible_architecture == 'x86_64'

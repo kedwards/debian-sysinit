@@ -1,0 +1,10 @@
+---
+- name: DBeaver - Exists
+  ansible.builtin.stat:
+    path: /usr/bin/dbeaver
+  register: dbeaver_exists_result
+
+- name: DBeaver - Install/Upgrade
+  ansible.builtin.apt:
+    deb: https://dbeaver.io/files/dbeaver-ce_latest_amd64.deb
+  when: not dbeaver_exists_result.stat.exists or upgrade

@@ -1,0 +1,130 @@
+---
+- name: Ensure DevOps repo is cloned
+  block:
+    - name: Check repo directory
+      ansible.builtin.git:
+        repo: "{{ sysinit_devops_repo_url }}"
+        dest: "{{ sysinit_withreach_dir }}"
+        update: no
+        accept_hostkey: yes
+        # apply results from ssh.yml here
+        key_file: "{{ lookup('env','HOME') }}/.ssh/id_rsa"
+      register: repo_dir_result
+      become: no  # Run as user to access SSH agent
+      environment:
+        SSH_AUTH_SOCK: "{{ ssh_auth_sock | default(ansible_env.SSH_AUTH_SOCK) }}"
+        SSH_AGENT_PID: "{{ ssh_agent_pid | default(ansible_env.SSH_AGENT_PID) }}"
+
+    - name: debug
+      debug:
+        var: repo_dir_result
+
+    - name: Clone DevOps repository
+      ansible.builtin.git:
+        repo: "{{ sysinit_devops_repo_url }}"
+        dest: "{{ sysinit_withreach_dir }}"
+        version: master
+        accept_hostkey: yes
+        # apply results from ssh.yml here
+        key_file: "{{ lookup('env','HOME') }}/.ssh/id_rsa"
+        # key_file: "{{ lookup('env','HOME') }}/.ssh/id_ed25519"
+      register: devops_result
+      become: no  # Run as user to access SSH agent
+      environment:
+        SSH_AUTH_SOCK: "{{ ssh_auth_sock | default(ansible_env.SSH_AUTH_SOCK) }}"
+        SSH_AGENT_PID: "{{ ssh_agent_pid | default(ansible_env.SSH_AGENT_PID) }}"
+      when: 
+        - repo_dir_result.changed
+        - repo_dir_result.before != repo_dir_result.after
+  when: sysinit_var | default('') != 'molecule_converge'
+
+- name: Check for new repositories to clone
+  shell: |
+    cd {{ sysinit_withreach_dir }}/dev
+    REPOS=$(cat repos.txt)
+    NEW_REPOS_FOUND=false
+    
+    for R in $REPOS; do
+        if [ ! -d ~/withreach/dev/repos/$R ]; then
+            echo "New repository found: $R"
+            NEW_REPOS_FOUND=true
+        fi
+    done
+    
+    if [ "$NEW_REPOS_FOUND" = "true" ]; then
+        echo "NEW_REPOS_TO_CLONE"
+    else
+        echo "ALL_REPOS_EXIST"
+    fi
+  register: repo_check
+  become: no
+  changed_when: false
+  when: sysinit_var | default('') != 'molecule_converge'
+
+- name: Retrieve required repositories
+  command: "{{ sysinit_repo_script }} dev"
+  args:
+    chdir: "{{ sysinit_withreach_dir }}"
+  register: repos_output
+  changed_when: "'NEW_REPOS_TO_CLONE' in repo_check.stdout"
+  become: no  # Run as user to access SSH agent
+  environment:
+    SSH_AUTH_SOCK: "{{ ssh_auth_sock | default(ansible_env.SSH_AUTH_SOCK) }}"
+    SSH_AGENT_PID: "{{ ssh_agent_pid | default(ansible_env.SSH_AGENT_PID) }}"
+  when: sysinit_var | default('') != 'molecule_converge'
+
+- name: Check if pre-commit hook already present
+  stat:
+    path: "{{ sysinit_v2_dir }}/.git/hooks/pre-commit"
+  register: hook
+  when: sysinit_var | default('') != 'molecule_converge'
+
+# TODO: install pre-commit into v2
+
+#- name: Install pre-commit via pip3
+#  pip:
+#    name: pre-commit
+#    state: latest
+#    executable: pip3
+#  when: not hook.stat.exists
+
+- name: Copy .env example
+  copy:
+    src: "{{ sysinit_env_example }}"
+    dest: "{{ sysinit_env_file }}"
+    remote_src: yes
+  when: 
+    - sysinit_env_file is not file
+    - sysinit_var | default('') != 'molecule_converge'
+
+- name: Copy local config file
+  copy:
+    src: "{{ sysinit_config_local_sample }}"
+    dest: "{{ sysinit_config_local }}"
+    remote_src: yes
+  when: 
+    - sysinit_config_local is not file
+    - sysinit_var | default('') != 'molecule_converge'
+
+- name: Check if pre-commit hook already present
+  stat:
+    path: "{{ sysinit_v2_dir }}/.git/hooks/pre-commit"
+  register: hook
+  when: sysinit_var | default('') != 'molecule_converge'
+
+- name: Create VSCode directories
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.config/Code/User"
+    state: directory
+    mode: '0755'
+    owner: "{{ lookup('env', 'USER') }}"
+  when: sysinit_var | default('') != 'molecule_converge'
+
+- name: Copy default VSCode settings
+  copy:
+    src: "{{ sysinit_vscode_settings_example }}"
+    dest: "{{ sysinit_vscode_settings }}"
+    remote_src: yes
+  when: 
+    - sysinit_vscode_settings is not file
+    - sysinit_var | default('') != 'molecule_converge'

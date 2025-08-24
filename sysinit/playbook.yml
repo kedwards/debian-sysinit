@@ -10,3 +10,4 @@
     combined_tools: "{{ sysinit_tools | default([]) + extra_tools }}"
   roles:
     - sysinit
+    - reach

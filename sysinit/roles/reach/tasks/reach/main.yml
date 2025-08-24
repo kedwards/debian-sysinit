@@ -1,0 +1,15 @@
+---
+- name: Configure SSH
+  ansible.builtin.include_tasks: "ssh.yml"
+
+- name: Install repositories
+  ansible.builtin.include_tasks: "repos.yml"
+
+- name: Configure sudo access
+  ansible.builtin.include_tasks: "sudoers.yml"
+
+- name: Configure host
+  ansible.builtin.include_tasks: "host.yml"
+
+- name: Configure rach user preferences
+  ansible.builtin.include_tasks: "user.yml"

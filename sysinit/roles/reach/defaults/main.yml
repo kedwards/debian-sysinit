@@ -1,0 +1,50 @@
+---
+sysinit_withreach_dir: "{{ lookup('env','HOME') }}/withreach"
+
+sysinit_devops_repo_url: "git@github.com:withreach/reach-devops.git"
+sysinit_devops_repo_branch: "main"
+sysinit_repo_script: "{{ sysinit_withreach_dir }}/bin/getRepos.sh"
+
+sysinit_dev_repos_dir: "{{ sysinit_withreach_dir }}/dev/repos"
+sysinit_v2_dir: "{{ sysinit_dev_repos_dir }}/v2"
+
+sysinit_vscode_settings_example: "{{ sysinit_v2_dir }}/.vscode/settings-example.json"
+sysinit_vscode_settings: "{{ sysinit_v2_dir }}/.vscode/settings.json"
+
+sysinit_env_example: "{{ sysinit_withreach_dir }}/dev/env.example"
+sysinit_env_file: "{{ sysinit_withreach_dir }}/dev/.env"
+
+sysinit_config_local_sample: "{{ sysinit_v2_dir }}/config_local.sample.yaml"
+sysinit_config_local: "{{ sysinit_v2_dir }}/config_local.yaml"
+
+sysinit_hosts_marker: "# Local Development"
+sysinit_dev_hosts:
+  - admin.rch.local
+  - admin-api.rch.local
+  - checkout.rch.local
+  - portal.rch.local
+  - reports.rch.local
+  - stash.rch.local
+  - redirect.rch.local
+  - vue.admin.rch.local
+
+sysinit_mise_plugins:
+  - 1password-cli
+  - amazon-ecr-credential-helper
+  - awscli
+  - github-cli
+  - granted
+  - jq
+  - node
+  - python@3.11
+  - starship
+  - usage
+
+# Git configuration template variables
+git_user_email: ""
+git_user_name: ""
+git_signing_key: ""
+
+# AWS SSO configuration
+# Set the role suffix for AWS SSO roles (dev, devops)
+aws_sso_role_suffix: "dev"
