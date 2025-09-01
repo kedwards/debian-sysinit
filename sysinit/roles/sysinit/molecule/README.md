@@ -9,7 +9,7 @@ The Molecule tests focus on:
 1. **Idempotency Testing**: Ensures that running the role multiple times produces the same result
 2. **File Creation**: Verifies that expected files and directories are created with correct permissions
 3. **System Integration**: Tests hosts file modifications and other system-level changes
-4. **Cross-Platform**: Tests on both Ubuntu and CentOS containers
+4. **Cross-Platform**: Tests on Debian/Ubuntu, Arch, Fedora, and CentOS containers
 
 ## Test Scenarios
 
@@ -72,60 +72,3 @@ molecule syntax
 - `side_effect.yml`: Tests for unintended changes
 - `tests/test_default.py`: Python tests using testinfra
 - `requirements.yml`: Ansible dependencies
-
-## Container Platforms
-
-The tests run against:
-- Ubuntu 22.04 (`ubuntu-instance`)
-- CentOS Stream 8 (`centos-instance`)
-
-Both containers run with systemd and required capabilities for realistic testing.
-
-## Key Testing Features
-
-### Idempotency Verification
-The `idempotence` step runs the role twice and ensures no changes occur on the second run.
-
-### File and Directory Testing
-Tests verify:
-- Correct file/directory creation
-- Appropriate permissions (755 for directories, 644 for files, 755 for scripts)
-- File content validation
-
-### Hosts File Testing  
-Special attention to `/etc/hosts` modifications:
-- Entries are added correctly
-- No duplicate entries on multiple runs
-- Original entries are preserved
-
-### Cross-Platform Testing
-Tests run on multiple Linux distributions to ensure compatibility.
-
-## Troubleshooting
-
-### Docker Issues
-If you encounter Docker permission issues:
-```bash
-sudo usermod -aG docker $USER
-# Then log out and back in
-```
-
-### Container Startup Issues
-For systemd-related issues, ensure Docker is running with proper capabilities:
-```bash
-sudo systemctl start docker
-sudo systemctl enable docker
-```
-
-### Test Failures
-Check individual test results:
-```bash
-molecule verify --debug
-```
-
-View container logs:
-```bash
-molecule login
-# or
-docker logs <container_id>
-```

@@ -1,22 +1,53 @@
 ---
-- name: Prepare
+- name: Molecule Prepare
   hosts: all
-  become: true
-  gather_facts: false  # We can't gather facts without Python
+  become: false
+  gather_facts: false
   tasks:
-    - name: Install Python and essential packages
+    - name: Determine initial distribution
       ansible.builtin.raw: |
-        apt-get update
-        apt-get install -y python3 python3-pip python3-setuptools curl wget gnupg2 software-properties-common sudo bison
+        if [ -f /etc/os-release ]; then
+          . /etc/os-release
+          echo "$ID"
+        elif [ -f /etc/lsb-release ]; then
+          . /etc/lsb-release
+          echo "$DISTRIB_ID"
+        elif [ -f /etc/redhat-release ]; then
+          awk '{print $1}' /etc/redhat-release | tr '[:upper:]' '[:lower:]' | sed 's/centos/redhat/' | sed 's/scientific/redhat/'
+        else
+          echo "unknown"
+        fi
+      register: initial_distro_check
+      changed_when: false
+      failed_when: false
+
+    - name: Set initial distribution fact
+      ansible.builtin.set_fact:
+        initial_distribution: "{{ initial_distro_check.stdout | trim }}"
+
+    - name: Install Python and essential packages (APT)
+      ansible.builtin.raw: |
+        apt update
+        apt install -y python3 python3-pip openssh-client python3-setuptools git curl wget gnupg2 sudo bison
         ln -sf /usr/bin/python3 /usr/bin/python
       register: install_python
       changed_when: install_python.rc == 0
+      when: initial_distribution == 'debian' or initial_distribution == 'ubuntu'
 
-    - name: Wait for apt lock to be released
+    - name: Install Python and essential packages (PACMAN)
       ansible.builtin.raw: |
-        while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do sleep 5; done
-        while fuser /var/lib/apt/lists/lock >/dev/null 2>&1; do sleep 5; done
-      changed_when: false
+        pacman -Syu
+        pacman -S --noconfirm python python-pip openssh python-setuptools git curl wget gnupg sudo bison
+      register: install_python
+      changed_when: install_python.rc == 0
+      when: initial_distribution == 'arch'
+
+    - name: Install Python and essential packages (DNF)
+      ansible.builtin.raw: |
+        dnf install -y python3 python3-pip openssh python3-setuptools git curl wget gnupg2 sudo bison python3-libdnf5
+      register: install_python
+      changed_when: install_python.rc == 0
+      when: initial_distribution == 'fedora'
 
     - name: Install github3.py library
       ansible.builtin.raw: pip3 install --break-system-packages github3.py
@@ -28,26 +59,35 @@
 
     - name: Create test user
       ansible.builtin.user:
-        name: kedwards
+        name: "{{ lookup('env', 'USER') }}"
         state: present
         create_home: true
         shell: /bin/bash
-        groups: sudo
+        groups: "{{ 'sudo' if initial_distribution in ['debian', 'ubuntu'] else 'wheel' }}"
         append: true
+
+    - name: Create .ssh directory for test user
+      ansible.builtin.file:
+        path: "/home/{{ lookup('env', 'USER') }}/.ssh"
+        state: directory
+        mode: '0755'
+        owner: "{{ lookup('env', 'USER') }}"
+        group: "{{ lookup('env', 'USER') }}"
+        recurse: true
 
     - name: Create .local/bin directory for test user
       ansible.builtin.file:
-        path: /home/kedwards/.local/bin
+        path: "/home/{{ lookup('env', 'USER') }}/.local/bin"
         state: directory
         mode: '0755'
-        owner: kedwards
-        group: kedwards
+        owner: "{{ lookup('env', 'USER') }}"
+        group: "{{ lookup('env', 'USER') }}"
         recurse: true
 
     - name: Set ownership of user home directory
       ansible.builtin.file:
-        path: /home/kedwards
+        path: "/home/{{ lookup('env', 'USER') }}"
         state: directory
-        owner: kedwards
-        group: kedwards
+        owner: "{{ lookup('env', 'USER') }}"
+        group: "{{ lookup('env', 'USER') }}"
         recurse: true

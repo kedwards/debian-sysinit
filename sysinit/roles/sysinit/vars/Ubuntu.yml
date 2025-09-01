@@ -1,35 +1,10 @@
 ---
 sysinit_packages:
-  - amazon-ecr-credential-helper
-  - apt-transport-https
-  - asciinema
-  - blueman
-  - bluetooth
-  - build-essential
-  - ca-certificates
-  - dnsutils
-  - flameshot
-  - libffi-dev
-  - libnss3-tools
-  - libbz2-dev
-  - liblzma-dev
-  - libncursesw5-dev
-  - libreadline-dev
-  - libssl-dev
-  - libsqlite3-dev
-  - libxml2-dev
-  - libxmlsec1-dev
-  - stow
-  - tk-dev
-  - xsel
-  - xz-utils
-  - zlib1g-dev
+  - unzip
 
 sysinit_tools:
   - aws-ssm
-  - bash-my-aws
   - docker
-  - dropbox
   - mise
 
-apt_packages: []
+sysinit_custom_apt_packages: []

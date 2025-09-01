@@ -1,0 +1,112 @@
+[alias]
+  # Show all of my configured aliases
+  aliases = !git config --list | grep 'alias\\.' | sed 's/alias\\.\\([^=]*\\)=\\(.*\\)/\\1\\ \t => \\2/' | sort
+
+  # aliases are useful if you either frequently typo certain words
+  # or else if you are used to another VC like cvs or svn
+  co = checkout
+  ci = commit
+  st = status
+  br = branch -av
+  brdel = branch -D
+
+  hist = log --pretty=format:'%h %ad | %s%d [%an]' --graph --date=short
+
+  # pretty much everybody has their favorite log format view
+  # you can find dozens of variations with a quick google
+  lg = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative
+
+[branch]
+  # sorts the list by the most recent commit date rather than alpha order
+  sort = -committerdate
+
+[color]
+  # this turns on default colors for many commands
+  # or you can customize specific colors per command (see [3] for example)
+  ui = auto
+
+[commit]
+  # Add complete diff to commit message for context, will get snipped
+  verbose = true
+
+[core]
+  # lets you define a global .gitignore for all those
+  # *.swp, *~, *.o, etc things that you're frequently
+  # sticking in .gitignore
+  excludesfile = ~/.gitignore_global
+
+  # tells git to ignore file permission changes
+  filemode = false
+
+  # EOL attribute
+  whitespace = cr-at-eol
+
+[credential]
+  # external helper to be called when a username or password credential
+  helper = store
+
+[diff]
+  # Use better, descriptive initials (c, i, w) instead of a/b.
+  algorithm = histogram
+  mnemonicPrefix = true
+
+  # color moved pieces of code
+  colorMoved = plain
+
+  # Show renames/moves as such
+  renames = true
+
+[fetch]
+  # if true, fetch will attempt to update all available remotes.
+  all = true
+
+  # fetching will also remove any remote-tracking references that no longer exist on the remote
+  prune = true
+
+  # prune tags that set with prune maintain 1:1 to upstream refs
+  pruneTags = true
+
+[init]
+  # overriding the default branch name (main; be socially conscious)
+  defaultBranch = main
+
+[push]
+  # Automagically setup remote tracking branch with same name
+  autoSetupRemote = true
+
+  # Default push should only push the current branch to its push target, regardless of its remote name
+  default = simple
+
+  # When pushing, also push tags whose commit-ishs are now reachable upstream
+  followTags = true
+
+[pull]
+  # Rebase on pull by default
+  rebase = true
+
+[rebase]
+  # automatically create a temporary stash entry before the operation begins
+  autoStash = true
+
+  # autosuash on rebase
+  autoSquash = true
+
+  # update refs when operation completes
+  updateRefs = true
+
+[tag]
+  # Sort tags as version numbers whenever applicable, so 1.10.2 is AFTER 1.2.0.
+  sort = version:refname
+
+[user]
+  # these are about the most basic and should pretty much always exist
+  email = {{ git_user_email | default('') }}
+  name = {{ git_user_name | default('') }}
+  signingkey = {{ git_signing_key | default('') }}
+  useConfigOnly = true
+
+[rerere]
+  # google `git rerere`, basically git remembers your
+  # partial merge choices and replays them next time
+  enabled = true
+  autoupdate = true

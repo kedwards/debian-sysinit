@@ -36,15 +36,15 @@ tasks:
       - find . -name "*.sh" -type f -not -path "./.venv/*" | xargs shellcheck -e SC1091
 
   # Testing tasks
-  test:
-    desc: Run tests
+  syntax-check:
+    desc: Run syntx check
     cmds:
       - ansible-playbook --syntax-check playbook.yml
 
   molecule-test:
     desc: Run Molecule tests for default scenario, no destroy
     cmds:
-      - cd roles/sysinit && molecule test --destroy=never
+      - cd roles/sysinit && molecule test
 
   molecule-converge:
     desc: Run Molecule converge for development
@@ -82,11 +82,14 @@ tasks:
     desc: Install dependencies
     silent: true
     cmds:
+      - uv venv --clear
       - uv pip install -e . --group dev
+      - ansible-galaxy install -r requirements.yml
       - echo -e "Please also install shellcheck using your system package manager:\n
-         Ubuntu/Debian -> sudo apt install shellcheck\n
-         macOS -> brew install shellcheck\n
-         Arch Linux -> sudo pacman -S shellcheck"
+          Arch Linux -> pacman -S shellcheck\n
+          Debian -> apt install shellcheck\n
+          Fedora -> dnf install ShellCheck\n
+          EPEL -> yum -y install epel-release; yum install ShellCheck"
 
   install-hooks:
     desc: Install pre-commit hooks

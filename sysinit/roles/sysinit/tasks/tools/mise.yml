@@ -91,8 +91,10 @@
 
     - name: Mise - Install Plugins
       ansible.builtin.shell: |
+        set -o pipefail
+
         PLUGIN_BASE=$(echo '{{ plugin_item }}' | cut -d'@' -f1)
-        
+
         if {{ mise_bin }} ls --installed | grep -q "^$PLUGIN_BASE\s"; then
           echo "already_installed: $PLUGIN_BASE"
           exit 0

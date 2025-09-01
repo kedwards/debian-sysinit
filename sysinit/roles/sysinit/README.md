@@ -1,63 +1,63 @@
-sysinit
-=======
+# Sysinit Role
 
-Ansible role for system initialization and tool installation.
+[![Ansible Galaxy](https://img.shields.io/ansible/role/sysinit.svg)](https://galaxy.ansible.com/kedwards/sysinit)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/kedwards/sysinit/blob/main/LICENSE)
 
-Requirements
-------------
+An Ansible role for system initialization and development environment configuration.
 
-- Ansible 2.9+
-- Target systems: Ubuntu, Debian, Arch Linux
-- Internet connectivity for downloading tools
-- GitHub API token (recommended for higher rate limits)
+## Requirements
 
-Role Variables
---------------
+- Ansible >= 11.8.0
+- SSH key configured for Git operations (`~/.ssh/id_rsa`) or (`~/.ssh/id_ed25519`)
+- Sudo privileges for host file modifications
+- Python 3 and pip3 for pre-commit installation
 
-The following variables can be set to customize the role behavior:
+## Supported Platforms
 
-### Core Variables
+- Debian
+- Ubuntu
+- Fedora
+- CentOs
+- Arch
 
-- `upgrade`: (boolean, default: `false`) - Forces reinstallation/upgrade of tools even if they already exist
-- `github_token`: (string, optional) - GitHub API token for accessing release information
+## Role Variables
 
-### Mise Plugin Configuration
+All variables are defined in `defaults/main.yml` and can be overridden:
 
-- `sysinit_mise_plugins`: List of mise plugins to install
-- `sysinit_mise_custom_plugins`: List of custom mise plugin configurations
+## Dependencies
 
-Dependencies
-------------
+This role has no external role dependencies but requires the following Ansible collections:
+- `ansible.posix`
+- `community.general`
 
-- `community.general` collection for GitHub release lookups
-- `ansible.builtin` modules
+## Usage Example
 
-Example Playbook
-----------------
-
-Basic usage:
-
+### Basic Playbook
 ```yaml
-- hosts: servers
-  become: true
+---
+- name: Initialize Development Environment
+  hosts: localhost
+  become: yes
   roles:
-    - sysinit
+    - kedwards.sysinit
 ```
 
-With custom configuration:
+### Command Line Usage
+```bash
+# Run the full role
+ansible-playbook -i inventory playbook.yml
 
-```yaml
-- hosts: servers
-  become: true
-  vars:
-    upgrade: true
-    github_token: "{{ vault_github_token }}"
-  roles:
-    - sysinit
+# Run specific tool installation
+ansible-playbook -i inventory playbook.yml -e tools='chrome dbeaver' 
+
+# Check mode (dry run)
+ansible-playbook -i inventory playbook.yml --check
 ```
 
+## Contributing
 
-License
--------
-
-BSD
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test with distributions
+5. Submit a pull request

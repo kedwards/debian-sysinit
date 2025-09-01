@@ -6,8 +6,44 @@ dependency:
 driver:
   name: docker
 platforms:
-  - name: sysinit-ubuntu-22
+  - name: sysinit-arch
+    image: archlinux
+    pre_build_image: true
+    privileged: true
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    command: sleep infinity
+    tmpfs:
+      - /run
+      - /tmp
+    capabilities:
+      - SYS_ADMIN
+  - name: sysinit-ubuntu
     image: ubuntu
+    pre_build_image: true
+    privileged: true
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    command: sleep infinity
+    tmpfs:
+      - /run
+      - /tmp
+    capabilities:
+      - SYS_ADMIN
+  - name: sysinit-fedora
+    image: fedora
+    pre_build_image: true
+    privileged: true
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    command: sleep infinity
+    tmpfs:
+      - /run
+      - /tmp
+    capabilities:
+      - SYS_ADMIN
+  - name: sysinit-debian
+    image: debian
     pre_build_image: true
     privileged: true
     volumes:
@@ -25,11 +61,18 @@ provisioner:
   log: true
   inventory:
     host_vars:
-      sysinit-ubuntu-22:
+      sysinit-arch:
+        ansible_user: root
+      sysinit-fedora:
+        ansible_user: root
+      sysinit-ubuntu:
         ansible_user: root
   config_options:
     defaults:
       callbacks_enabled: profile_tasks
+      host_key_checking: false
+    ssh_connection:
+      pipelining: true
 verifier:
   name: ansible
 lint: |

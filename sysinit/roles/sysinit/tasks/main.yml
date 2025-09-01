@@ -10,7 +10,7 @@
       - "Release: {{ ansible_distribution_release }}"
       - "Sysinit: {{ sysinit_var }}"
 
-- name: Load variables
+- name: Load distribution variables
   ansible.builtin.include_vars: "{{ ansible_distribution }}.yml"
 
 - name: Combine tools lists
@@ -21,15 +21,6 @@
   ansible.builtin.package:
     name: "{{ sysinit_packages }}"
     state: present
-
-- name: Install apt community or private packages
-  ansible.builtin.include_tasks: "apt.yml"
-  loop: "{{ sysinit_apt_packages | default([]) }}"
-  when: ansible_distribution == 'Debian'
-
-- name: Install Arch aur packages
-  ansible.builtin.include_tasks: "aur.yml"
-  when: ansible_distribution == 'Archlinux'
 
 - name: Install tools
   ansible.builtin.include_tasks: "tools/{{ item }}.yml"

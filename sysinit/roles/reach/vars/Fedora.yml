@@ -1,7 +1,0 @@
----
-sysinit_packages: []
-
-sysinit_tools:
-  - aws-ssm
-  - docker
-  - mise

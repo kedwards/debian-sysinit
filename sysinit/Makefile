@@ -48,10 +48,12 @@ audit-secrets: ## Audit secrets baseline
 ##@ Utility
 install-deps: ## Install development dependencies
 	uv pip install -e . --group dev
+	ansible-galaxy install -r requirements.yml
 	@echo "Please also install shellcheck using your system package manager:"
-	@echo "  Ubuntu/Debian: sudo apt install shellcheck"
-	@echo "  macOS: brew install shellcheck"
-	@echo "  Arch Linux: sudo pacman -S shellcheck"
+	@echo "  Arch Linux: pacman -S shellcheck"
+	@echo "  Debian: apt install shellcheck"
+	@echo "  Fedora: dnf install ShellCheck"
+	@echo "  EPEL: yum -y install epel-release; yum install install shellcheck"
 
 install-hooks: ## Install pre-commit hooks
 	pre-commit install

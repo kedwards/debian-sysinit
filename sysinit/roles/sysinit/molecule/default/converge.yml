@@ -1,9 +1,9 @@
 ---
-- name: Converge
+- name: Molecule Converge
   hosts: all
   become: true
   vars:
-    sysinit_var: "molecule_converge"
+    sysinit_var: molecule_converge
     upgrade: false
   roles:
     - role: sysinit

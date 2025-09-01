@@ -1,17 +1,44 @@
 ---
-- name: Verify
+- name: Molecule Verify
   hosts: all
   become: true
-  gather_facts: false
   tasks:
-    - name: Verify system packages are installed
-      ansible.builtin.package_facts:
+    - name: Define required commands
+      ansible.builtin.set_fact:
+        required_commands:
+          - aws
+          - assume
+          - curl
+          - docker
+          - gh
+          - git
+          - gpg
+          - granted
+          - jq
+          - mise
+          - node
+          - op
+          - python
+          - starship
 
-    - name: Fail if required package is not installed
+    - name: Check required commands are available with mise activated
+      become: true
+      become_user: "{{ lookup('env', 'USER') }}"
+      ansible.builtin.shell: |
+        set -euo pipefail
+        eval "$(/home/{{ lookup('env', 'USER') }}/.local/bin/mise activate bash)"
+      args:
+        executable: /bin/bash
+      register: cmd_check
+      changed_when: false
+      failed_when: false
+      loop: "{{ required_commands }}"
+
+    - name: Collect missing commands
+      ansible.builtin.set_fact:
+        missing_commands: "{{ cmd_check.results | selectattr('rc', 'ne', 0) | map(attribute='item') | list }}"
+
+    - name: Fail if required command is missing
       ansible.builtin.fail:
-        msg: "Required package '{{ item }}' is not installed."
-      when: item not in ansible_facts.packages
-      loop:
-        - curl
-        - git
-        - gpg
+        msg: "Required command(s) missing: {{ missing_commands | join(', ') }}"
+      when: missing_commands | length > 0

@@ -1,0 +1,32 @@
+---
+- name: Configure system timezone
+  community.general.timezone:
+    name: "{{ sysinit_timezone | default('UTC') }}"
+  when: sysinit_timezone is defined
+
+- name: Configure system locale
+  when: ansible_distribution in ['Debian', 'Ubuntu']
+  block:
+    - name: Configure system locale
+      ansible.builtin.package:
+        name: locales
+        state: present
+
+    - name: Configure system locale
+      community.general.locale_gen:
+        name: "{{ item }}"
+        state: present
+      loop: "{{ sysinit_locales | default(['en_US.UTF-8']) }}"
+
+- name: Add local development hosts
+  become: true
+  ansible.builtin.blockinfile:
+    path: /etc/hosts
+    block: |
+      {{ sysinit_hosts_marker }}
+      {% for host in sysinit_dev_hosts %}
+      127.0.0.1 {{ host }}
+      {% endfor %}
+    marker: "{{ sysinit_hosts_marker }} {mark}"
+    create: false
+  when: sysinit_var | default('') != 'molecule_converge'

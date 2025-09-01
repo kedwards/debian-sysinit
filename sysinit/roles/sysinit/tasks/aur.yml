@@ -1,9 +1,0 @@
----
-- name: Install Arch aur packages
-  become: true
-  become_user: "{{ lookup('env', 'USER') }}"
-  ansible.builtin.shell: >
-    yay --noconfirm --answerclean None --answerdiff None -S {{ item }}
-  args:
-    creates: "/var/lib/pacman/local/{{ item }}-*"
-  loop: "{{ sysinit_aur_packages }}"

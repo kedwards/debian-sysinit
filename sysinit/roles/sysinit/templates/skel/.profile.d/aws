@@ -1,0 +1,281 @@
+#!/bin/bash
+
+# Switches AWS profiles and sets the active profile in the environment.
+# Arguments:
+#   $1 - The profile name or option (-c, -u, -x).
+#   $2 - The AWS region (optional).
+aws-profile_switcher() {
+  if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    cat <<EOF
+Usage: aws-profile_switcher [-<c|u|x>] <profile> [-r <region>]"
+Switches AWS profiles and sets the active profile in the environment
+Parameters:
+  profile: Name of AWS profile
+  region: AWS region
+  -c: login via SSO to console, set profile active
+  -u: unset active profile
+  -x: logout of SSO
+EOF
+    return 0
+  elif [[ "$1" == "-u" || "$1" == "-x" ]]; then
+    unset ENV AWS_PROFILE AWS_ACCOUNT
+    export ENV AWS_PROFILE AWS_ACCOUNT
+    doAssume --unset
+    [[ "$1" == "-x" ]] && granted sso-tokens clear --all
+  else
+    doAssume "$@"
+  fi
+}
+
+# Executes the assume command with the provided arguments.
+# Arguments:
+#   $@ - The arguments to pass to the assume command.
+doAssume() {
+  local cmd="assume"
+  for arg in "$@"; do
+    cmd="$cmd $arg"
+  done
+  eval "$cmd"
+  export ENV=$AWS_PROFILE
+  aws-whoami &>/dev/null
+}
+
+# Prints the current AWS account ID and alias.
+# Returns:
+#   0 if the profile is set, 1 otherwise.
+aws-whoami() {
+  if [[ -z "$AWS_PROFILE" ]]; then
+    echo "No profile is set"
+    return 1
+  fi
+
+  account_alias=$(aws iam list-account-aliases --query "AccountAliases[0]" --output text)
+  if [[ -n "$account_alias" ]]; then
+    echo "AWS Account: $account_alias"
+    read -r userId account arn <<<"$(aws sts get-caller-identity --query "[UserId,Account,Arn]" --output text)"
+    echo "User: $userId"
+    echo "Account: $account"
+    echo "Arn: $arn"
+    export AWS_ACCOUNT=$account
+  fi
+}
+
+# Auto-completion setup for Bash and Zsh.
+if [[ -n "$BASH_VERSION" ]]; then
+  # Bash completion function
+  profile_switcher_completer() {
+    mapfile -t COMPREPLY < <(aws configure list-profiles | grep --color=never "^${COMP_WORDS[COMP_CWORD]}")
+  }
+  complete -F profile_switcher_completer aws-profile_switcher p
+elif [[ -n "$ZSH_VERSION" ]]; then
+  # Ensure compinit is loaded
+  autoload -Uz compinit && compinit
+  # Zsh completion function
+  _profile_switcher_completer() {
+    local cur="${words[-1]}"
+    reply=($(aws configure list-profiles | grep --color=never "^${cur}"))
+  }
+  compdef _profile_switcher_completer aws-profile_switcher p
+fi
+
+# Connects to an instance via SSM.
+# Arguments:
+#   $1 - The instance name or ID, or -db for database connection.
+#   $2 - The host (optional).
+#   $3 - The port (optional).
+#   $4 - The local port (optional).
+aws-ssm_connect() {
+  dbconnect=false
+
+  if [[ "$1" =~ "-h" ]] || [[ "$1" = "--help" ]]; then
+    cat <<EOF
+Connect to an instance via SSM
+Usage:
+  aws-ssm_connect [-db | <intance-name|instance-id> ] [ <host>:rch-cf-rds-engine ] [ <port>:5432 ] [ <local_port>:\$port ] }
+
+Connect Examples:
+  aws-ssm_connect               : search for an instance to connect to
+  aws-ssm_connect instance-name : connect to an instance named instance-name
+  aws-ssm_connect i-XXXXXXXXXX  : connect to an instance by instance-id
+
+Port Forwarding Examples:
+  aws-ssm_connect -db : db forwarding - forwarding  port 5432 to remote port 5432, engine database
+  aws-ssm_connect my-instance rch-cf-rds-engine.rch 5432 9999 : forwarding local port 9999 to remote port 5432"
+EOF
+  elif [ -n "$AWS_PROFILE" ]; then
+    if [ "$1" = "-db" ]; then
+      shift
+      dbconnect=true
+    fi
+
+    local instanceIdentifier=$1
+    local instanceId=""
+
+    if [[ "${instanceIdentifier:0:2}" == "i-" ]]; then
+      instanceId=$instanceIdentifier
+    else
+      [ "$dbconnect" = "true" ] && instanceIdentifier="CheckoutEngine"
+
+      aws-get_all_running_instances "${instanceIdentifier}"
+
+      if [ -z "$instance_array" ]; then
+        echo "No running instances found"
+        return
+      elif [ "${#instance_array[@]}" -eq 1 ]; then
+        instanceId=$(echo "${instance_array[0]}" | sed 's/\"//g' | cut -d' ' -f2)
+      else
+        PS3='Select instance to connect to, or 0 to exit: '
+        select instanceIdentifier in "${instance_array[@]}"; do
+          if [[ $REPLY == "0" ]]; then
+            return
+          elif [[ -z $instanceIdentifier ]]; then
+            printf '"%s" is not a valid choice\n' "$REPLY" >&2
+          else
+            break
+          fi
+        done
+        instanceId=$(echo "${instanceIdentifier}" | sed 's/\"//g' | cut -d' ' -f2)
+      fi
+    fi
+
+    if [[ "${dbconnect}" = "true" ]]; then
+      echo ""
+      dbs=("engine" "index" "timeline")
+      PS3='Select db to connect to, or 0 to exit: '
+      select db in "${dbs[@]}"; do
+        if [[ $REPLY == "0" ]]; then
+          return
+        elif [[ -z "$db" ]]; then
+          printf '"%s" is not a valid choice\n' "$REPLY" >&2
+        else
+          break
+        fi
+      done
+
+      local host="rch-cf-rds-$db-read"
+      local port=5432
+      local local_port=$port
+
+      aws ssm start-session --target "$instanceId" \
+        --document-name AWS-StartPortForwardingSessionToRemoteHost \
+        --parameters "{\"host\":[\"$host\"],\"portNumber\":[\"$port\"], \"localPortNumber\":[\"$local_port\"]}"
+    else
+      aws ssm start-session --target "$instanceId"
+    fi
+  else
+    echo 'No profile is set'
+    return 1
+  fi
+}
+
+# Queries AWS SSM for a list of running instances.
+# Arguments:
+#   $1 - The instance name to search for (optional).
+aws-get_all_running_instances() {
+  local instance_name="$1"
+  local query_search
+
+  if [[ -n "$instance_name" ]]; then
+    query_search=" && Tags[?Key=='Name' && contains(Value, '$instance_name')]].[Tags[?Key=='Name']"
+  else
+    query_search="].[Tags[?Key=='Name']"
+  fi
+
+  local query="Reservations[].Instances[?State.Name == 'running'${query_search} | [0].Value, InstanceId][]"
+
+  case "$(uname -s)" in
+    Linux*)
+      if [[ -n "$BASH_VERSION" ]]; then
+        mapfile -t instance_array < <(aws ec2 describe-instances --query "$query" --output json | jq -r 'sort_by(.[]) | .[] | join(" ")')
+      elif [[ -n "$ZSH_VERSION" ]]; then
+        instance_array=("${(@f)$(aws ec2 describe-instances --query "$query" --output json | jq -r 'sort_by(.[]) | .[] | join(" ")')}")
+      fi
+      ;;
+    Darwin*) # macOS
+      instance_array=("${(@f)$(aws ec2 describe-instances --query "$query" --output json | jq -r 'sort_by(.[]) | .[] | join(" ")')}")
+      ;;
+  esac
+}
+
+# Gets instance ID(s) based on the provided identifier(s).
+# Arguments:
+#   $1 - The instance identifier(s) (name or ID).
+aws-get_instance() {
+  if [[ -n "$BASH_VERSION" ]]; then
+    mapfile -t instanceArray <<< "$1"
+  elif [[ -n "$ZSH_VERSION" ]]; then
+    instanceArray=("${(@f)$1}")
+  fi
+
+  local instances=""
+  for instanceIdentifier in "${instanceArray[@]}"; do
+    if [[ "${instanceIdentifier:0:2}" == "i-" ]]; then
+      instance_id=$(aws ec2 describe-instances --instance-ids "$instanceIdentifier" --query "Reservations[].Instances[?State.Name == 'running'].InstanceId[]" --output text)
+    else
+      instance_id=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=$instanceIdentifier" --query "Reservations[].Instances[?State.Name == 'running'].InstanceId[]" --output text)
+    fi
+    instances+="$instance_id "
+  done
+
+  instances=$(echo "$instances" | xargs)  # Trim excess whitespace
+  echo "$instances"
+}
+
+# Gets AWS VPN Client Endpoint configuration.
+# Arguments are optional
+# logged in environment will be default.
+# Arguments:
+#   $1 - The AWS profile
+#   $2 - The AWS region
+aws-get_vpn_client_endpoint() {
+  local profile=${1:-$AWS_PROFILE}
+  local region=${2:-$AWS_REGION}
+
+  if [[ "$1" == "-h" || "$1" == "--help" || -z "$profile" ]]; then
+    cat <<EOF
+Usage: aws-get_vpn_client_endpoint [<profile>] [<region>]
+Get client VPN endpoint configuration.
+Use arguments to provide profile/region or use the logged-in profile/region.
+Parameters:
+  profile:  AWS profile
+  region:   AWS region
+EOF
+    return 1
+  else
+    if [[ "$profile" == "$AWS_PROFILE" ]]; then
+      aws ec2 export-client-vpn-client-configuration \
+        --client-vpn-endpoint-id "$(aws ec2 describe-client-vpn-endpoints \
+          --query "ClientVpnEndpoints[0].ClientVpnEndpointId" --output text)" \
+        --output text | tee "${profile}_client_vpn.ovpn"
+    else
+      aws-profile_switcher "$profile" -r "$region" --exec -- "aws ec2 export-client-vpn-client-configuration \
+        --client-vpn-endpoint-id $(aws-profile_switcher "$profile" -r "$region" --exec -- aws ec2 describe-client-vpn-endpoints \
+        --query 'ClientVpnEndpoints[0].ClientVpnEndpointId' --output text) \
+        --output text | tee \"${profile}_client_vpn.ovpn\""
+    fi
+
+    # Remove 'verify-x509-name' line from .ovpn file
+    if [[ -n "$BASH_VERSION" ]]; then
+      sed -i '/verify-x509-name/d' "${profile}_client_vpn.ovpn"
+    elif [[ -n "$ZSH_VERSION" ]]; then
+      sed -i '' '/verify-x509-name/d' "${profile}_client_vpn.ovpn"
+    fi
+  fi
+  return 0
+}
+
+# List all AWS profiles in configuration
+aws-list_aws_profiles () {
+  # out=$(grep "^\[.*\]" "$HOME/.aws/config" | sed 's/\[//g;s/\]//g' | cut -d ' ' -f 2)
+  out=$(grep 'profile' "$HOME/.aws/config" | awk '{ print substr($2,1,length($2)-1) }')
+  if [ -n "$1" ]; then
+    local -n input_ref=$1
+    input_ref=$out
+  else
+    echo $out
+  fi
+}
+
+# Define alias at the end so it's recognized
+alias p='aws-profile_switcher'
+alias c='aws-ssm_connect'

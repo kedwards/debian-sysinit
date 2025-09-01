@@ -1,9 +1,9 @@
+---
 galaxy_info:
-  role: sysinit
   namespace: kedwards
   author: Kevin Edwards
   description: System initialization.
-  company: LivITy
+  company: LivITy Ltd.
 
   # If the issue tracker for your role is not on github, uncomment the
   # next line and provide a value

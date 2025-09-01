@@ -1,1 +1,2 @@
-sysinit_var: variable from host_vars/localhost/localhost.yml
+---
+sysinit_var: host_vars/localhost/localhost.yml

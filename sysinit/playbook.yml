@@ -5,9 +5,6 @@
   gather_facts: true
   vars:
     upgrade: false
-    github_token: "{{ vault_github_token | default('') }}"
-    extra_tools: "{{ (tools | default('') | split(',')) | select('match', '.+') | list }}"
-    combined_tools: "{{ sysinit_tools | default([]) + extra_tools }}"
+    sysinit_var: system_initialization
   roles:
     - sysinit
-    - reach

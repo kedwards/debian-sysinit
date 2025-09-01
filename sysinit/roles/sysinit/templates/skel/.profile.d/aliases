@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+alias dc="docker compose"
+alias l="ls -laF"

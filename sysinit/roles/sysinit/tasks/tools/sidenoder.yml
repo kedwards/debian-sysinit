@@ -5,7 +5,7 @@
   register: sidenoder_exists_result
 
 - name: Sidenoder - Install
-  when: not sidenoder_exists_result.stat.exists or (upgrade | default(false))
+  when: not sidenoder_exists_result.stat.exists or upgrade
   block:
     - name: Sidenoder - Get latest
       community.general.github_release:
