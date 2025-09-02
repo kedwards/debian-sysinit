@@ -13,4 +13,4 @@
   ansible.builtin.dnf:
     name: https://s3.amazonaws.com/session-manager-downloads/plugin/latest/linux_64bit/session-manager-plugin.rpm
     disable_gpg_check: true
-  when: ansible_distribution == 'Fedora' and (not awsssm_exists_result.stat.exists or upgrade)
+  when: (ansible_distribution == 'Fedora' or ansible_distribution == 'CentOs') and (not awsssm_exists_result.stat.exists or upgrade)

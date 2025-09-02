@@ -1,5 +1,9 @@
 ---
 sysinit_packages:
+  - asciinema
+  - flameshot
+  - stow
+  - xsel
   - unzip
 
 sysinit_tools:

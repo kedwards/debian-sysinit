@@ -1,5 +1,6 @@
 ---
 sysinit_packages:
+  - asciinema
   - flameshot
   - stow
   - xsel

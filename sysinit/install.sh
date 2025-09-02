@@ -3,17 +3,7 @@
 set -euo pipefail
 
 SYSINIT_REPO=https://github.com/withreach/sysinit.git
-
-# Determine script directory
-if [[ -p /dev/stdin ]]; then
-  # If run via stdin (e.g., curl ... | bash)
-  script_dir="$HOME/sysinit"
-elif [[ -n "${BASH_SOURCE[0]:-}" ]]; then
-  # If sourced or run as file
-  script_dir="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
-else
-  script_dir="$(dirname "$(realpath "$0")")"
-fi
+script_dir="$HOME/sysinit"
 
 cleanup() {
   if command -v deactivate >/dev/null; then
@@ -28,7 +18,7 @@ trap cleanup ERR EXIT
 get_packages_for_pm() {
   local pm="$1"
   case "$pm" in
-  apt-get)
+  apt)
     echo "curl git gpg"
     ;;
   pacman)
@@ -72,22 +62,22 @@ install_packages() {
 
   case "$pm" in
   apt)
-    sudo apt-get update
-    sudo apt-get upgrade -y
-    sudo apt-get install -y "$packages"
-    sudo apt-get autoremove -y
+    sudo apt update
+    sudo apt upgrade -y
+    sudo apt install -y $packages
+    sudo apt autoremove -y
     ;;
   dnf)
     sudo dnf update -y
-    sudo dnf install -y "$packages"
+    sudo dnf install -y $packages
     ;;
   pacman)
     sudo pacman -Syu --noconfirm
-    sudo pacman -S --noconfirm "$packages"
+    sudo pacman -S --noconfirm $packages
     ;;
   yum)
     sudo yum update -y
-    sudo yum install -y "$packages"
+    sudo yum install -y $packages
     ;;
   *)
     echo "Unsupported or unknown package manager"
