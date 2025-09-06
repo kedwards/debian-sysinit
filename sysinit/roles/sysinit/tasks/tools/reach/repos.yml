@@ -1,18 +1,23 @@
 ---
 - name: Ensure DevOps repo exists (clone if missing)
   when: sysinit_var | default('') != 'molecule_converge'
+  tags:
+    - reach
+    - reach-repos
+    - repositories
+    - git
   block:
     - name: Check if DevOps repo is present
       ansible.builtin.stat:
-        path: "{{ sysinit_withreach_dir }}/.git"
+        path: "{{ sysinit_reach_base_dir }}/.git"
       register: devops_repo_gitdir
       become: false
 
     - name: Clone DevOps repository
       ansible.builtin.git:
-        repo: "{{ sysinit_devops_repo_url }}"
-        dest: "{{ sysinit_withreach_dir }}"
-        version: "{{ sysinit_devops_repo_branch }}"
+        repo: "{{ sysinit_reach_devops_repo_url }}"
+        dest: "{{ sysinit_reach_base_dir }}"
+        version: "{{ sysinit_reach_devops_repo_branch }}"
         update: false
         accept_hostkey: true
         key_file: "{{ lookup('env', 'HOME') }}/.ssh/id_rsa"
@@ -25,21 +30,21 @@
 
 - name: Check for new repositories to clone
   ansible.builtin.shell: |
-    cd {{ sysinit_withreach_dir }}/dev
+    cd {{ sysinit_reach_dev_dir }}
     REPOS=$(cat repos.txt)
     NEW_REPOS_FOUND=false
 
     for R in $REPOS; do
-        if [ ! -d ~/withreach/dev/repos/$R ]; then
-            echo "New repository found: $R"
-            NEW_REPOS_FOUND=true
-        fi
+      if [ ! -d {{ sysinit_reach_repos_dir }}/$R ]; then
+        echo "New repository found: $R"
+        NEW_REPOS_FOUND=true
+      fi
     done
 
     if [ "$NEW_REPOS_FOUND" = "true" ]; then
-        echo "NEW_REPOS_TO_CLONE"
+      echo "NEW_REPOS_TO_CLONE"
     else
-        echo "ALL_REPOS_EXIST"
+      echo "ALL_REPOS_EXIST"
     fi
   register: repo_check
   become: false
@@ -47,9 +52,9 @@
   when: sysinit_var | default('') != 'molecule_converge'
 
 - name: Retrieve required repositories
-  ansible.builtin.command: "{{ sysinit_repo_script }} dev"
+  ansible.builtin.command: "{{ sysinit_reach_repo_script }} dev"
   args:
-    chdir: "{{ sysinit_withreach_dir }}"
+    chdir: "{{ sysinit_reach_base_dir }}"
   register: repos_output
   changed_when: "'NEW_REPOS_TO_CLONE' in repo_check.stdout"
   become: false
@@ -60,7 +65,7 @@
 
 - name: Check if pre-commit hook already present
   ansible.builtin.stat:
-    path: "{{ sysinit_v2_dir }}/.git/hooks/pre-commit"
+    path: "{{ sysinit_reach_v2_dir }}/.git/hooks/pre-commit"
   register: hook
   when: sysinit_var | default('') != 'molecule_converge'
 
@@ -73,29 +78,29 @@
 
 - name: Copy .env example
   ansible.builtin.copy:
-    src: "{{ sysinit_env_example }}"
-    dest: "{{ sysinit_env_file }}"
+    src: "{{ sysinit_reach_env_example }}"
+    dest: "{{ sysinit_reach_env_file }}"
     remote_src: true
     mode: '0644'
     owner: "{{ lookup('env', 'USER') }}"
   when:
-    - sysinit_env_file is not file
+    - sysinit_reach_env_file is not file
     - sysinit_var | default('') != 'molecule_converge'
 
 - name: Copy local config file
   ansible.builtin.copy:
-    src: "{{ sysinit_config_local_sample }}"
-    dest: "{{ sysinit_config_local }}"
+    src: "{{ sysinit_reach_config_local_sample }}"
+    dest: "{{ sysinit_reach_config_local }}"
     remote_src: true
     mode: '0644'
     owner: "{{ lookup('env', 'USER') }}"
   when:
-    - sysinit_config_local is not file
+    - sysinit_reach_config_local is not file
     - sysinit_var | default('') != 'molecule_converge'
 
 - name: Create VSCode directories
   ansible.builtin.file:
-    path: "{{ ansible_env.HOME }}/.config/Code/User"
+    path: "{{ sysinit_reach_vscode_user_dir }}"
     state: directory
     mode: '0755'
     owner: "{{ lookup('env', 'USER') }}"
@@ -103,11 +108,11 @@
 
 - name: Copy default VSCode settings
   ansible.builtin.copy:
-    src: "{{ sysinit_vscode_settings_example }}"
-    dest: "{{ sysinit_vscode_settings }}"
+    src: "{{ sysinit_reach_vscode_settings_example }}"
+    dest: "{{ sysinit_reach_vscode_settings }}"
     remote_src: true
     mode: '0755'
     owner: "{{ lookup('env', 'USER') }}"
   when:
-    - sysinit_vscode_settings is not file
+    - sysinit_reach_vscode_settings is not file
     - sysinit_var | default('') != 'molecule_converge'

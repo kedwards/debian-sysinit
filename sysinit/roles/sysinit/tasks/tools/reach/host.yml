@@ -14,19 +14,28 @@
 
     - name: Configure system locale
       community.general.locale_gen:
-        name: "{{ item }}"
+        name: "{{ locale_item }}"
         state: present
       loop: "{{ sysinit_locales | default(['en_US.UTF-8']) }}"
+      loop_control:
+        loop_var: locale_item
 
 - name: Add local development hosts
   become: true
   ansible.builtin.blockinfile:
     path: /etc/hosts
     block: |
-      {{ sysinit_hosts_marker }}
-      {% for host in sysinit_dev_hosts %}
+      {{ sysinit_reach_hosts_marker }}
+      {% for host in sysinit_reach_dev_hosts %}
       127.0.0.1 {{ host }}
       {% endfor %}
-    marker: "{{ sysinit_hosts_marker }} {mark}"
+    marker: "{{ sysinit_reach_hosts_marker }} {mark}"
     create: false
+    backup: "{{ sysinit_reach_hosts_backup }}"
   when: sysinit_var | default('') != 'molecule_converge'
+  notify: validate hosts
+  tags:
+    - reach
+    - reach-host
+    - hosts
+    - network

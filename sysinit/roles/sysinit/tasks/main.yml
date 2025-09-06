@@ -15,7 +15,7 @@
 
 - name: Combine tools lists
   ansible.builtin.set_fact:
-    sysinit_combined_tools: "{{ (tools | default('') | split(',')) | select('match', '.+') | list + (sysinit_tools | default([])) }}"
+    sysinit_combined_tools: "{{ (sysinit_tools | default([])) + (tools | default('') | split(',')) | select('match', '.+') | list }}"
 
 - name: Install system packages
   ansible.builtin.package:

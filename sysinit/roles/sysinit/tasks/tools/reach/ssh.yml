@@ -1,44 +1,59 @@
 ---
 - name: Ensure .ssh directory exists
   ansible.builtin.file:
-    path: "{{ ansible_user_dir }}/.ssh"
+    path: "{{ lookup('env', 'HOME') }}/.ssh"
     state: directory
     mode: '0700'
-    owner: "{{ ansible_user_id }}"
+    owner: "{{ lookup('env', 'USER') }}"
+  tags:
+    - reach
+    - reach-ssh
+    - ssh
+    - configuration
 
 - name: Check for id_rsa
   ansible.builtin.stat:
-    path: "{{ ansible_user_dir }}/.ssh/id_rsa"
+    path: "{{ lookup('env', 'HOME') }}/.ssh/id_rsa"
   register: rsa_key
+  tags:
+    - reach
+    - reach-ssh
+    - ssh
 
 - name: Check for id_ed25519
   ansible.builtin.stat:
-    path: "{{ ansible_user_dir }}/.ssh/id_ed25519"
+    path: "{{ lookup('env', 'HOME') }}/.ssh/id_ed25519"
   register: ed_key
+  tags:
+    - reach
+    - reach-ssh
+    - ssh
 
 - name: Generate SSH key if none exists
   ansible.builtin.command: >
-    ssh-keygen -t ed25519 -f "{{ ansible_user_dir }}/.ssh/id_ed25519" -N '' \
-    -C "{{ ansible_user_id }}@{{ ansible_hostname }}"
+    ssh-keygen -t ed25519 -f "{{ lookup('env', 'HOME') }}/.ssh/id_ed25519" -N '' \
+    -C "{{ lookup('env', 'USER') }}@{{ ansible_hostname }}"
   become: false
   when: not (rsa_key.stat.exists or ed_key.stat.exists)
   register: ssh_key_generated
   args:
-    creates: "{{ ansible_user_dir }}/.ssh/id_ed25519"
+    creates: "{{ lookup('env', 'HOME') }}/.ssh/id_ed25519"
 
 - name: Set SSH key permissions
   ansible.builtin.file:
-    path: "{{ item.path }}"
-    mode: "{{ item.mode }}"
+    path: "{{ ssh_item.path }}"
+    mode: "{{ ssh_item.mode }}"
   loop:
-    - { path: "{{ ansible_user_dir }}/.ssh/id_ed25519", mode: '0600' }
-    - { path: "{{ ansible_user_dir }}/.ssh/id_ed25519.pub", mode: '0644' }
+    - { path: "{{ lookup('env', 'HOME') }}/.ssh/id_ed25519", mode: '0600' }
+    - { path: "{{ lookup('env', 'HOME') }}/.ssh/id_ed25519.pub", mode: '0644' }
+  loop_control:
+    loop_var: ssh_item
   become: false
   when: not (rsa_key.stat.exists or ed_key.stat.exists)
 
 - name: Display SSH key generation result
   ansible.builtin.debug:
-    msg: "Generated new SSH key at {{ ansible_user_dir }}/.ssh/id_ed25519"
+    msg: "Generated new SSH key at {{ lookup('env', 'HOME') }}/.ssh/id_ed25519"
   when: ssh_key_generated is defined and ssh_key_generated.changed
 
 - name: Create SSH agent setup script
@@ -47,7 +62,7 @@
       #!/bin/bash
       # SSH Agent Setup Script for Ansible
 
-      SSH_ENV="{{ ansible_user_dir }}/.ssh/agent-env"
+      SSH_ENV="{{ lookup('env', 'HOME') }}/.ssh/agent-env"
 
       # Function to start SSH agent
       start_agent() {
@@ -70,49 +85,49 @@
 
       # Check if keys are loaded
       if ! ssh-add -l >/dev/null 2>&1; then
-          echo "No keys loaded in SSH agent. Available keys:"
-          for key in {{ ansible_user_dir }}/.ssh/id_rsa {{ ansible_user_dir }}/.ssh/id_ed25519; do
-              if [ -f "$key" ]; then
-                  echo "  - $key"
-                  # Try to add the key (will prompt for passphrase if needed)
-                  if [ "$1" = "--interactive" ]; then
-                      ssh-add "$key"
-                  else
-                      echo "Run 'ssh-add $key' to add this key"
-                  fi
-              fi
-          done
+        echo "No keys loaded in SSH agent. Available keys:"
+        for key in {{ lookup('env', 'HOME') }}/.ssh/id_rsa {{ lookup('env', 'HOME') }}/.ssh/id_ed25519; do
+          if [ -f "$key" ]; then
+            echo "  - $key"
+            # Try to add the key (will prompt for passphrase if needed)
+            if [ "$1" = "--interactive" ]; then
+              ssh-add "$key"
+            else
+              echo "Run 'ssh-add $key' to add this key"
+            fi
+          fi
+        done
       else
-          echo "SSH keys are loaded:"
-          ssh-add -l
+        echo "SSH keys are loaded:"
+        ssh-add -l
       fi
 
       # Export environment for current session
       echo "To use SSH agent in your current session, run:"
-      echo "source {{ ansible_user_dir }}/.ssh/agent-env"
-    dest: "{{ ansible_user_dir }}/.ssh/setup-agent.sh"
+      echo "source {{ lookup('env', 'HOME') }}/.ssh/agent-env"
+    dest: "{{ lookup('env', 'HOME') }}/.ssh/setup-agent.sh"
     mode: '0755'
-    owner: "{{ ansible_user_id }}"
+    owner: "{{ lookup('env', 'USER') }}"
   become: false
 
 - name: Check if SSH agent is running and keys are loaded
   ansible.builtin.shell: |
-    if [ -f {{ ansible_user_dir }}/.ssh/agent-env ]; then
-        source {{ ansible_user_dir }}/.ssh/agent-env > /dev/null 2>&1
-        if kill -0 "$SSH_AGENT_PID" 2>/dev/null && ssh-add -l >/dev/null 2>&1; then
-            echo "agent_running_with_keys"
-        else
-            echo "agent_needs_setup"
-        fi
-    else
+    if [ -f {{ lookup('env', 'HOME') }}/.ssh/agent-env ]; then
+      source {{ lookup('env', 'HOME') }}/.ssh/agent-env > /dev/null 2>&1
+      if kill -0 "$SSH_AGENT_PID" 2>/dev/null && ssh-add -l >/dev/null 2>&1; then
+        echo "agent_running_with_keys"
+      else
         echo "agent_needs_setup"
+      fi
+    else
+      echo "agent_needs_setup"
     fi
   register: ssh_agent_status
   become: false
   changed_when: false
 
 - name: Run SSH agent setup
-  ansible.builtin.command: "{{ ansible_user_dir }}/.ssh/setup-agent.sh"
+  ansible.builtin.command: "{{ lookup('env', 'HOME') }}/.ssh/setup-agent.sh"
   register: ssh_setup_result
   become: false
   when: ssh_agent_status.stdout == "agent_needs_setup"
@@ -125,13 +140,13 @@
 
 - name: Source SSH agent environment for Ansible
   ansible.builtin.shell: |
-    if [ -f {{ ansible_user_dir }}/.ssh/agent-env ]; then
-        source {{ ansible_user_dir }}/.ssh/agent-env
-        echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK"
-        echo "SSH_AGENT_PID=$SSH_AGENT_PID"
+    if [ -f {{ lookup('env', 'HOME') }}/.ssh/agent-env ]; then
+      source {{ lookup('env', 'HOME') }}/.ssh/agent-env
+      echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK"
+      echo "SSH_AGENT_PID=$SSH_AGENT_PID"
     else
-        echo "no_agent_env"
-        exit 1
+      echo "no_agent_env"
+      exit 1
     fi
   register: agent_env
   become: false

@@ -1,0 +1,55 @@
+---
+# Tags: reach, reach-selinux, selinux, security, docker
+
+- name: Check if SELinux is enabled
+  ansible.builtin.debug:
+    msg: "SELinux status: {{ ansible_selinux.status if ansible_selinux is defined else 'not available' }}"
+  tags:
+    - reach
+    - reach-selinux
+    - selinux
+    - security
+
+- name: Configure SELinux contexts for reach directories
+  community.general.sefcontext:
+    target: "{{ context_item.path }}"
+    setype: "{{ context_item.setype }}"
+    state: present
+  loop: "{{ sysinit_reach_selinux_contexts }}"
+  loop_control:
+    loop_var: context_item
+  become: true
+  when:
+    - sysinit_reach_selinux_enabled | bool
+    - sysinit_var | default('') != 'molecule_converge'
+  notify: restore selinux contexts
+
+- name: Apply SELinux contexts immediately
+  ansible.builtin.command:
+    cmd: "restorecon -R {{ context_item.path }}"
+  loop: "{{ sysinit_reach_selinux_contexts }}"
+  loop_control:
+    loop_var: context_item
+  become: true
+  when:
+    - sysinit_reach_selinux_enabled | bool
+    - sysinit_var | default('') != 'molecule_converge'
+  changed_when: false
+
+- name: Enable SELinux booleans for Docker containers
+  ansible.posix.seboolean:
+    name: "{{ boolean_item }}"
+    state: true
+    persistent: true
+  loop:
+    - container_manage_cgroup
+    - container_use_cephfs
+    - virt_use_nfs
+    - virt_sandbox_use_all_caps
+  loop_control:
+    loop_var: boolean_item
+  become: true
+  when:
+    - sysinit_reach_selinux_enabled | bool
+    - sysinit_var | default('') != 'molecule_converge'
+  ignore_errors: true  # Some booleans might not exist on all systems

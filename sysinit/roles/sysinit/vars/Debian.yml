@@ -3,6 +3,7 @@ sysinit_packages:
   - asciinema
   - flameshot
   - stow
+  - unzip
   - xsel
 
 sysinit_tools:

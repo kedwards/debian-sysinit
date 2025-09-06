@@ -20,7 +20,7 @@
       ansible.builtin.command:
         cmd: gpg --dearmor -o /etc/apt/keyrings/docker.gpg /tmp/docker.gpg
         creates: /etc/apt/keyrings/docker.gpg
-      when: docker_keyring_exists.stat.exists and docker_gpg_download is succeeded
+      when: not docker_keyring_exists.stat.exists and docker_gpg_download is succeeded
 
     - name: Docker - Remove temporary GPG key file
       ansible.builtin.file:

@@ -44,7 +44,3 @@ sysinit_mise_custom_plugins:
     src: "https://github.com/kedwards/asdf-git-worktree-wrapper.git",
   }
 
-sysinit_git_user_email: ""
-sysinit_git_user_name: ""
-sysinit_git_signing_key: ""
-

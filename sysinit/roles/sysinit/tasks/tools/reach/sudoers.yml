@@ -1,12 +1,19 @@
 ---
-- name: Create sudoers rule for hosts file modification
+- name: Create sudoers rule for reach development hosts
   ansible.builtin.copy:
     content: |
-      # Allow user to modify /etc/hosts without password
-      {{ ansible_user | default(ansible_user_id) }} ALL=(ALL) NOPASSWD: /usr/bin/tee -a /etc/hosts
-    dest: /etc/sudoers.d/hosts-access
+      # Allow user to modify /etc/hosts without password for reach development
+      {{ local('env', 'USER') }} ALL=(ALL) NOPASSWD: /usr/bin/tee -a /etc/hosts
+      {{ local('env', 'USER') }} ALL=(ALL) NOPASSWD: /usr/bin/sed -i * /etc/hosts
+    dest: "{{ sysinit_reach_sudoers_file }}"
     owner: root
     group: root
     mode: '0440'
     validate: 'visudo -cf %s'
+    backup: "{{ sysinit_reach_sudoers_backup }}"
   become: true
+  tags:
+    - reach
+    - reach-sudo
+    - sudoers
+    - security

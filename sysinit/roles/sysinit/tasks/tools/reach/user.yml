@@ -11,7 +11,7 @@
 - name: Create all necessary directories from file paths
   become: false
   ansible.builtin.file:
-    path: "/home/{{ lookup('env', 'USER') }}/{{ (item.path | regex_replace(role_path + '/templates/skel/', '') | dirname) }}"
+    path: "/home/{{ lookup('env', 'USER') }}/{{ (files_item.path | regex_replace(role_path + '/templates/skel/', '') | dirname) }}"
     state: directory
     owner: "{{ lookup('env', 'USER') }}"
     group: "{{ lookup('env', 'USER') }}"
@@ -19,24 +19,26 @@
       {{
         '0700'
         if ((
-          item.path | regex_replace(role_path + '/templates/skel/', '') | dirname)
+          files_item.path | regex_replace(role_path + '/templates/skel/', '') | dirname)
           | regex_search('(^|/)(\\.ssh|\\.gpg|\\.profile\\.d)(/|$)'))
         else
           '0755'
       }}
   loop: "{{ skel_files.files }}"
+  loop_control:
+    loop_var: files_item
   when:
-    - (item.path | regex_replace(role_path + '/templates/skel/', '') | dirname) != '.'
-    - (item.path | regex_replace(role_path + '/templates/skel/', '') | dirname) != ''
+    - (files_item.path | regex_replace(role_path + '/templates/skel/', '') | dirname) != '.'
+    - (files_item.path | regex_replace(role_path + '/templates/skel/', '') | dirname) != ''
 
 - name: Deploy configuration files from skel templates
   become: false
   ansible.builtin.template:
     src: >-
-      skel/{{ item.path
+      skel/{{ config_file_item.path
       | regex_replace(role_path + '/templates/skel/', '') }}
     dest: >-
-      /home/{{ lookup('env', 'USER') }}/{{ item.path
+      /home/{{ lookup('env', 'USER') }}/{{ config_file_item.path
       | regex_replace(role_path + '/templates/skel/', '') }}
     owner: "{{ lookup('env', 'USER') }}"
     group: "{{ lookup('env', 'USER') }}"
@@ -44,7 +46,7 @@
       {{
         '0600'
         if (
-          item.path
+          config_file_item.path
           | regex_replace(role_path + '/templates/skel/', '')
           | regex_search('(^|/)(\\.ssh|\\.gpg)/')
         )
@@ -54,9 +56,11 @@
     {{ lookup('community.general.filetree',
               role_path ~ '/templates/skel/',
               wantlist=True) }}
+  loop_control:
+    loop_var: config_file_item
   when:
-    - item.state == "file"
-    - (item.path | regex_replace(role_path + '/templates/skel/', '')) != '.profile.d/aws'
+    - config_file_item.state == "file"
+    - (config_file_item.path | regex_replace(role_path + '/templates/skel/', '')) != '.profile.d/aws'
 
 - name: Install .profile.d/aws as a plain file (no templating)
   become: false

@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-SYSINIT_REPO=https://github.com/withreach/sysinit.git
+SYSINIT_REPO=https://github.com/kedwards/sysinit.git
 script_dir="$HOME/sysinit"
 
 cleanup() {

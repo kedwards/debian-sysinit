@@ -13,6 +13,7 @@ sysinit_packages:
   - lynx
   - seahorse
   - stow
+  - unzip 
   - xsel
 
 sysinit_aur_packages:
