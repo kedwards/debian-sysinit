@@ -29,6 +29,7 @@ All variables are defined in `defaults/main.yml` and can be overridden:
 This role has no external role dependencies but requires the following Ansible collections:
 - `ansible.posix`
 - `community.general`
+- `community.docker` (if using Docker-related tasks)
 
 ## Usage Example
 

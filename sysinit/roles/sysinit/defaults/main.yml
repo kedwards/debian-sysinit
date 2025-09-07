@@ -32,7 +32,7 @@ sysinit_mise_plugins:
   - terraform
   - terragrunt
   - usage
-  - tmux
+#  - tmux
   - uv
   - zellij
 
