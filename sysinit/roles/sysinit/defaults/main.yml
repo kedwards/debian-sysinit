@@ -36,8 +36,6 @@ sysinit_mise_plugins:
   - uv
   - zellij
 
-sysinit_slack_version: 4.45.64
-
 sysinit_mise_custom_plugins:
   - {
     plugin: "git-worktree-wrapper",
