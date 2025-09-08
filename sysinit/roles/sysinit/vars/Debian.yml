@@ -1,7 +1,14 @@
 ---
 sysinit_packages:
   - asciinema
+  - brightnessctl
   - flameshot
+  - gcc
+  - i3
+  - i3blocks
+  - make
+  - rofi
+  - scrot
   - stow
   - unzip
   - xsel
