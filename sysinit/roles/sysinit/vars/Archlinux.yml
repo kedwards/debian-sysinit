@@ -6,14 +6,16 @@ sysinit_packages:
   - docker
   - docker-buildx
   - flameshot
-  - ghostty
   - gnome-keyring
   - libxcrypt-compat
   - lua-language-server
   - lynx
+  - make
   - seahorse
   - stow
-  - unzip 
+  - task
+  - unzip
+  - xclip
   - xsel
 
 sysinit_aur_packages:

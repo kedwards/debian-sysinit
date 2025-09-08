@@ -1,5 +1,0 @@
-command_timeout = 100000
-[container]
-disabled = true
-[battery]
-disabled = true

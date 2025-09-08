@@ -4,9 +4,13 @@ sysinit_packages:
   - docker-compose
   - docker-buildx
   - flameshot
+  - make
   - stow
+  - task
   - unzip
+  - xclip
   - xsel
+  - zip
 
 sysinit_tools:
   - aws-ssm

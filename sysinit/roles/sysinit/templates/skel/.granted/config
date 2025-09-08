@@ -1,6 +1,0 @@
-DefaultBrowser = "CHROME"
-CustomBrowserPath = "/mnt/c/Program Files/Google/Chrome/Application/chrome.exe"
-CustomSSOBrowserPath = ""
-LastCheckForUpdates = 0
-Ordering = ""
-ExportCredentialSuffix = ""

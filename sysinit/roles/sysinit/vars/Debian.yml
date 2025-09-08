@@ -1,17 +1,15 @@
 ---
 sysinit_packages:
   - asciinema
-  - brightnessctl
   - flameshot
   - gcc
-  - i3
-  - i3blocks
   - make
-  - rofi
-  - scrot
   - stow
+  - task
   - unzip
+  - xclip
   - xsel
+  - zip
 
 sysinit_tools:
   - aws-ssm
@@ -19,3 +17,5 @@ sysinit_tools:
   - docker
   - dropbox
   - mise
+
+

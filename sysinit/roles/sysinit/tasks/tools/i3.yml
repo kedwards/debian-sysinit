@@ -1,0 +1,30 @@
+---
+- name: Set required package
+  ansible.builtin.vars:
+    i3_packages
+      - acpi
+      - arandr
+      - brightnessctl
+      - dex-autostart
+      - dmenu
+      - dunst
+      - feh
+      - i3
+      - i3blocks
+      - i3lock
+      - i3status
+      - jq
+      - NetworkManager
+      - rofi
+      - scrot
+      - thunar
+      - unzip
+      - xrandr
+      - xss-lock
+      - zip
+      
+- name: Install i3 packages
+  ansible.builtin.package:
+    name: "{{ i3_packages }}"
+    state: present
+  when: ansible_os_Family == "Debian"_
