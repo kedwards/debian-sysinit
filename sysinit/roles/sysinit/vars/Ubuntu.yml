@@ -1,15 +1,4 @@
 ---
-sysinit_packages:
-  - flameshot
-  - make
-  - task
-  - stow
-  - xclip
-  - xsel
-  - unzip
-  - zip
-
 sysinit_tools:
   - aws-ssm
   - docker
-  - mise

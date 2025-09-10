@@ -1,4 +1,16 @@
 ---
+sysinit_packages:
+  - gcc
+  - make
+  - stow
+  - unzip
+  - xclip
+  - xsel
+  - zip
+
+sysinit_sys_tools:
+  - mise
+
 sysinit_mise_plugins:
   - 1password-cli
   - amazon-ecr-credential-helper
@@ -29,6 +41,7 @@ sysinit_mise_plugins:
   - rclone
   - ripgrep
   - starship
+  - task
   - terraform
   - terragrunt
   - usage
@@ -41,4 +54,3 @@ sysinit_mise_custom_plugins:
     plugin: "git-worktree-wrapper",
     src: "https://github.com/kedwards/asdf-git-worktree-wrapper.git",
   }
-

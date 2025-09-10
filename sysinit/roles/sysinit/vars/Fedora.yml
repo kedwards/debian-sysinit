@@ -1,17 +1,8 @@
 ---
-sysinit_packages:
+sysinit_distro_packages:
   - docker
   - docker-compose
   - docker-buildx
-  - flameshot
-  - make
-  - stow
-  - task
-  - unzip
-  - xclip
-  - xsel
-  - zip
 
 sysinit_tools:
   - aws-ssm
-  - mise
