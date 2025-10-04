@@ -1,4 +1,7 @@
 ---
+sysinit_debug: false
+sysinit_force_update: false
+
 sysinit_packages:
   - gcc
   - make
@@ -15,10 +18,8 @@ sysinit_mise_plugins:
   - 1password-cli
   - amazon-ecr-credential-helper
   - awscli
-  - aws-vault
   - bat
   - direnv
-  - eksctl
   - eza
   - fd
   - fzf
@@ -27,25 +28,15 @@ sysinit_mise_plugins:
   - golang
   - granted
   - jq
-  - k9s
-  - kubectl
-  - kubectx
-  - kubens
-  - minikube
-  - mkcert
   - neovim
   - node
-  - packer
   - pre-commit
   - python
   - rclone
   - ripgrep
   - starship
   - task
-  - terraform
-  - terragrunt
   - usage
-#  - tmux
   - uv
   - zellij
 

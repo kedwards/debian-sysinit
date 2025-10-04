@@ -1,0 +1,42 @@
+---
+- name: Configure SSH
+  ansible.builtin.include_tasks: "reach/ssh.yml"
+  tags:
+    - reach
+    - reach-ssh
+    - always
+
+- name: Install repositories
+  ansible.builtin.include_tasks: "reach/repos.yml"
+  tags:
+    - reach
+    - reach-repos
+    - always
+
+- name: Configure sudo access
+  ansible.builtin.include_tasks: "reach/sudoers.yml"
+  tags:
+    - reach
+    - reach-sudo
+    - always
+
+- name: Configure host
+  ansible.builtin.include_tasks: "reach/host.yml"
+  tags:
+    - reach
+    - reach-host
+    - always
+
+- name: Configure SELinux
+  ansible.builtin.include_tasks: "reach/selinux.yml"
+  tags:
+    - reach
+    - reach-selinux
+    - always
+
+- name: Configure user preferences
+  ansible.builtin.include_tasks: "reach/user.yml"
+  tags:
+    - reach
+    - reach-user
+    - always
