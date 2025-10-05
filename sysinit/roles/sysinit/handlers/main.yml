@@ -1,31 +1,33 @@
 ---
-- name: reload systemd daemon
+- name: Reload systemd daemon
   ansible.builtin.systemd:
     daemon_reload: true
   become: true
   listen: "reload systemd"
 
-- name: restart ssh service
+- name: Restart SSH service
   ansible.builtin.service:
     name: "{{ ssh_service_name | default('sshd') }}"
     state: restarted
   become: true
   listen: "restart ssh"
 
-- name: reload ssh config
+- name: Reload SSH config
   ansible.builtin.meta: noop
   listen: "reload ssh config"
 
-# General headers
-- name: restart docker
+# General service handlers
+- name: Restart Docker service
   ansible.builtin.service:
     name: docker
     state: restarted
   become: true
   listen: "restart docker"
 
-- name: reload profile
-  ansible.builtin.shell:
-    cmd: "source {{ lookup('env', 'HOME') }}/.bashrc"
+- name: Reload user profile
+  ansible.builtin.command:
+    cmd: "bash -c 'source {{ sysinit_user_home }}/.bashrc'"
   become: false
+  become_user: "{{ sysinit_user }}"
   listen: "reload profile"
+  changed_when: false

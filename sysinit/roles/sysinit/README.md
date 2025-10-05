@@ -50,7 +50,7 @@ This role has no external role dependencies but requires the following Ansible c
 ansible-playbook -i inventory playbook.yml
 
 # Run specific tool installation
-ansible-playbook -i inventory playbook.yml -e tools='chrome dbeaver' 
+ansible-playbook -i inventory playbook.yml -e tools='chrome dbeaver'
 
 # Check mode (dry run)
 ansible-playbook -i inventory playbook.yml --check

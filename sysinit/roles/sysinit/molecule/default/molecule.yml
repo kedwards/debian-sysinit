@@ -6,8 +6,8 @@ dependency:
 driver:
   name: docker
 platforms:
-  - name: sysinit-arch
-    image: archlinux
+  - name: sysinit-debian
+    image: debian:bookworm
     pre_build_image: true
     privileged: true
     volumes:
@@ -19,7 +19,7 @@ platforms:
     capabilities:
       - SYS_ADMIN
   - name: sysinit-ubuntu
-    image: ubuntu
+    image: ubuntu:22.04
     pre_build_image: true
     privileged: true
     volumes:
@@ -31,7 +31,7 @@ platforms:
     capabilities:
       - SYS_ADMIN
   - name: sysinit-fedora
-    image: fedora
+    image: fedora:38
     pre_build_image: true
     privileged: true
     volumes:
@@ -42,8 +42,8 @@ platforms:
       - /tmp
     capabilities:
       - SYS_ADMIN
-  - name: sysinit-debian
-    image: debian
+  - name: sysinit-arch
+    image: archlinux:latest
     pre_build_image: true
     privileged: true
     volumes:
@@ -61,11 +61,13 @@ provisioner:
   log: true
   inventory:
     host_vars:
-      sysinit-arch:
+      sysinit-debian:
+        ansible_user: root
+      sysinit-ubuntu:
         ansible_user: root
       sysinit-fedora:
         ansible_user: root
-      sysinit-ubuntu:
+      sysinit-arch:
         ansible_user: root
   config_options:
     defaults:

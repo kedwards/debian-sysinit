@@ -2,8 +2,8 @@
 - name: Display system info
   ansible.builtin.debug:
     msg:
-      - "User: {{ lookup('env', 'USER') }}"
-      - "Home: {{ lookup('env', 'HOME') }}"
+      - "User: {{ sysinit_user }}"
+      - "Home: {{ sysinit_user_home }}"
       - "System: {{ ansible_system }}"
       - "Architecture: {{ ansible_userspace_architecture }}"
       - "OS Family: {{ ansible_os_family }}"
@@ -16,7 +16,11 @@
 
 - name: Combine tools lists
   ansible.builtin.set_fact:
-    sysinit_combined_tools: "{{ (sysinit_sys_tools | default([])) + (sysinit_tools | default([])) + (tools | default('') | split(',')) | select('match', '.+') | list }}"
+    sysinit_combined_tools: >
+      {{ (sysinit_sys_tools | default([])) +
+         (sysinit_tools | default([])) +
+         (tools | default('') | split(',')) |
+         select('match', '.+') | list }}
 
 - name: Install system packages
   ansible.builtin.package:

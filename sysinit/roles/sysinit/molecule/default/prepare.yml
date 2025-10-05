@@ -50,7 +50,9 @@
       when: initial_distribution == 'fedora'
 
     - name: Install github3.py library
-      ansible.builtin.raw: pip3 install --break-system-packages github3.py
+      ansible.builtin.raw: |
+        pip3 install --break-system-packages github3.py 2>/dev/null || \
+        pip3 install github3.py
       register: install_github3
       changed_when: install_github3.rc == 0
 
@@ -59,7 +61,7 @@
 
     - name: Create test user
       ansible.builtin.user:
-        name: "{{ lookup('env', 'USER') }}"
+        name: "{{ ansible_user_id }}"
         state: present
         create_home: true
         shell: /bin/bash
@@ -68,26 +70,26 @@
 
     - name: Create .ssh directory for test user
       ansible.builtin.file:
-        path: "/home/{{ lookup('env', 'USER') }}/.ssh"
+        path: "/home/{{ ansible_user_id }}/.ssh"
         state: directory
         mode: '0755'
-        owner: "{{ lookup('env', 'USER') }}"
-        group: "{{ lookup('env', 'USER') }}"
+        owner: "{{ ansible_user_id }}"
+        group: "{{ ansible_user_id }}"
         recurse: true
 
     - name: Create .local/bin directory for test user
       ansible.builtin.file:
-        path: "/home/{{ lookup('env', 'USER') }}/.local/bin"
+        path: "/home/{{ ansible_user_id }}/.local/bin"
         state: directory
         mode: '0755'
-        owner: "{{ lookup('env', 'USER') }}"
-        group: "{{ lookup('env', 'USER') }}"
+        owner: "{{ ansible_user_id }}"
+        group: "{{ ansible_user_id }}"
         recurse: true
 
     - name: Set ownership of user home directory
       ansible.builtin.file:
-        path: "/home/{{ lookup('env', 'USER') }}"
+        path: "/home/{{ ansible_user_id }}"
         state: directory
-        owner: "{{ lookup('env', 'USER') }}"
-        group: "{{ lookup('env', 'USER') }}"
+        owner: "{{ ansible_user_id }}"
+        group: "{{ ansible_user_id }}"
         recurse: true

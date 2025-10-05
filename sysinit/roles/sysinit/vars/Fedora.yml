@@ -1,8 +1,7 @@
 ---
-sysinit_distro_packages:
-  - docker
-  - docker-compose
-  - docker-buildx
+# Fedora-specific packages (docker via role, not distro packages)
+sysinit_distro_packages: []
 
 sysinit_tools:
   - aws-ssm
+  - docker

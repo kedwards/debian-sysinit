@@ -29,7 +29,7 @@ Before running the installer, ensure you have:
   export GIT_USER_NAME="Your Name"
   export GIT_USER_EMAIL="you@example.com"
   ```
-  
+
   *Why: The installer passes your Git identity into the Ansible role and will fail if not provided. It will prompt if missing, but will exit if you leave either value blank.*
 
 - **An SSH key present and loadable by ssh-agent**:
@@ -72,6 +72,36 @@ The installer bootstraps tooling and a virtual environment for you; if you prefe
   ansible-playbook playbook.yml -K -e "git_user_name=Your Name" -e "git_user_email=you@example.com"
   ```
 
+## Development
+
+This project uses [Task](https://taskfile.dev) for automation. After cloning:
+
+```bash
+# Install dependencies
+task install-deps
+
+# Install pre-commit hooks
+task install-hooks
+
+# See all available tasks
+task --list-all
+
+# Run linting
+task lint
+
+# Run tests
+task molecule-test
+```
+
+**Available Development Commands:**
+- `task lint` - Run all linters (pre-commit, ansible-lint, shellcheck)
+- `task syntax-check` - Ansible syntax validation
+- `task molecule-test` - Full Molecule test suite
+- `task molecule-converge` - Quick converge for development
+- `task scan-secrets` - Detect secrets in code
+- `task clean` - Remove build artifacts
+
 **Notes:**
 - The installer will start an ssh-agent and attempt to load a default SSH key (id_ed25519, id_rsa). If none are found or loadable, it exits with guidance.
 - The playbook targets localhost by default and will ask for sudo (-K) to perform system changes.
+- This project has migrated from Make to Task for better cross-platform support and YAML-based configuration.

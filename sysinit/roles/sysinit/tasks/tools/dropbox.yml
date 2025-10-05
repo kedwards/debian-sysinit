@@ -1,40 +1,40 @@
 ---
-- name: Dropbox - Exists
+- name: Dropbox - Check if already exists
   ansible.builtin.stat:
     path: /usr/bin/dropbox
   register: dropbox_exists_result
-  
-- name: Dropbox install
-  when: not dropbox_exists_result.stat.exists or upgrade
+
+- name: Dropbox - Install or upgrade
+  when: not dropbox_exists_result.stat.exists or upgrade | default(false)
   block:
-    - name: "Fetch Dropbox {{ ansible_distribution }} packages directory listing"
+    - name: Dropbox - Fetch package directory listing
       ansible.builtin.uri:
         url: "https://linux.dropbox.com/packages/{{ ansible_distribution | lower }}/"
-        return_content: yes
+        return_content: true
       register: dropbox_listing
 
-    - name: Extract _amd64.deb Dropbox filenames
+    - name: Dropbox - Extract AMD64 DEB filenames
       when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'
       ansible.builtin.set_fact:
-        dropbox_files: "{{ dropbox_listing.content | regex_findall('dropbox_[0-9\\.]+_amd64\\.deb') | unique }}" 
+        dropbox_files: "{{ dropbox_listing.content | regex_findall('dropbox_[0-9\\.]+_amd64\\.deb') | unique }}"
 
-    - name: Extract .fedora.x86_64.rpm Dropbox filenames
+    - name: Dropbox - Extract Fedora RPM filenames
       when: ansible_distribution == 'Fedora'
       ansible.builtin.set_fact:
         dropbox_files: "{{ dropbox_listing.content | regex_findall('nautilus-dropbox-[\\d.]+-\\d+\\.fedora\\.x86_64\\.rpm') | unique }}"
 
-    - name: Select the latest version file
+    - name: Dropbox - Select the latest version file
       ansible.builtin.set_fact:
         dropbox_latest: "{{ dropbox_files | sort | last }}"
 
-    - name: Dropbox – Install/Upgrade (Fedora)
+    - name: Dropbox - Install or upgrade (Fedora)
       ansible.builtin.dnf:
         name: "http://linux.dropbox.com/packages/{{ ansible_distribution | lower }}/{{ dropbox_latest }}"
         state: present
         disable_gpg_check: true
       when: ansible_distribution == 'Fedora'
 
-    - name: Dropbox – Install/Upgrade (Debian/Ubuntu)
+    - name: Dropbox - Install or upgrade (Debian/Ubuntu)
       ansible.builtin.apt:
         deb: "http://linux.dropbox.com/packages/{{ ansible_distribution | lower }}/{{ dropbox_latest }}"
         state: present

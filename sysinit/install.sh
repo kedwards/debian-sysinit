@@ -64,20 +64,20 @@ install_packages() {
   apt)
     sudo apt update
     sudo apt upgrade -y
-    sudo apt install -y $packages
+    sudo apt install -y "$packages"
     sudo apt autoremove -y
     ;;
   dnf)
     sudo dnf update -y
-    sudo dnf install -y $packages
+    sudo dnf install -y "$packages"
     ;;
   pacman)
     sudo pacman -Syu --noconfirm
-    sudo pacman -S --noconfirm $packages
+    sudo pacman -S --noconfirm "$packages"
     ;;
   yum)
     sudo yum update -y
-    sudo yum install -y $packages
+    sudo yum install -y "$packages"
     ;;
   *)
     echo "Unsupported or unknown package manager"
@@ -173,7 +173,8 @@ setup_git_config() {
   fi
 
   if [ -z "$GIT_USER_EMAIL" ]; then
-    local hostname=$(hostname 2>/dev/null || echo "localhost")
+    local hostname
+    hostname=$(hostname 2>/dev/null || echo "localhost")
     GIT_USER_EMAIL="${USER:-$(whoami)}@${hostname}"
   fi
 
@@ -258,11 +259,10 @@ setup_ssh_agent() {
   # If we don't have keys loaded, try to load them
   if [ "$keys_loaded" = false ]; then
     echo "🔍 Looking for SSH keys to load..."
-    
+
     # Look for SSH keys to add
     local keys_found=false
     local keys_added=false
-    local found_encrypted=false
 
     for key in ~/.ssh/id_rsa ~/.ssh/id_ed25519 ~/.ssh/id_ecdsa ~/.ssh/id_dsa; do
       if [ -f "$key" ]; then
@@ -279,9 +279,8 @@ setup_ssh_agent() {
           if ssh-keygen -y -f "$key" >/dev/null 2>&1; then
             echo "   ⚠️  Key $key is not encrypted but failed to load"
           else
-            found_encrypted=true
             echo "   🔐 Key $key appears to be encrypted"
-            
+
             # If we have an interactive terminal, try to prompt for passphrase
             if [ "$is_interactive" = true ]; then
               echo "   🔑 Prompting for passphrase..."
@@ -320,7 +319,7 @@ setup_ssh_agent() {
         echo "❌ Could not load any SSH keys, even with interactive prompts."
         echo ""
         echo "This might be due to:"
-        echo "   • Invalid or corrupted key files"  
+        echo "   • Invalid or corrupted key files"
         echo "   • Permission issues"
         echo "   • Incorrect passphrase"
         echo ""
@@ -393,7 +392,7 @@ main() {
   install_mise
   sync_repo
   setup_git_config
-  setup_ssh_agent
+  #setup_ssh_agent
   setup_python_env
   run_ansible
 }

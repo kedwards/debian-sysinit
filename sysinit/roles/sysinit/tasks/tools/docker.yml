@@ -69,7 +69,6 @@
         name:
           - bash-completion
           - containerd.io
-          - docker-buildx-plugin
           - docker-ce
           - docker-ce-cli
           - docker-compose-plugin
@@ -82,13 +81,9 @@
 
 - name: Docker - Configure user
   ansible.builtin.user:
-    name: "{{ user_item }}"
+    name: "{{ sysinit_user }}"
     groups: docker
     append: true
-  loop_control:
-    loop_var: user_item
-  loop:
-    - "{{ lookup('env', 'USER') }}"
 
 - name: Docker - Install docker completion
   block:

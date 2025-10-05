@@ -10,15 +10,17 @@ tasks:
   build:
     desc: Build the project
     cmds:
-      - echo "Building..."
+      - echo "✅ Project is ready - no build step required for Ansible project"
 
   clean:
-    desc: Remove build artifacts
+    desc: Remove build artifacts and temporary files
     cmds:
-      - rm -rf dist
-      - find . -name "*.pyc" -delete
-      - find . -name "*__pycache__" -delete
-      - find . -name "*.tmp" -delete
+      - rm -rf dist build .pytest_cache
+      - find . -name "*.pyc" -type f -delete
+      - find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+      - find . -name "*.tmp" -type f -delete
+      - find . -name ".coverage" -type f -delete
+      - echo "✅ Cleanup completed"
 
   lint:
     desc: Run all linters
@@ -28,7 +30,7 @@ tasks:
   lint-ansible:
     desc: Lint the Ansible code
     cmds:
-      - ansible-lint playbook.yml roles/
+      - bash -c 'source .venv/bin/activate && ansible-lint playbook.yml roles/'
 
   lint-shell:
     desc: Lint shell code
@@ -37,29 +39,29 @@ tasks:
 
   # Testing tasks
   syntax-check:
-    desc: Run syntx check
+    desc: Run syntax check
     cmds:
-      - ansible-playbook --syntax-check playbook.yml
+      - bash -c 'source .venv/bin/activate && ansible-playbook --syntax-check playbook.yml'
 
   molecule-test:
     desc: Run Molecule tests for default scenario, no destroy
     cmds:
-      - cd roles/sysinit && molecule test
+      - bash -c 'source .venv/bin/activate && cd roles/sysinit && molecule test'
 
   molecule-converge:
     desc: Run Molecule converge for development
     cmds:
-      - cd roles/sysinit && molecule converge
+      - bash -c 'source .venv/bin/activate && cd roles/sysinit && molecule converge'
 
   molecule-verify:
     desc: Run Molecule verify only
     cmds:
-      - cd roles/sysinit && molecule verify
+      - bash -c 'source .venv/bin/activate && cd roles/sysinit && molecule verify'
 
   molecule-destroy:
     desc: Destroy Molecule test instances
     cmds:
-      - cd roles/sysinit && molecule destroy
+      - bash -c 'source .venv/bin/activate && cd roles/sysinit && molecule destroy'
 
   # Secrets
   scan-secrets:
@@ -80,11 +82,10 @@ tasks:
   # Utility tasks
   install-deps:
     desc: Install dependencies
-    silent: true
     cmds:
       - uv venv --clear
       - uv pip install -e . --group dev
-      - ansible-galaxy install -r requirements.yml
+      - bash -c 'source .venv/bin/activate && ansible-galaxy install -r requirements.yml'
       - echo -e "Please also install shellcheck using your system package manager:\n
           Arch Linux -> pacman -S shellcheck\n
           Debian -> apt install shellcheck\n
@@ -95,3 +96,32 @@ tasks:
     desc: Install pre-commit hooks
     cmds:
       - pre-commit install
+      - echo "✅ Pre-commit hooks installed"
+
+  # Additional development tasks
+  check:
+    desc: Run comprehensive checks (lint + syntax + secrets)
+    cmds:
+      - task: lint
+      - task: syntax-check
+      - task: scan-secrets
+      - echo "✅ All checks passed"
+
+  format:
+    desc: Format YAML files with prettier
+    cmds:
+      - |+
+        if command -v prettier >/dev/null 2>&1; then
+          find . -name "*.yml" -o -name "*.yaml" | grep -v node_modules | xargs prettier --write
+          echo "✅ YAML files formatted"
+        else
+          echo "⚠️  prettier not found, install with: npm install -g prettier"
+        fi
+
+  upgrade-deps:
+    desc: Upgrade Python dependencies
+    cmds:
+      - uv pip install --upgrade pip
+      - uv pip install --upgrade -e . --group dev
+      - ansible-galaxy install --force -r requirements.yml
+      - echo "✅ Dependencies upgraded"
