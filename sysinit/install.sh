@@ -167,20 +167,17 @@ setup_git_config() {
   GIT_USER_NAME="${GIT_USER_NAME:-$(git config --global user.name 2>/dev/null || true)}"
   GIT_USER_EMAIL="${GIT_USER_EMAIL:-$(git config --global user.email 2>/dev/null || true)}"
 
-  # Prompt for missing required values
+  # create default git credentials
   if [ -z "$GIT_USER_NAME" ]; then
-    read -rp "Enter your Git user name: " GIT_USER_NAME
+    GIT_USER_NAME="${USER:-$(whoami)}"
   fi
 
   if [ -z "$GIT_USER_EMAIL" ]; then
-    read -rp "Enter your Git email: " GIT_USER_EMAIL
+    local hostname=$(hostname 2>/dev/null || echo "localhost")
+    GIT_USER_EMAIL="${USER:-$(whoami)}@${hostname}"
   fi
 
-  # Validate required fields
-  if [ -z "$GIT_USER_NAME" ] || [ -z "$GIT_USER_EMAIL" ]; then
-    echo "Error: Git user name and email are required"
-    exit 1
-  fi
+  echo "Git configuration: $GIT_USER_NAME <$GIT_USER_EMAIL>"
 
   # Export for use in ansible
   export GIT_USER_NAME
@@ -190,51 +187,181 @@ setup_git_config() {
 # Setup SSH agent for GitHub access
 setup_ssh_agent() {
   local ssh_env="$HOME/.ssh/agent-env"
+  local existing_agent=false
+  local keys_loaded=false
+  local is_interactive=false
+
+  # Check if we have an interactive terminal
+  if [ -t 0 ] && [ -t 1 ]; then
+    is_interactive=true
+  fi
+
+  echo "🔑 Setting up SSH agent and keys..."
 
   # Ensure .ssh directory exists
   mkdir -p "$HOME/.ssh"
   chmod 700 "$HOME/.ssh"
 
-  # Kill any existing ssh-agent if running
-  if [ -f "$ssh_env" ]; then
+  # Check if there's already a working SSH agent with keys
+  if [ -n "${SSH_AUTH_SOCK:-}" ] && [ -n "${SSH_AGENT_PID:-}" ]; then
+    if kill -0 "$SSH_AGENT_PID" 2>/dev/null && ssh-add -l >/dev/null 2>&1; then
+      echo "✅ Found existing SSH agent with keys loaded, using it"
+      echo "   Keys loaded: $(ssh-add -l | wc -l)"
+      export SSH_AUTH_SOCK
+      export SSH_AGENT_PID
+      return 0
+    fi
+  fi
+
+  # If no existing agent, check if we have one saved in agent-env
+  if [ "$existing_agent" = false ] && [ -f "$ssh_env" ]; then
     # shellcheck source=/dev/null
     source "$ssh_env" >/dev/null 2>&1 || true
     if [ -n "${SSH_AGENT_PID:-}" ] && kill -0 "$SSH_AGENT_PID" 2>/dev/null; then
-      kill "$SSH_AGENT_PID" 2>/dev/null || true
-    fi
-  fi
-
-  # Start fresh SSH agent
-  ssh-agent >"$ssh_env"
-  chmod 600 "$ssh_env"
-
-  # Source the agent environment
-  # shellcheck disable=SC1090
-  source "$ssh_env" >/dev/null
-
-  # Verify agent is running
-  if [ -z "${SSH_AGENT_PID:-}" ] || ! kill -0 "$SSH_AGENT_PID" 2>/dev/null; then
-    echo "Error: Failed to start SSH agent"
-    exit 1
-  fi
-
-  # Look for SSH keys to add
-  local keys_found=false
-  local keys_added=false
-
-  for key in ~/.ssh/id_rsa ~/.ssh/id_ed25519 ~/.ssh/id_ecdsa; do
-    if [ -f "$key" ]; then
-      keys_found=true
-
-      # Try to add the key
-      if ssh-add "$key" 2>/dev/null; then
-        keys_added=true
-        break
+      if ssh-add -l >/dev/null 2>&1; then
+        echo "✅ Found existing SSH agent in $ssh_env with keys loaded"
+        echo "   Keys loaded: $(ssh-add -l | wc -l)"
+        existing_agent=true
+        keys_loaded=true
       else
-        echo "Failed to add $key (may need passphrase or key is invalid)"
+        echo "📋 Found existing SSH agent in $ssh_env but no keys loaded"
+        existing_agent=true
       fi
     fi
-  done
+  fi
+
+  # Start new agent only if we don't have a working one
+  if [ "$existing_agent" = false ]; then
+    echo "🚀 Starting new SSH agent..."
+    # Kill any stale agents first
+    if [ -f "$ssh_env" ]; then
+      # shellcheck source=/dev/null
+      source "$ssh_env" >/dev/null 2>&1 || true
+      if [ -n "${SSH_AGENT_PID:-}" ] && kill -0 "$SSH_AGENT_PID" 2>/dev/null; then
+        kill "$SSH_AGENT_PID" 2>/dev/null || true
+      fi
+    fi
+
+    ssh-agent >"$ssh_env"
+    chmod 600 "$ssh_env"
+    # shellcheck disable=SC1090
+    source "$ssh_env" >/dev/null
+
+    # Verify agent is running
+    if [ -z "${SSH_AGENT_PID:-}" ] || ! kill -0 "$SSH_AGENT_PID" 2>/dev/null; then
+      echo "❌ Error: Failed to start SSH agent"
+      exit 1
+    fi
+    echo "✅ SSH agent started successfully"
+  fi
+
+  # If we don't have keys loaded, try to load them
+  if [ "$keys_loaded" = false ]; then
+    echo "🔍 Looking for SSH keys to load..."
+    
+    # Look for SSH keys to add
+    local keys_found=false
+    local keys_added=false
+    local found_encrypted=false
+
+    for key in ~/.ssh/id_rsa ~/.ssh/id_ed25519 ~/.ssh/id_ecdsa ~/.ssh/id_dsa; do
+      if [ -f "$key" ]; then
+        keys_found=true
+        echo "   Found SSH key: $key"
+
+        # First try without passphrase (for unencrypted keys)
+        if ssh-add "$key" 2>/dev/null; then
+          echo "   ✅ Successfully added $key (no passphrase required)"
+          keys_added=true
+          break
+        else
+          # Check if key is encrypted by trying to read it
+          if ssh-keygen -y -f "$key" >/dev/null 2>&1; then
+            echo "   ⚠️  Key $key is not encrypted but failed to load"
+          else
+            found_encrypted=true
+            echo "   🔐 Key $key appears to be encrypted"
+            
+            # If we have an interactive terminal, try to prompt for passphrase
+            if [ "$is_interactive" = true ]; then
+              echo "   🔑 Prompting for passphrase..."
+              if ssh-add "$key"; then
+                echo "   ✅ Successfully added $key with passphrase"
+                keys_added=true
+                break
+              else
+                echo "   ❌ Failed to add $key even with passphrase"
+              fi
+            else
+              echo "   ⏸️  Cannot prompt for passphrase (no interactive terminal)"
+            fi
+          fi
+        fi
+      fi
+    done
+
+    # Handle the case where no keys were found
+    if [ "$keys_found" = false ]; then
+      echo ""
+      echo "❌ No SSH keys found in ~/.ssh/"
+      echo ""
+      echo "📝 To fix this, generate an SSH key pair:"
+      echo "   ssh-keygen -t ed25519 -C \"your-email@example.com\""
+      echo ""
+      echo "Then run this script again."
+      echo ""
+      exit 1
+    fi
+
+    # Handle the case where keys were found but none could be loaded
+    if [ "$keys_added" = false ]; then
+      echo ""
+      if [ "$is_interactive" = true ]; then
+        echo "❌ Could not load any SSH keys, even with interactive prompts."
+        echo ""
+        echo "This might be due to:"
+        echo "   • Invalid or corrupted key files"  
+        echo "   • Permission issues"
+        echo "   • Incorrect passphrase"
+        echo ""
+        echo "🔧 Try these troubleshooting steps:"
+        echo "   1. Check key permissions: ls -la ~/.ssh/"
+        echo "   2. Test key manually: ssh-add ~/.ssh/id_rsa"
+        echo "   3. Verify key format: ssh-keygen -l -f ~/.ssh/id_rsa"
+        echo ""
+        exit 1
+      else
+        echo "⚠️  SSH keys found but require manual loading (no interactive terminal available)"
+        echo ""
+        echo "🎯 SOLUTION: Choose one of these options:"
+        echo ""
+        echo "Option 1 - Pre-load your SSH key, then re-run:"
+        echo "   # Load your SSH key first"
+        if [ -f "$ssh_env" ]; then
+          echo "   source $ssh_env"
+        else
+          echo "   eval \$(ssh-agent -s)"
+        fi
+        echo "   ssh-add ~/.ssh/id_rsa  # (or your key file)"
+        echo "   # Then re-run the installer"
+        echo "   wget -O - https://raw.githubusercontent.com/withreach/sysinit/refs/heads/main/install.sh | bash"
+        echo ""
+        echo "Option 2 - Run the script interactively:"
+        echo "   # Download and run interactively"
+        echo "   wget https://raw.githubusercontent.com/withreach/sysinit/refs/heads/main/install.sh"
+        echo "   chmod +x install.sh"
+        echo "   ./install.sh"
+        echo ""
+        echo "Option 3 - Use an unencrypted key (less secure):"
+        echo "   ssh-keygen -t ed25519 -f ~/.ssh/id_sysinit -N \"\""
+        echo "   # Then re-run this script"
+        echo ""
+        echo "💡 For security, Option 1 or 2 are recommended."
+        echo ""
+        exit 1
+      fi
+    fi
+  fi
 
   # Check if any keys were found
   if [ "$keys_found" = false ]; then
@@ -245,19 +372,15 @@ setup_ssh_agent() {
     exit 1
   fi
 
-  # Check if any keys were successfully added
-  if [ "$keys_added" = false ]; then
-    echo "No SSH keys could be loaded. This might be due to:"
-    echo "  - Encrypted keys requiring passphrase"
-    echo "  - Invalid or corrupted key files"
-    echo "  - Permission issues"
-    echo ""
-    echo "Please manually add your key:"
-    echo "  source $ssh_env"
-    echo "  ssh-add ~/.ssh/id_ed25519  # or your key file"
-    echo "Then run this script again."
+  # Final verification that we have working SSH keys
+  if ! ssh-add -l >/dev/null 2>&1; then
+    echo "❌ Error: SSH agent is running but no keys are loaded"
     exit 1
   fi
+
+  echo "✅ SSH agent setup complete!"
+  echo "   🔑 Keys loaded: $(ssh-add -l | wc -l)"
+  echo "   📋 Agent PID: $SSH_AGENT_PID"
 
   # Export environment for Ansible
   export SSH_AUTH_SOCK

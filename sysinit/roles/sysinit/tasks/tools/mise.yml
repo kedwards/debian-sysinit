@@ -89,38 +89,33 @@
       loop: "{{ sysinit_mise_custom_plugins }}"
       when: sysinit_mise_custom_plugins is defined and sysinit_mise_custom_plugins | length > 0
 
-    - name: Mise - Install Plugins
-      ansible.builtin.shell: |
-        set -o pipefail
+    - name: Mise - Get current global config
+      ansible.builtin.shell: >
+        {{ mise_bin }} current 2>/dev/null || echo "No tools configured"
+      register: mise_current_tools
+      changed_when: false
+      failed_when: false
 
-        PLUGIN_BASE=$(echo "{{ plugin_item }}" | cut -d'@' -f1)
-        
-        # Check if plugin is already managed by mise using 'mise current' command
-        if {{ mise_bin }} current $PLUGIN_BASE >/dev/null 2>&1; then
-          echo "Plugin $PLUGIN_BASE already installed (managed by mise)"
-          exit 0
-        fi
-        
-        # Check if plugin is already installed using mise ls command
-        if {{ mise_bin }} ls --installed 2>/dev/null | grep -q "^$PLUGIN_BASE\s"; then
-          echo "Plugin $PLUGIN_BASE already installed"
-          exit 0
-        fi
-        
-        # Also check by looking for the plugin directory
-        if [ -d "$HOME/.local/share/mise/plugins/$PLUGIN_BASE" ]; then
-          echo "Plugin $PLUGIN_BASE already installed (directory exists)"
-          exit 0
-        fi
-        
-        # Install the plugin
-        echo "Installing plugin $PLUGIN_BASE"
-        {{ mise_bin }} use -g -y {{ plugin_item }}
-      args:
-        executable: /bin/bash
-      loop_control:
-        loop_var: plugin_item
-      loop: "{{ sysinit_mise_plugins }}"
+    - name: Mise - Check which tools need installation
+      ansible.builtin.set_fact:
+        tools_to_install: >
+          {%- set missing_tools = [] -%}
+          {%- for tool in sysinit_mise_plugins -%}
+            {%- set tool_base = tool.split('@')[0] -%}
+            {%- if tool_base not in mise_current_tools.stdout -%}
+              {%- set _ = missing_tools.append(tool) -%}
+            {%- endif -%}
+          {%- endfor -%}
+          {{ missing_tools }}
+
+    - name: Mise - Display tools to install
+      ansible.builtin.debug:
+        msg: "Tools to install: {{ tools_to_install | join(', ') if tools_to_install | length > 0 else 'None (all tools already configured)' }}"
+
+    - name: Mise - Install all missing plugins globally at once
+      ansible.builtin.shell: >
+        {{ mise_bin }} use --global --yes {{ tools_to_install | join(' ') }}
       register: plugin_install_result
-      changed_when: plugin_install_result.rc == 0 and 'already installed' not in plugin_install_result.stdout
+      when: tools_to_install | length > 0
+      changed_when: plugin_install_result.rc == 0
       failed_when: plugin_install_result.rc != 0 and 'rate limit' not in plugin_install_result.stderr

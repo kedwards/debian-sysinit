@@ -1,6 +1,6 @@
 ---
 # APT-based systems (Ubuntu/Debian)
-- name: Docker - Install (APT)"
+- name: Docker - Install (APT)
   when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
   block:
     - name: Docker - Check if docker GPG keyring exists

@@ -1,12 +1,191 @@
 ---
 - name: 1Password - Install/Upgrade (APT)
-  ansible.builtin.apt:
-    deb: https://downloads.1password.com/linux/debian/amd64/stable/1password-latest.deb
-    state: present
-  where: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+  block:
+    - name: 1Password - Download 1Password apt key and convert to GPG keyring
+      ansible.builtin.shell: |
+        curl -sS https://downloads.1password.com/linux/keys/1password.asc | \
+        gpg --dearmor -o /usr/share/keyrings/1password-archive-keyring.gpg
+      args:
+        creates: /usr/share/keyrings/1password-archive-keyring.gpg
+    
+    - name: 1Password - Download 1Password apt key and convert to GPG keyring
+      ansible.builtin.shell: |
+        curl -sS https://downloads.1password.com/linux/keys/1password.asc | \
+        gpg --dearmor -o /usr/share/keyrings/1password-archive-keyring.gpg
+      args:
+        creates: /usr/share/keyrings/1password-archive-keyring.gpg
+
+    - name: 1Password - Add 1Password APT repository
+      copy:
+        dest: /etc/apt/sources.list.d/1password.list
+        content: |
+          deb [arch=amd64 signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/amd64 stable main
+
+    - name: 1Password - Add debsig-verify policy
+      ansible.builtin.get_url:
+        url: https://downloads.1password.com/linux/debian/debsig/1password.pol
+        dest: /etc/debsig/policies/AC2D62742012EA22/1password.pol
+        mode: '0644'
+
+    - name: 1Password - Download and install 1Password debsig GPG key
+      ansible.builtin.shell: |
+        curl -sS https://downloads.1password.com/linux/keys/1password.asc | \
+        gpg --dearmor -o /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg
+      args:
+        creates: /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg
+
+    - name: 1Password - Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: 1Password - Install 1Password
+      apt:
+        name: 1password
+        state: present
+
+    - name: 1Password CLI - Download 1Password signing key
+      ansible.builtin.get_url:
+        url: https://downloads.1password.com/linux/keys/1password.asc
+        dest: /usr/share/keyrings/1password-archive-keyring.gpg
+        mode: '0644'
+      register: onepassword_key
+
+    - name: 1Password CLI - Convert key to gpg format
+      ansible.builtin.command:
+        cmd: gpg --dearmor -o /usr/share/keyrings/1password-archive-keyring.gpg /usr/share/keyrings/1password-archive-keyring.gpg
+        creates: /usr/share/keyrings/1password-archive-keyring.gpg
+      when: onepassword_key is changed
+
+    - name: 1Password CLI - Add 1Password apt repository
+      ansible.builtin.apt_repository:
+        repo: "deb [arch={{ ansible_architecture }} signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/{{ ansible_architecture }} stable main"
+        state: present
+        filename: 1password
+
+    - name: 1Password CLI - Ensure debsig policy directory exists
+      ansible.builtin.file:
+        path: /etc/debsig/policies/AC2D62742012EA22
+        state: directory
+        mode: '0755'
+
+    - name: 1Password CLI - Download 1Password debsig policy
+      ansible.builtin.get_url:
+        url: https://downloads.1password.com/linux/debian/debsig/1password.pol
+        dest: /etc/debsig/policies/AC2D62742012EA22/1password.pol
+        mode: '0644'
+
+    - name: 1Password CLI - Ensure debsig keyring directory exists
+      ansible.builtin.file:
+        path: /usr/share/debsig/keyrings/AC2D62742012EA22
+        state: directory
+        mode: '0755'
+
+    - name: 1Password CLI - Download and convert debsig signing key
+      ansible.builtin.get_url:
+        url: https://downloads.1password.com/linux/keys/1password.asc
+        dest: /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.asc
+        mode: '0644'
+
+    - name: 1Password CLI - Convert debsig key to gpg format
+      ansible.builtin.command:
+        cmd: gpg --dearmor -o /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.asc
+        creates: /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg
+
+    - name: 1Password CLI - Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: 1Password CLI - Install 1Password CLI
+      ansible.builtin.apt:
+        name: 1password-cli
+        state: present
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
 
 - name: 1Password - Install/Upgrade (DNF)
-  ansible.builtin.dnf:
-    name: https://downloads.1password.com/linux/rpm/stable/x86_64/1password-latest.rpm
-    state: present
-  where: ansible_distribution == 'Fedora' or ansible_distribution == 'Redhat'
+  block:
+    - name: 1Password - Import 1Password GPG key
+      rpm_key:
+        key: https://downloads.1password.com/linux/keys/1password.asc
+        state: present
+
+    - name: 1Password - Add 1Password yum repository
+      ansible.builtin.copy:
+        dest: /etc/yum.repos.d/1password.repo
+        content: |
+          [1password]
+          name=1Password Stable Channel
+          baseurl=https://downloads.1password.com/linux/rpm/stable/$basearch
+          enabled=1
+          gpgcheck=1
+          repo_gpgcheck=1
+          gpgkey=https://downloads.1password.com/linux/keys/1password.asc
+        mode: '0644'
+
+    - name: 1Password - Install 1Password
+      ansible.builtin.dnf:
+        name: 1password
+        state: present
+
+    - name: 1Password CLI - Import 1Password GPG key
+      ansible.builtin.rpm_key:
+        key: https://downloads.1password.com/linux/keys/1password.asc
+        state: present
+
+    - name: 1Password CLI - Add 1Password yum/dnf repository
+      ansible.builtin.yum_repository:
+        name: 1password
+        description: 1Password Stable Channel
+        baseurl: https://downloads.1password.com/linux/rpm/stable/$basearch
+        enabled: yes
+        gpgcheck: yes
+        repo_gpgcheck: yes
+        gpgkey: https://downloads.1password.com/linux/keys/1password.asc
+        file: 1password
+
+    - name: 1Password CLI - Ensure metadata is up to date
+      ansible.builtin.dnf:
+        update_cache: yes
+
+    - name: 1Password CLI - Install 1Password CLI
+      ansible.builtin.dnf:
+        name: 1password-cli
+        state: present
+  when: ansible_distribution == 'Fedora' or ansible_distribution == 'Redhat'
+
+- name: 1Password - Install/Upgrade  Arch Linux
+  block:
+    - name: 1Password - Ensure base-devel and git are installed
+      pacman:
+        name:
+          - base-devel
+          - git
+        state: present
+
+    - name: 1Password - Import 1Password GPG key
+      become: false
+      ansible.builtin.shell: |
+        curl -sS https://downloads.1password.com/linux/keys/1password.asc | gpg --import
+      args:
+        executable: /bin/bash
+      environment:
+        GNUPGHOME: "/home/{{ aur_user }}/.gnupg"
+      become_user: "{{ aur_user }}"
+
+    - name: 1Password - Clone 1Password AUR repository
+      become: false
+      ansible.builtin.git:
+        repo: https://aur.archlinux.org/1password.git
+        dest: /home/{{ aur_user }}/1password
+        update: yes
+      become_user: "{{ aur_user }}"
+
+    - name: 1Password - Build and install 1Password from AUR
+      become: false
+      ansible.builtin.shell: |
+        cd /home/{{ aur_user }}/1password && makepkg -si --noconfirm
+      args:
+        chdir: /home/{{ aur_user }}/1password
+        executable: /bin/bash
+      become_user: "{{ aur_user }}"
+    when: ansible_distribution == 'ArchLinux'
+

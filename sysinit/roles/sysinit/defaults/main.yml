@@ -15,24 +15,23 @@ sysinit_sys_tools:
   - mise
 
 sysinit_mise_plugins:
-  - 1password-cli
-  - amazon-ecr-credential-helper
+#  - amazon-ecr-credential-helper
   - awscli
   - bat
-  - direnv
+#  - direnv
   - eza
   - fd
   - fzf
   - github-cli
   - git-worktree-wrapper
-  - golang
+#  - golang
   - granted
   - jq
   - neovim
-  - node
-  - pre-commit
-  - python
-  - rclone
+#  - node
+#  - pre-commit
+#  - python
+#  - rclone
   - ripgrep
   - starship
   - task
