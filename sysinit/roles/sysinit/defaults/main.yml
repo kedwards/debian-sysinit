@@ -1,19 +1,16 @@
 ---
-# Debug and control variables
 sysinit_debug: false
 sysinit_force_update: false
 
-# Generic path variables (use Ansible facts instead of env lookups)
-sysinit_user: "{{ ansible_user_id }}"
-sysinit_user_home: "{{ ansible_env.HOME | default('/home/' + ansible_user_id) }}"
-sysinit_local_bin: "{{ sysinit_user_home }}/.local/bin"
-sysinit_local_share: "{{ sysinit_user_home }}/.local/share"
-sysinit_applications_dir: "/usr/share/applications"
+#sysinit_user: "{{ ansible_user_id }}"
+#sysinit_user_home: "{{ ansible_env.HOME | default('/home/' + ansible_user_id) }}"
+#sysinit_local_bin: "{{ sysinit_user_home }}/.local/bin"
+#sysinit_local_share: "{{ sysinit_user_home }}/.local/share"
+#sysinit_applications_dir: "/usr/share/applications"
 
 sysinit_packages:
   - gcc
   - make
-  - stow
   - unzip
   - xclip
   - xsel
@@ -28,7 +25,6 @@ sysinit_mise_plugins:
   - bat
   - bun
   - chezmoi
-#  - direnv
   - eza
   - fd
   - fzf

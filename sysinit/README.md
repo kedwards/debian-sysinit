@@ -104,4 +104,3 @@ task molecule-test
 **Notes:**
 - The installer will start an ssh-agent and attempt to load a default SSH key (id_ed25519, id_rsa). If none are found or loadable, it exits with guidance.
 - The playbook targets localhost by default and will ask for sudo (-K) to perform system changes.
-- This project has migrated from Make to Task for better cross-platform support and YAML-based configuration.

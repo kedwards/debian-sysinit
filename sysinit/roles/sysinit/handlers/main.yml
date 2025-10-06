@@ -25,9 +25,7 @@
   listen: "restart docker"
 
 - name: Reload user profile
-  ansible.builtin.command:
-    cmd: "bash -c 'source {{ sysinit_user_home }}/.bashrc'"
+  ansible.builtin.shell:
+    cmd: "source {{ sysinit_user_home }}/.bashrc"
   become: false
-  become_user: "{{ sysinit_user }}"
   listen: "reload profile"
-  changed_when: false

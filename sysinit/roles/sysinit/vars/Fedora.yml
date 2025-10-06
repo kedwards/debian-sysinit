@@ -1,5 +1,4 @@
 ---
-# Fedora-specific packages (docker via role, not distro packages)
 sysinit_distro_packages: []
 
 sysinit_tools:
