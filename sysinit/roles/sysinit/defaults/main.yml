@@ -20,7 +20,7 @@ sysinit_packages:
   - zip
 
 sysinit_sys_tools:
-  - mise_unified
+  - mise2
 
 sysinit_mise_plugins:
   - amazon-ecr-credential-helper

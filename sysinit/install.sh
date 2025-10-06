@@ -390,7 +390,7 @@ setup_ssh_agent() {
 main() {
   install_packages
   install_mise
-  #sync_repo
+  sync_repo
   setup_git_config
   #setup_ssh_agent
   setup_python_env
