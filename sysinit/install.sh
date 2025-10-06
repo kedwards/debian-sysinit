@@ -64,20 +64,20 @@ install_packages() {
   apt)
     sudo apt update
     sudo apt upgrade -y
-    sudo apt install -y "$packages"
+    sudo apt install -y $packages
     sudo apt autoremove -y
     ;;
   dnf)
     sudo dnf update -y
-    sudo dnf install -y "$packages"
+    sudo dnf install -y $packages
     ;;
   pacman)
     sudo pacman -Syu --noconfirm
-    sudo pacman -S --noconfirm "$packages"
+    sudo pacman -S --noconfirm $packages
     ;;
   yum)
     sudo yum update -y
-    sudo yum install -y "$packages"
+    sudo yum install -y $packages
     ;;
   *)
     echo "Unsupported or unknown package manager"
@@ -390,7 +390,7 @@ setup_ssh_agent() {
 main() {
   install_packages
   install_mise
-  sync_repo
+  #sync_repo
   setup_git_config
   #setup_ssh_agent
   setup_python_env

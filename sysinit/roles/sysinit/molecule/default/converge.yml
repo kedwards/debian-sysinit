@@ -13,7 +13,7 @@
     sysinit_applications_dir: "/usr/share/applications"
     # Limit tools for testing to basic ones that are likely to work in containers
     sysinit_sys_tools:
-      - mise
+      - mise_unified
     sysinit_mise_plugins:
       - jq
       - github-cli

@@ -20,20 +20,21 @@ sysinit_packages:
   - zip
 
 sysinit_sys_tools:
-  - mise
+  - mise_unified
 
 sysinit_mise_plugins:
   - amazon-ecr-credential-helper
   - awscli
   - bat
   - bun
+  - chezmoi
 #  - direnv
   - eza
   - fd
   - fzf
   - github-cli
   - git-worktree-wrapper
-  - golang
+  - go
   - granted
   - jq
   - neovim
