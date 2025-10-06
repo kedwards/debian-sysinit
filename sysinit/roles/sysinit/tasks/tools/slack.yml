@@ -1,34 +1,70 @@
 ---
 - name: Slack - Get latest version from download page
-  ansible.builtin.uri:
-    url: "https://slack.com/downloads/instructions/linux?ddl=1&build=deb"
-    method: GET
-    return_content: true
-  register: slack_download_page
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+  block:
+    - ansible.builtin.uri:
+        url: "https://slack.com/downloads/instructions/linux?ddl=1&build=deb"
+        method: GET
+        return_content: true
+      register: slack_download_page
 
-- name: Slack - Extract version number
-  ansible.builtin.set_fact:
-    slack_version: >-
-      {{
-        slack_download_page.content
-        | regex_search('slack-desktop-([0-9]+\.[0-9]+\.[0-9]+)-amd64\.deb', '\1')
-        | first
-        | regex_replace('\n', '')
-        | trim
-        | default('4.45.64')
-      }}
+    - name: Slack - Extract version number
+      ansible.builtin.set_fact:
+        slack_version: >-
+          {{
+            slack_download_page.content
+            | regex_search('slack-desktop-([0-9]+\.[0-9]+\.[0-9]+)-amd64\.deb', '\1')
+            | first
+            | regex_replace('\n', '')
+            | trim
+            | default('4.45.64')
+          }}
 
-- name: Slack - Download .deb package
-  ansible.builtin.get_url:
-    url: "https://downloads.slack-edge.com/desktop-releases/linux/x64/{{ slack_version }}/slack-desktop-{{ slack_version }}-amd64.deb"
-    dest: "/tmp/slack-desktop-{{ slack_version }}-amd64.deb"
-    mode: '0644'
-    timeout: 300
-    headers:
-      User-Agent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"
+    - name: Slack - Download .deb package
+      ansible.builtin.get_url:
+        url: "https://downloads.slack-edge.com/desktop-releases/linux/x64/{{ slack_version }}/slack-desktop-{{ slack_version }}-amd64.deb"
+        dest: "/tmp/slack-desktop-{{ slack_version }}-amd64.deb"
+        mode: '0644'
+        timeout: 300
+        headers:
+          User-Agent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"
 
-- name: Slack - Install .deb package
-  ansible.builtin.apt:
-    deb: "/tmp/slack-desktop-{{ slack_version }}-amd64.deb"
-    state: present
-  when: (ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu') and (not slack_exists_result.stat.exists or upgrade)
+    - name: Slack - Install .deb package
+      ansible.builtin.apt:
+        deb: "/tmp/slack-desktop-{{ slack_version }}-amd64.deb"
+        state: present
+
+- name: Slack - Get latest version from download page
+  when: ansible_distribution == 'Fedora'
+  block:
+    - ansible.builtin.uri:
+        url: "https://slack.com/downloads/instructions/linux?ddl=1&build=rpm"
+        method: GET
+        return_content: true
+      register: slack_download_page
+
+    - name: Slack - Extract version number
+      ansible.builtin.set_fact:
+        slack_version: >-
+          {{
+            slack_download_page.content
+            | regex_search('slack-desktop-([0-9]+\.[0-9]+\.[0-9]+)-amd64\.rpm', '\1')
+            | first
+            | regex_replace('\n', '')
+            | trim
+            | default('4.45.64')
+          }}
+
+    - name: Slack - Download .rpm package
+      ansible.builtin.get_url:
+        url: "https://downloads.slack-edge.com/desktop-releases/linux/x64/{{ slack_version }}/slack-{{ slack_version }}-0.1.el8.x86_64.rpm"
+        dest: "/tmp/slack-{{ slack_version }}-0.1.el8.x86_64.rpm"
+        mode: '0644'
+        timeout: 300
+        headers:
+          User-Agent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"
+
+    - name: Slack - Install .deb package
+      ansible.builtin.apt:
+        deb: "/tmp/slack-{{ slack_version }}-0.1.el8.x86_64.rpm"
+        state: present
