@@ -1,4 +1,9 @@
 ---
+- name: Set user configuration
+  ansible.builtin.set_fact:
+    sysinit_user: "{{ lookup('env', 'USER') }}"
+    sysinit_user_home: "{{ lookup('env', 'HOME') }}"
+
 - name: Display system info
   ansible.builtin.debug:
     msg:
@@ -22,12 +27,16 @@
          (tools | default('') | split(',')) |
          select('match', '.+') | list }}
 
-- name: Install system packages
-  ansible.builtin.package:
-    name: "{{ sysinit_packages + sysinit_distro_packages | default([]) }}"
-    state: present
+- name: Debug
+  ansible.builtin.debug
+    var: sysinit_combined_tools
 
-- name: Install tools
-  ansible.builtin.include_tasks: "tools/{{ item }}.yml"
-  loop: "{{ sysinit_combined_tools | default([]) }}"
-  when: sysinit_combined_tools is defined and sysinit_combined_tools | length > 0
+# - name: Install system packages
+#   ansible.builtin.package:
+#     name: "{{ sysinit_packages + sysinit_distro_packages | default([]) }}"
+#     state: present
+
+# - name: Install tools
+#   ansible.builtin.include_tasks: "tools/{{ item }}.yml"
+#   loop: "{{ sysinit_combined_tools | default([]) }}"
+#   when: sysinit_combined_tools is defined and sysinit_combined_tools | length > 0
