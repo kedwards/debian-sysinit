@@ -1,5 +1,5 @@
 ---
-- name: Install i3 packages
+- name: Install flameshot
   ansible.builtin.package:
     name: flameshot
     state: present

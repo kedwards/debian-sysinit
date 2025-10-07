@@ -5,12 +5,74 @@ set -euo pipefail
 SYSINIT_REPO=https://github.com/kedwards/sysinit.git
 script_dir="$HOME/sysinit"
 
+# Default flag values
+ENABLE_SSH_SETUP=false
+
+# Display usage information
+usage() {
+  cat << EOF
+Usage: $0 [OPTIONS]
+
+Install and configure system using sysinit repository.
+
+OPTIONS:
+  -s, --enable-ssh   Enable SSH agent setup (disabled by default)
+  -h, --help         Display this help message
+
+EXAMPLES:
+  # Install without SSH setup (default)
+  $0
+  
+  # Install with SSH setup enabled
+  $0 --enable-ssh
+  $0 -s
+  
+  # Download and run with SSH setup enabled
+  wget -O - https://raw.githubusercontent.com/withreach/sysinit/refs/heads/main/install.sh | bash -s -- --enable-ssh
+
+EOF
+}
+
+# Parse command line arguments
+parse_args() {
+  while [[ $# -gt 0 ]]; do
+    case $1 in
+      -s|--enable-ssh)
+        ENABLE_SSH_SETUP=true
+        shift
+        ;;
+      -h|--help)
+        usage
+        exit 0
+        ;;
+      *)
+        echo "Unknown option: $1" >&2
+        usage >&2
+        exit 1
+        ;;
+    esac
+  done
+}
+
+# Fix ownership of .venv directory and contents
+fix_venv_ownership() {
+  if [[ -d "$script_dir/.venv" ]]; then
+    echo "🔧 Fixing .venv ownership..."
+    # Fix ownership of .venv directory and all its contents
+    sudo chown -R "$USER:$USER" "$script_dir/.venv" 2>/dev/null || {
+      echo "⚠️  Warning: Could not fix .venv ownership, but continuing..."
+    }
+  fi
+}
+
 cleanup() {
   if command -v deactivate >/dev/null; then
     deactivate || true
   fi
   # Only clean up temp files, preserve .venv for idempotency
   rm -rf "${mise_installer:-/tmp}/mise_install.sh" || true
+  # Fix .venv ownership if it exists
+  fix_venv_ownership
 }
 trap cleanup ERR EXIT
 
@@ -143,6 +205,15 @@ setup_python_env() {
 
   # Only create venv if it doesn't exist or if sysinit package isn't installed
   if [[ ! -d ".venv" ]] || ! .venv/bin/python -c "import sysinit" 2>/dev/null; then
+    # Fix ownership before attempting to recreate .venv
+    if [[ -d ".venv" ]]; then
+      echo "🔧 Fixing .venv ownership before recreation..."
+      sudo chown -R "$USER:$USER" ".venv" 2>/dev/null || {
+        echo "⚠️  Could not fix ownership, removing .venv manually..."
+        sudo rm -rf ".venv"
+      }
+    fi
+    
     uv venv --clear
     # shellcheck disable=SC1091
     source ".venv/bin/activate"
@@ -388,11 +459,22 @@ setup_ssh_agent() {
 
 # Main execution with better error handling
 main() {
+  # Parse command line arguments
+  parse_args "$@"
+  
   install_packages
   install_mise
   sync_repo
   setup_git_config
-  #setup_ssh_agent
+  
+  # Conditionally run SSH setup based on flag
+  if [[ "$ENABLE_SSH_SETUP" == "true" ]]; then
+    echo "🔑 Setting up SSH agent..."
+    setup_ssh_agent
+  else
+    echo "⏭️  Skipping SSH agent setup (use --enable-ssh to enable)"
+  fi
+  
   setup_python_env
   run_ansible
 }
