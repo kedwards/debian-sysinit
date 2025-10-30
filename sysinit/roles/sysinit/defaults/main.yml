@@ -2,12 +2,6 @@
 sysinit_debug: false
 sysinit_force_update: false
 
-#sysinit_user: "{{ ansible_user_id }}"
-#sysinit_user_home: "{{ ansible_env.HOME | default('/home/' + ansible_user_id) }}"
-#sysinit_local_bin: "{{ sysinit_user_home }}/.local/bin"
-#sysinit_local_share: "{{ sysinit_user_home }}/.local/share"
-#sysinit_applications_dir: "/usr/share/applications"
-
 sysinit_packages:
   - gcc
   - make
@@ -17,7 +11,10 @@ sysinit_packages:
   - zip
 
 sysinit_sys_tools:
+  - dropbox
   - mise2
+  - opass
+  - slack
 
 sysinit_mise_plugins:
   - amazon-ecr-credential-helper
