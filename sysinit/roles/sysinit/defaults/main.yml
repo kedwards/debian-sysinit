@@ -11,16 +11,12 @@ sysinit_packages:
   - zip
 
 sysinit_sys_tools:
-  - dropbox
-  - mise2
-  - opass
-  - slack
+  - mise
 
 sysinit_mise_plugins:
   - amazon-ecr-credential-helper
   - awscli
   - bat
-  - bun
   - chezmoi
   - eza
   - fd

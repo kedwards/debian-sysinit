@@ -25,6 +25,7 @@ An Ansible role for system initialization and development environment configurat
 
 All variables are defined in `defaults/main.yml` and can be overridden:
 
+
 ## Dependencies
 
 This role has no external role dependencies but requires the following Ansible collections:

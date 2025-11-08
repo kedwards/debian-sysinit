@@ -84,7 +84,8 @@ tasks:
     desc: Install dependencies
     cmds:
       - uv venv --clear
-      - uv pip install -e . --group dev
+      - uv pip install -r requirements.txt
+      - uv pip install -r development.requirements.txt
       - bash -c 'source .venv/bin/activate && ansible-galaxy install -r requirements.yml'
       - echo -e "Please also install shellcheck using your system package manager:\n
           Arch Linux -> pacman -S shellcheck\n
@@ -122,6 +123,7 @@ tasks:
     desc: Upgrade Python dependencies
     cmds:
       - uv pip install --upgrade pip
-      - uv pip install --upgrade -e . --group dev
+      - uv pip install --upgrade -r requirements.txt
+      - uv pip install --upgrade -r development.requirements.txt
       - ansible-galaxy install --force -r requirements.yml
       - echo "✅ Dependencies upgraded"

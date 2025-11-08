@@ -1,0 +1,11 @@
+# Test dependencies
+pytest==8.4.1
+molecule==25.7.0
+molecule-plugins[docker]==23.7.0
+
+# Lint dependencies
+pre-commit==4.2.0
+cfn-lint==1.38.0
+detect-secrets==1.5.0
+ansible-lint==25.7.0
+yamllint==1.37.0

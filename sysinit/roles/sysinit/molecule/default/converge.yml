@@ -5,17 +5,5 @@
   vars:
     sysinit_var: molecule_converge
     upgrade: false
-    # Provide sysinit variables for testing
-    sysinit_user: "{{ ansible_user_id }}"
-    sysinit_user_home: "{{ ansible_env.HOME | default('/home/' + ansible_user_id) }}"
-    sysinit_local_bin: "{{ sysinit_user_home }}/.local/bin"
-    sysinit_local_share: "{{ sysinit_user_home }}/.local/share"
-    sysinit_applications_dir: "/usr/share/applications"
-    # Limit tools for testing to basic ones that are likely to work in containers
-    sysinit_sys_tools:
-      - mise_unified
-    sysinit_mise_plugins:
-      - jq
-      - github-cli
   roles:
     - role: sysinit

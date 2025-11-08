@@ -10,40 +10,33 @@
           - assume
           - curl
           - docker
-          - gh
           - git
           - gpg
           - granted
           - jq
           - mise
           - node
-          - op
           - python
           - starship
 
-    - name: Check if mise binary exists
-      ansible.builtin.stat:
-        path: "/root/.local/bin/mise"
-      register: mise_exists
-
-    - name: Check if basic commands exist (simplified container verification)
-      ansible.builtin.command: "which {{ item }}"
+    - name: Check required commands are available with mise activated
+      become: true
+      become_user: "{{ lookup('env', 'USER') }}"
+      ansible.builtin.shell: |
+        set -euo pipefail
+        eval "$(/home/{{ lookup('env', 'USER') }}/.local/bin/mise activate bash)"
+      args:
+        executable: /bin/bash
       register: cmd_check
       changed_when: false
       failed_when: false
-      loop:
-        - curl
-        - git
-        - gpg
-        - python
-        - docker  # Only on some distros
-      when: item != 'docker' or ansible_os_family != 'Archlinux'
+      loop: "{{ required_commands }}"
 
-    - name: Verify mise installation
+    - name: Collect missing commands
+      ansible.builtin.set_fact:
+        missing_commands: "{{ cmd_check.results | selectattr('rc', 'ne', 0) | map(attribute='item') | list }}"
+
+    - name: Fail if required command is missing
       ansible.builtin.fail:
-        msg: "mise binary not found at expected path"
-      when: not mise_exists.stat.exists
-
-    - name: Collect successful commands
-      ansible.builtin.debug:
-        msg: "Basic system verification completed - mise binary exists and essential commands are available"
+        msg: "Required command(s) missing: {{ missing_commands | join(', ') }}"
+      when: missing_commands | length > 0

@@ -67,6 +67,11 @@ cd sysinit
 
 The installer bootstraps tooling and a virtual environment for you; if you prefer, you can run the playbook directly:
 - Ensure Python 3.11+ and dependencies are installed (uv/mise steps are handled by install.sh)
+- Install dependencies:
+  ```bash
+  pip install -r requirements.txt
+  ansible-galaxy install -r requirements.yml
+  ```
 - Pass Git identity to the playbook (required):
   ```bash
   ansible-playbook playbook.yml -K -e "git_user_name=Your Name" -e "git_user_email=you@example.com"

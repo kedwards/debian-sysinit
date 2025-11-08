@@ -464,7 +464,7 @@ main() {
   
   install_packages
   install_mise
-  # sync_repo
+  sync_repo
   setup_git_config
   
   # Conditionally run SSH setup based on flag

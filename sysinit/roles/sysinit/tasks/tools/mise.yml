@@ -1,7 +1,7 @@
 ---
 - name: Mise - Set mise directory path
   ansible.builtin.set_fact:
-    mise_dir: "{{ sysinit_local_bin }}"
+    mise_dir: "/home/{{ lookup('env', 'USER') }}/.local/bin"
 
 - name: Mise - Set mise binary path
   ansible.builtin.set_fact:
@@ -13,6 +13,8 @@
   register: mise_exists_result
 
 - name: Mise - Install
+  become: true
+  become_user: "{{ lookup('env', 'USER') }}"
   when: not mise_exists_result.stat.exists or upgrade | default(false)
   block:
     - name: Mise - Create local bin directory
@@ -20,16 +22,12 @@
         path: "{{ mise_dir }}"
         state: directory
         mode: "0755"
-        owner: "{{ sysinit_user }}"
-        group: "{{ sysinit_user }}"
 
     - name: Mise - Import gpg key
       ansible.builtin.shell: >
         gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys 0x7413A06D
       args:
-        creates: "{{ sysinit_user_home }}/.gnupg/pubring.kbx"
-      environment:
-        GNUPGHOME: "{{ sysinit_user_home }}/.gnupg"
+        creates: "/home/{{ lookup('env', 'USER') }}/.gnupg/pubring.kbx"
 
     - name: Mise - Download signed install script
       ansible.builtin.get_url:
@@ -53,9 +51,6 @@
       ansible.builtin.shell: >
         export MISE_INSTALL_PATH="{{ mise_bin }}" &&
         bash /tmp/mise-install.sh
-      environment:
-        HOME: "{{ sysinit_user_home }}"
-        USER: "{{ sysinit_user }}"
       args:
         creates: "{{ mise_bin }}"
 
@@ -79,17 +74,16 @@
     msg: Mise binary cannot be found and is required.
   when: not mise_exists_result.stat.exists
 
-- name: Mise - Configure plugins and tools
+- name: Mise - Install Tools and Plugins
+  become: true
+  become_user: "{{ lookup('env', 'USER') }}"
   when: mise_exists_result.stat.exists
   block:
     - name: Mise - Install custom plugins
       ansible.builtin.shell: >
         {{ mise_bin }} plugin add {{ custom_plugin_item.plugin }} {{ custom_plugin_item.src }}
       args:
-        creates: "{{ sysinit_user_home }}/.local/share/mise/plugins/{{ custom_plugin_item.plugin }}"
-      environment:
-        HOME: "{{ sysinit_user_home }}"
-        USER: "{{ sysinit_user }}"
+        creates: "$HOME/.local/share/mise/plugins/{{ custom_plugin_item.plugin }}"
       loop_control:
         loop_var: custom_plugin_item
       loop: "{{ sysinit_mise_custom_plugins }}"
@@ -98,9 +92,6 @@
     - name: Mise - Get current global config
       ansible.builtin.shell: >
         {{ mise_bin }} current 2>/dev/null || echo "No tools configured"
-      environment:
-        HOME: "{{ sysinit_user_home }}"
-        USER: "{{ sysinit_user }}"
       register: mise_current_tools
       changed_when: false
       failed_when: false
@@ -124,10 +115,34 @@
     - name: Mise - Install all missing plugins globally at once
       ansible.builtin.shell: >
         {{ mise_bin }} use --global --yes {{ tools_to_install | join(' ') }}
-      environment:
-        HOME: "{{ sysinit_user_home }}"
-        USER: "{{ sysinit_user }}"
       register: plugin_install_result
       when: tools_to_install | length > 0
       changed_when: plugin_install_result.rc == 0
       failed_when: plugin_install_result.rc != 0 and 'rate limit' not in plugin_install_result.stderr
+
+    - name: Mise - Verify installation success
+      ansible.builtin.shell: >
+        {{ mise_bin }} current {{ tool_item.split('@')[0] }} >/dev/null 2>&1
+      loop: "{{ sysinit_mise_plugins }}"
+      loop_control:
+        loop_var: tool_item
+      register: tool_verification
+      changed_when: false
+      failed_when: tool_verification.rc != 0
+      when: tools_to_install | length > 0
+
+    - name: Mise - Display installation results
+      ansible.builtin.debug:
+        msg: "Successfully installed and configured {{ tools_to_install | length }} mise tools"
+      when: tools_to_install | length > 0
+
+    - name: Mise - Show final tool configuration
+      ansible.builtin.shell: >
+        {{ mise_bin }} current
+      register: final_tools_config
+      changed_when: false
+      failed_when: false
+
+    - name: Mise - Display final configuration
+      ansible.builtin.debug:
+        msg: "Final mise tools configuration:\n{{ final_tools_config.stdout }}"

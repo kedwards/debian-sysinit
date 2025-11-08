@@ -1,5 +1,0 @@
----
-- name: Install i3 packages
-  ansible.builtin.package:
-    name: asciinema
-    state: present

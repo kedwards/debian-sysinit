@@ -6,10 +6,11 @@
       - arandr
       - brightnessctl
       #- cpmpoton #
-      - dex-autostart
+      #- dex-autostart
       - dmenu
       - dunst
       - feh
+      - flameshot 
       #- fonts-font-awesome #
       #- fonts-noto #
       #- fonts-liberation #
@@ -37,6 +38,7 @@
       #- thunar-volman #
       - unzip
       - x11-xserver-utils
+      - xfce4-terminal
       #- xbacklight #
       #- xorg ##
       #- xinit ##

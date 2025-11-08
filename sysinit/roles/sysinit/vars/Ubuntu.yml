@@ -2,3 +2,4 @@
 sysinit_tools:
   - aws-ssm
   - docker
+  - postgresql-client
