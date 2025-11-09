@@ -2,9 +2,7 @@
 
 set -euo pipefail
 
-# Initialize PROMPT_COMMAND to avoid unbound variable error with mise
 PROMPT_COMMAND="${PROMPT_COMMAND:-}"
-
 SYSINIT_REPO=https://github.com/kedwards/sysinit.git
 script_dir="$HOME/sysinit"
 
