@@ -2,6 +2,9 @@
 
 set -euo pipefail
 
+# Initialize PROMPT_COMMAND to avoid unbound variable error with mise
+PROMPT_COMMAND="${PROMPT_COMMAND:-}"
+
 SYSINIT_REPO=https://github.com/kedwards/sysinit.git
 script_dir="$HOME/sysinit"
 
@@ -217,7 +220,7 @@ setup_python_env() {
     uv venv --clear
     # shellcheck disable=SC1091
     source ".venv/bin/activate"
-    uv pip install -e .
+    uv pip install -r requirements.txt
   else
     # shellcheck disable=SC1091
     source ".venv/bin/activate"

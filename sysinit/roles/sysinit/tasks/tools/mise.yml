@@ -108,10 +108,6 @@
           {%- endfor -%}
           {{ missing_tools }}
 
-    - name: Mise - Display tools to install
-      ansible.builtin.debug:
-        msg: "Tools to install: {{ tools_to_install | join(', ') if tools_to_install | length > 0 else 'None (all tools already configured)' }}"
-
     - name: Mise - Install all missing plugins globally at once
       ansible.builtin.shell: >
         {{ mise_bin }} use --global --yes {{ tools_to_install | join(' ') }}
@@ -119,30 +115,3 @@
       when: tools_to_install | length > 0
       changed_when: plugin_install_result.rc == 0
       failed_when: plugin_install_result.rc != 0 and 'rate limit' not in plugin_install_result.stderr
-
-    - name: Mise - Verify installation success
-      ansible.builtin.shell: >
-        {{ mise_bin }} current {{ tool_item.split('@')[0] }} >/dev/null 2>&1
-      loop: "{{ sysinit_mise_plugins }}"
-      loop_control:
-        loop_var: tool_item
-      register: tool_verification
-      changed_when: false
-      failed_when: tool_verification.rc != 0
-      when: tools_to_install | length > 0
-
-    - name: Mise - Display installation results
-      ansible.builtin.debug:
-        msg: "Successfully installed and configured {{ tools_to_install | length }} mise tools"
-      when: tools_to_install | length > 0
-
-    - name: Mise - Show final tool configuration
-      ansible.builtin.shell: >
-        {{ mise_bin }} current
-      register: final_tools_config
-      changed_when: false
-      failed_when: false
-
-    - name: Mise - Display final configuration
-      ansible.builtin.debug:
-        msg: "Final mise tools configuration:\n{{ final_tools_config.stdout }}"
