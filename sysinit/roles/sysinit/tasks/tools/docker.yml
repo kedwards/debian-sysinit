@@ -1,7 +1,7 @@
 ---
 # APT-based systems (Ubuntu/Debian)
 - name: Docker - Install (APT)
-  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+  when: ansible_facts['distribution'] == 'Debian' or ansible_facts['distribution'] == 'Ubuntu'
   block:
     - name: Docker - Check if docker GPG keyring exists
       ansible.builtin.stat:
@@ -10,7 +10,7 @@
 
     - name: Docker - Add docker official GPG key
       ansible.builtin.get_url:
-        url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
+        url: "https://download.docker.com/linux/{{ ansible_facts['distribution'] | lower }}/gpg"
         dest: /tmp/docker.gpg
         mode: "0644"
       register: docker_gpg_download
@@ -37,8 +37,8 @@
       ansible.builtin.apt_repository:
         repo: >
           deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg]
-          https://download.docker.com/linux/{{ ansible_distribution | lower }}/
-          {{ ansible_distribution_release }} stable
+          https://download.docker.com/linux/{{ ansible_facts['distribution'] | lower }}/
+          {{ ansible_facts['distribution_release'] }} stable
         state: present
 
     - name: Docker - Install
@@ -53,7 +53,7 @@
 
 # DNF-based systems (Fedora)
 - name: Docker - Install (Fedora)
-  when: ansible_distribution == 'Fedora'
+  when: ansible_facts['distribution'] == 'Fedora'
   block:
     - name: Docker - Add Docker repository
       ansible.builtin.yum_repository:
