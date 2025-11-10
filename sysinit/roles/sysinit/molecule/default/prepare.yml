@@ -70,7 +70,7 @@
       ansible.builtin.file:
         path: "/home/{{ lookup('env', 'USER') }}/.ssh"
         state: directory
-        mode: '0755'
+        mode: "0755"
         owner: "{{ lookup('env', 'USER') }}"
         group: "{{ lookup('env', 'USER') }}"
         recurse: true
@@ -79,7 +79,7 @@
       ansible.builtin.file:
         path: "/home/{{ lookup('env', 'USER') }}/.local/bin"
         state: directory
-        mode: '0755'
+        mode: "0755"
         owner: "{{ lookup('env', 'USER') }}"
         group: "{{ lookup('env', 'USER') }}"
         recurse: true

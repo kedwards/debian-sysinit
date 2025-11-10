@@ -23,11 +23,11 @@ OPTIONS:
 EXAMPLES:
   # Install without SSH setup (default)
   $0
-  
+
   # Install with SSH setup enabled
   $0 --enable-ssh
   $0 -s
-  
+
   # Download and run with SSH setup enabled
   wget -O - https://raw.githubusercontent.com/withreach/sysinit/refs/heads/main/install.sh | bash -s -- --enable-ssh
 
@@ -127,19 +127,23 @@ install_packages() {
   apt)
     sudo apt update
     sudo apt upgrade -y
+    # shellcheck disable=SC2086
     sudo apt install -y $packages
     sudo apt autoremove -y
     ;;
   dnf)
     sudo dnf update -y
+    # shellcheck disable=SC2086
     sudo dnf install -y $packages
     ;;
   pacman)
     sudo pacman -Syu --noconfirm
+    # shellcheck disable=SC2086
     sudo pacman -S --noconfirm $packages
     ;;
   yum)
     sudo yum update -y
+    # shellcheck disable=SC2086
     sudo yum install -y $packages
     ;;
   *)
@@ -214,7 +218,7 @@ setup_python_env() {
         sudo rm -rf ".venv"
       }
     fi
-    
+
     uv venv --clear
     # shellcheck disable=SC1091
     source ".venv/bin/activate"
@@ -462,12 +466,12 @@ setup_ssh_agent() {
 main() {
   # Parse command line arguments
   parse_args "$@"
-  
+
   install_packages
   install_mise
   sync_repo
   setup_git_config
-  
+
   # Conditionally run SSH setup based on flag
   if [[ "$ENABLE_SSH_SETUP" == "true" ]]; then
     echo "🔑 Setting up SSH agent..."
@@ -475,7 +479,7 @@ main() {
   else
     echo "⏭️  Skipping SSH agent setup (use --enable-ssh to enable)"
   fi
-  
+
   setup_python_env
   run_ansible
 }

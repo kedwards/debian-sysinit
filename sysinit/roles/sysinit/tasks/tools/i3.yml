@@ -5,43 +5,43 @@
       - acpi
       - arandr
       - brightnessctl
-      #- cpmpoton #
-      #- dex-autostart
+      # - cpmpoton #
+      # - dex-autostart
       - dmenu
       - dunst
       - feh
-      - flameshot 
-      #- fonts-font-awesome #
-      #- fonts-noto #
-      #- fonts-liberation #
+      - flameshot
+      # - fonts-font-awesome #
+      # - fonts-noto #
+      # - fonts-liberation #
       - i3
       - i3blocks
       - i3lock
       - i3status
       - jq
-      #- lightdm ##
-      #- lightdm-gtk-greeter ##
-      #- lightdm-gtk-greeter-settings ##
+      # - lightdm ##
+      # - lightdm-gtk-greeter ##
+      # - lightdm-gtk-greeter-settings ##
 
-      #- lxappearance
+      # - lxappearance
       - network-manager
-      #- network-manager-gnome #
-      #- pulseaudio #
-      #- pavucontrol #
-      #- policykit-1-gnome #
+      # - network-manager-gnome #
+      # - pulseaudio #
+      # - pavucontrol #
+      # - policykit-1-gnome #
       - rofi
       - scrot
-      #- suckless-tools
+      # - suckless-tools
       - thunar
-      #- thunar-archive-plugin #
-      #- thunar-media-tags-plugin #
-      #- thunar-volman #
+      # - thunar-archive-plugin #
+      # - thunar-media-tags-plugin #
+      # - thunar-volman #
       - unzip
       - x11-xserver-utils
       - xfce4-terminal
-      #- xbacklight #
-      #- xorg ##
-      #- xinit ##
+      # - xbacklight #
+      # - xorg ##
+      # - xinit ##
       - xss-lock
       - zip
 

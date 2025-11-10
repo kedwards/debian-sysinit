@@ -12,7 +12,7 @@
       ansible.builtin.get_url:
         url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
         dest: /tmp/docker.gpg
-        mode: '0644'
+        mode: "0644"
       register: docker_gpg_download
       when: not docker_keyring_exists.stat.exists
 

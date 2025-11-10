@@ -12,7 +12,7 @@
       ansible.builtin.get_url:
         url: https://downloads.1password.com/linux/keys/1password.asc
         dest: /tmp/1password.asc
-        mode: '0644'
+        mode: "0644"
       register: onepassword_key_download
 
     - name: 1Password - Convert GPG key to keyring format
@@ -31,31 +31,31 @@
           signed-by=/usr/share/keyrings/1password-archive-keyring.gpg]
           https://downloads.1password.com/linux/debian/{{ system_architecture.stdout }}
           stable main
-        mode: '0644'
+        mode: "0644"
 
     - name: 1Password - Ensure debsig policy directory exists
       ansible.builtin.file:
         path: /etc/debsig/policies/AC2D62742012EA22
         state: directory
-        mode: '0755'
+        mode: "0755"
 
     - name: 1Password - Download debsig-verify policy
       ansible.builtin.get_url:
         url: https://downloads.1password.com/linux/debian/debsig/1password.pol
         dest: /etc/debsig/policies/AC2D62742012EA22/1password.pol
-        mode: '0644'
+        mode: "0644"
 
     - name: 1Password - Ensure debsig keyring directory exists
       ansible.builtin.file:
         path: /usr/share/debsig/keyrings/AC2D62742012EA22
         state: directory
-        mode: '0755'
+        mode: "0755"
 
     - name: 1Password - Download debsig GPG key
       ansible.builtin.get_url:
         url: https://downloads.1password.com/linux/keys/1password.asc
         dest: /tmp/1password-debsig.asc
-        mode: '0644'
+        mode: "0644"
       register: onepassword_debsig_key_download
 
     - name: 1Password - Convert debsig GPG key to keyring format
@@ -97,7 +97,7 @@
           gpgcheck=1
           repo_gpgcheck=1
           gpgkey=https://downloads.1password.com/linux/keys/1password.asc
-        mode: '0644'
+        mode: "0644"
 
     - name: 1Password - Install 1Password
       ansible.builtin.dnf:
@@ -143,7 +143,7 @@
       ansible.builtin.get_url:
         url: https://downloads.1password.com/linux/keys/1password.asc
         dest: /tmp/1password-arch.asc
-        mode: '0644'
+        mode: "0644"
       register: onepassword_arch_key_download
 
     - name: 1Password - Import 1Password GPG key

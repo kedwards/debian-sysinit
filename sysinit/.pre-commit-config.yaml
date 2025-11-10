@@ -9,7 +9,7 @@ repos:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
-        args: ['--unsafe']  # Allow custom YAML tags used by Ansible
+        args: ["--unsafe"] # Allow custom YAML tags used by Ansible
       - id: check-added-large-files
       - id: check-merge-conflict
       - id: mixed-line-ending
@@ -19,7 +19,7 @@ repos:
     rev: v1.5.0
     hooks:
       - id: detect-secrets
-        args: ['--baseline', '.secrets.baseline']
+        args: ["--baseline", ".secrets.baseline"]
         exclude: |
           (?x)^(
             \.secrets\.baseline$|
@@ -45,4 +45,4 @@ repos:
     rev: v0.10.0.1
     hooks:
       - id: shellcheck
-        args: ['-e', 'SC1091']  # Exclude sourcing non-constant files warning
+        args: ["-e", "SC1091"] # Exclude sourcing non-constant files warning

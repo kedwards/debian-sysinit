@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 tasks:
   default:
@@ -6,42 +6,28 @@ tasks:
     cmds:
       - task --list-all
 
-  # Build tasks
-  build:
-    desc: Build the project
-    cmds:
-      - echo "✅ Project is ready - no build step required for Ansible project"
-
-  clean:
-    desc: Remove build artifacts and temporary files
-    cmds:
-      - rm -rf dist build .pytest_cache
-      - find . -name "*.pyc" -type f -delete
-      - find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
-      - find . -name "*.tmp" -type f -delete
-      - find . -name ".coverage" -type f -delete
-      - echo "✅ Cleanup completed"
-
   lint:
     desc: Run all linters
     cmds:
       - pre-commit run --all-files
 
-  lint-ansible:
+  lint:ansible:
     desc: Lint the Ansible code
     cmds:
       - bash -c 'source .venv/bin/activate && ansible-lint playbook.yml roles/'
+      - echo "✅ Ansible code linted"
 
-  lint-shell:
+  lint:shell:
     desc: Lint shell code
     cmds:
       - find . -name "*.sh" -type f -not -path "./.venv/*" | xargs shellcheck -e SC1091
+      - echo "✅ Shell scripts linted"
 
-  # Testing tasks
   syntax-check:
     desc: Run syntax check
     cmds:
       - bash -c 'source .venv/bin/activate && ansible-playbook --syntax-check playbook.yml'
+      - echo "✅ Syntax check passed"
 
   molecule-test:
     desc: Run Molecule tests for default scenario, no destroy
@@ -67,7 +53,8 @@ tasks:
   scan-secrets:
     desc: Scan for secrets
     cmds:
-      - detect-secrets scan --baseline .secrets.baseline --force-use-all-plugins
+      - bash -c 'source .venv/bin/activate && detect-secrets scan --baseline .secrets.baseline --force-use-all-plugins'
+      - echo "✅ Secrets scanned"
 
   update-secrets:
     desc: Update secrets baseline
@@ -80,20 +67,19 @@ tasks:
       - detect-secrets audit .secrets.baseline
 
   # Utility tasks
-  install-deps:
+  install:deps:
     desc: Install dependencies
     cmds:
-      - uv venv --clear
-      - uv pip install -r requirements.txt
-      - uv pip install -r development.requirements.txt
-      - bash -c 'source .venv/bin/activate && ansible-galaxy install -r requirements.yml'
-      - echo -e "Please also install shellcheck using your system package manager:\n
-          Arch Linux -> pacman -S shellcheck\n
-          Debian -> apt install shellcheck\n
-          Fedora -> dnf install ShellCheck\n
-          EPEL -> yum -y install epel-release; yum install ShellCheck"
+      - if ! command -v prettier >/dev/null 2>&1; then echo "⚠️ prettier not found"; exit 1; fi
+      - if ! command -v uv >/dev/null 2>&1; then echo "⚠️ uv not found"; exit 1; fi
+      - if ! command -v shellcheck >/dev/null 2>&1; then echo -e "⚠️ shellcheck not found"; exit 1; fi
+      - |+
+        uv venv --clear
+        uv pip install -r requirements.txt
+        uv pip install -r development.requirements.txt
+        bash -c 'source .venv/bin/activate && ansible-galaxy install -r requirements.yml'
 
-  install-hooks:
+  install:hooks:
     desc: Install pre-commit hooks
     cmds:
       - pre-commit install
@@ -101,11 +87,9 @@ tasks:
 
   # Additional development tasks
   check:
-    desc: Run comprehensive checks (lint + syntax + secrets)
+    deps: ['lint', 'syntax-check', 'scan-secrets']
+    desc: Run comprehensive checks
     cmds:
-      - task: lint
-      - task: syntax-check
-      - task: scan-secrets
       - echo "✅ All checks passed"
 
   format:
@@ -113,17 +97,18 @@ tasks:
     cmds:
       - |+
         if command -v prettier >/dev/null 2>&1; then
-          find . -name "*.yml" -o -name "*.yaml" | grep -v node_modules | xargs prettier --write
+          find . -name "*.yml" -o -name "*.yaml" | grep -v node_modules | grep -v .venv | xargs prettier --write
           echo "✅ YAML files formatted"
         else
-          echo "⚠️  prettier not found, install with: npm install -g prettier"
+          echo "⚠️ prettier not found, run: 'task install:deps'"
         fi
 
   upgrade-deps:
     desc: Upgrade Python dependencies
+    deps: ['install:deps']
     cmds:
       - uv pip install --upgrade pip
       - uv pip install --upgrade -r requirements.txt
       - uv pip install --upgrade -r development.requirements.txt
-      - ansible-galaxy install --force -r requirements.yml
+      - bash -c 'source .venv/bin/activate && ansible-galaxy install --force -r requirements.yml'
       - echo "✅ Dependencies upgraded"
