@@ -1,4 +1,12 @@
 ---
+- name: Mise - Install tool dependencies
+  ansible.builtin.include_tasks: ../install_tool_packages.yml
+  vars:
+    tool_name: "{{ mise_plugin_item }}"
+  loop: "{{ sysinit_mise_plugins }}"
+  loop_control:
+    loop_var: mise_plugin_item
+
 - name: Mise - Set mise directory path
   ansible.builtin.set_fact:
     mise_dir: "/home/{{ lookup('env', 'USER') }}/.local/bin"
@@ -108,7 +116,7 @@
           {%- endfor -%}
           {{ missing_tools }}
 
-    - name: Mise - Install all missing plugins globally at once
+    - name: Mise - Install tools
       ansible.builtin.shell: >
         {{ mise_bin }} use --global --yes {{ tools_to_install | join(' ') }}
       register: plugin_install_result

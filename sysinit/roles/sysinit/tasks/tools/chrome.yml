@@ -1,17 +1,74 @@
 ---
-- name: Add Apt signing key
-  ansible.builtin.apt_key:
-    url: "https://dl.google.com/linux/linux_signing_key.pub"
-    state: present
+- name: Chrome - Install on (Debian/Ubuntu)
+  when: ansible_facts['distribution'] == 'Debian' or ansible_facts['distribution'] == 'Ubuntu'
+  block:
+    - name: Chrome - Add Apt signing key
+      ansible.builtin.apt_key:
+        url: "https://dl.google.com/linux/linux_signing_key.pub"
+        state: present
 
-- name: Add repository into sources list
-  ansible.builtin.apt_repository:
-    repo: deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main
-    state: present
-    filename: google-chrome
+    - name: Chrome - Add repository into sources list
+      ansible.builtin.apt_repository:
+        repo: deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main
+        state: present
+        filename: google-chrome
 
-- name: Install google-chrome-stable
-  ansible.builtin.apt:
-    name: google-chrome-stable
-    state: present
-    update_cache: true
+    - name: Chrome - Install google-chrome-stable
+      ansible.builtin.apt:
+        name: google-chrome-stable
+        state: present
+        update_cache: true
+
+- name: Chrome - Install on (Fedora/CentOS)
+  when: ansible_facts['distribution'] == 'Fedora' or ansible_facts['distribution'] == 'CentOS'
+  block:
+    - name: Chrome - Import Google GPG key
+      ansible.builtin.rpm_key:
+        key: https://dl.google.com/linux/linux_signing_key.pub
+        state: present
+
+    - name: Chrome - Add Google Chrome repository
+      ansible.builtin.copy:
+        dest: /etc/yum.repos.d/google-chrome.repo
+        content: |
+          [google-chrome]
+          name=google-chrome
+          baseurl=https://dl.google.com/linux/chrome/rpm/stable/x86_64
+          enabled=1
+          gpgcheck=1
+          gpgkey=https://dl.google.com/linux/linux_signing_key.pub
+        mode: "0644"
+
+    - name: Chrome - Install google-chrome-stable
+      ansible.builtin.dnf:
+        name: google-chrome-stable
+        state: present
+
+- name: Chrome - Install on Arch Linux
+  when: ansible_facts['distribution'] == 'Archlinux'
+  block:
+    - name: Chrome - Ensure base-devel and git are installed
+      community.general.pacman:
+        name:
+          - base-devel
+          - git
+        state: present
+
+    - name: Chrome - Clone Google Chrome AUR repository
+      become: false
+      ansible.builtin.git:
+        repo: https://aur.archlinux.org/google-chrome.git
+        dest: "/home/{{ aur_user }}/google-chrome"
+        update: true
+        version: master
+      become_user: "{{ aur_user }}"
+
+    - name: Chrome - Build and install Google Chrome from AUR
+      become: false
+      ansible.builtin.shell: |
+        cd "/home/{{ aur_user }}/google-chrome" && makepkg -si --noconfirm
+      args:
+        chdir: "/home/{{ aur_user }}/google-chrome"
+        executable: /bin/bash
+      become_user: "{{ aur_user }}"
+      changed_when: true

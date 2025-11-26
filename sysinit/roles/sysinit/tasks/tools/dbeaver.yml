@@ -1,10 +1,57 @@
 ---
-- name: DBeaver - Exists
-  ansible.builtin.stat:
-    path: /usr/bin/dbeaver
-  register: dbeaver_exists_result
+- name: DBeaver - Install on (Debian/Ubuntu)
+  when: ansible_facts['distribution'] == 'Debian' or ansible_facts['distribution'] == 'Ubuntu'
+  block:
+    - name: DBeaver - Check if exists
+      ansible.builtin.stat:
+        path: /usr/bin/dbeaver
+      register: dbeaver_exists_result
 
-- name: DBeaver - Install/Upgrade
-  ansible.builtin.apt:
-    deb: https://dbeaver.io/files/dbeaver-ce_latest_amd64.deb
-  when: not dbeaver_exists_result.stat.exists or upgrade
+    - name: DBeaver - Install/Upgrade
+      ansible.builtin.apt:
+        deb: https://dbeaver.io/files/dbeaver-ce_latest_amd64.deb
+      when: not dbeaver_exists_result.stat.exists or upgrade | default(false)
+
+- name: DBeaver - Install on (Fedora/CentOS)
+  when: ansible_facts['distribution'] == 'Fedora' or ansible_facts['distribution'] == 'CentOS'
+  block:
+    - name: DBeaver - Check if exists
+      ansible.builtin.stat:
+        path: /usr/bin/dbeaver
+      register: dbeaver_exists_result
+
+    - name: DBeaver - Install/Upgrade
+      ansible.builtin.dnf:
+        name: https://dbeaver.io/files/dbeaver-ce-latest-stable.x86_64.rpm
+        disable_gpg_check: true
+        state: present
+      when: not dbeaver_exists_result.stat.exists or upgrade | default(false)
+
+- name: DBeaver - Install on Arch Linux
+  when: ansible_facts['distribution'] == 'Archlinux'
+  block:
+    - name: DBeaver - Ensure base-devel and git are installed
+      community.general.pacman:
+        name:
+          - base-devel
+          - git
+        state: present
+
+    - name: DBeaver - Clone DBeaver AUR repository
+      become: false
+      ansible.builtin.git:
+        repo: https://aur.archlinux.org/dbeaver.git
+        dest: "/home/{{ aur_user }}/dbeaver"
+        update: true
+        version: master
+      become_user: "{{ aur_user }}"
+
+    - name: DBeaver - Build and install DBeaver from AUR
+      become: false
+      ansible.builtin.shell: |
+        cd "/home/{{ aur_user }}/dbeaver" && makepkg -si --noconfirm
+      args:
+        chdir: "/home/{{ aur_user }}/dbeaver"
+        executable: /bin/bash
+      become_user: "{{ aur_user }}"
+      changed_when: true

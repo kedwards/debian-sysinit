@@ -2,3 +2,15 @@
 sysinit_tools:
   - aws-ssm
   - docker
+
+sysinit_tool_packages:
+  mkcert:
+    - libnss3-tools
+  chrome:
+    - ca-certificates
+    - curl
+    - gnupg
+  docker:
+    - ca-certificates
+    - curl
+    - gnupg

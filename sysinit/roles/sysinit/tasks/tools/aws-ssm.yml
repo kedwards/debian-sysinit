@@ -1,16 +1,66 @@
 ---
-- name: AWS - SSM - Exists
+- name: AWS - SSM - Check if exists
   ansible.builtin.stat:
     path: /usr/local/bin/sessionmanagerplugin
   register: awsssm_exists_result
 
-- name: AWS - SSM - Install/Upgrade
+- name: AWS - SSM - Install/Upgrade on (Debian/Ubuntu)
   ansible.builtin.apt:
     deb: https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb
   when: (ansible_facts['distribution'] == 'Debian' or ansible_facts['distribution'] == 'Ubuntu') and (not awsssm_exists_result.stat.exists or upgrade)
 
-- name: AWS - SSM - Install/Upgrade
+- name: AWS - SSM - Install/Upgrade on (Fedora/CentOS)
   ansible.builtin.dnf:
     name: https://s3.amazonaws.com/session-manager-downloads/plugin/latest/linux_64bit/session-manager-plugin.rpm
     disable_gpg_check: true
-  when: (ansible_facts['distribution'] == 'Fedora' or ansible_facts['distribution'] == 'CentOs') and (not awsssm_exists_result.stat.exists or upgrade)
+  when: (ansible_facts['distribution'] == 'Fedora' or ansible_facts['distribution'] == 'CentOS') and (not awsssm_exists_result.stat.exists or upgrade | default(false))
+
+- name: AWS - SSM - Install on Arch Linux
+  when: ansible_facts['distribution'] == 'Archlinux' and (not awsssm_exists_result.stat.exists or upgrade | default(false))
+  block:
+    - name: AWS - SSM - Create temporary directory
+      ansible.builtin.tempfile:
+        state: directory
+        suffix: awsssm
+      register: awsssm_temp_dir
+
+    - name: AWS - SSM - Download tarball
+      ansible.builtin.get_url:
+        url: https://s3.amazonaws.com/session-manager-downloads/plugin/latest/linux_64bit/session-manager-plugin.rpm
+        dest: "{{ awsssm_temp_dir.path }}/session-manager-plugin.rpm"
+        mode: "0644"
+
+    - name: AWS - SSM - Extract RPM contents
+      ansible.builtin.shell: |
+        cd "{{ awsssm_temp_dir.path }}"
+        rpm2cpio session-manager-plugin.rpm | cpio -idmv
+      args:
+        executable: /bin/bash
+        creates: "{{ awsssm_temp_dir.path }}/usr/local/sessionmanagerplugin"
+
+    - name: AWS - SSM - Copy binary to /usr/local
+      ansible.builtin.copy:
+        src: "{{ awsssm_temp_dir.path }}/usr/local/sessionmanagerplugin/"
+        dest: /usr/local/sessionmanagerplugin/
+        remote_src: true
+        mode: preserve
+      become: true
+
+    - name: AWS - SSM - Create symlink
+      ansible.builtin.file:
+        src: /usr/local/sessionmanagerplugin/bin/session-manager-plugin
+        dest: /usr/local/bin/session-manager-plugin
+        state: link
+      become: true
+
+    - name: AWS - SSM - Create sessionmanagerplugin symlink
+      ansible.builtin.file:
+        src: /usr/local/sessionmanagerplugin/bin/session-manager-plugin
+        dest: /usr/local/bin/sessionmanagerplugin
+        state: link
+      become: true
+
+    - name: AWS - SSM - Clean up temporary directory
+      ansible.builtin.file:
+        path: "{{ awsssm_temp_dir.path }}"
+        state: absent

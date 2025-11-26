@@ -26,6 +26,7 @@ sysinit_mise_plugins:
   - go
   - granted
   - jq
+  - mkcert
   - neovim
   - node
   - pre-commit

@@ -1,78 +1,84 @@
 ---
-# APT-based systems (Ubuntu/Debian)
-- name: Docker - Install (APT)
+- name: Docker - Install on (Debian/Ubuntu)
   when: ansible_facts['distribution'] == 'Debian' or ansible_facts['distribution'] == 'Ubuntu'
   block:
-    - name: Docker - Check if docker GPG keyring exists
-      ansible.builtin.stat:
-        path: /etc/apt/keyrings/docker.gpg
-      register: docker_keyring_exists
-
-    - name: Docker - Add docker official GPG key
-      ansible.builtin.get_url:
-        url: "https://download.docker.com/linux/{{ ansible_facts['distribution'] | lower }}/gpg"
-        dest: /tmp/docker.gpg
-        mode: "0644"
-      register: docker_gpg_download
-      when: not docker_keyring_exists.stat.exists
-
-    - name: Docker - Import docker GPG key
-      ansible.builtin.command:
-        cmd: gpg --dearmor -o /etc/apt/keyrings/docker.gpg /tmp/docker.gpg
-        creates: /etc/apt/keyrings/docker.gpg
-      when: not docker_keyring_exists.stat.exists and docker_gpg_download is succeeded
-
-    - name: Docker - Remove temporary GPG key file
-      ansible.builtin.file:
-        path: /tmp/docker.gpg
-        state: absent
-      when: not docker_keyring_exists.stat.exists and docker_gpg_download is defined
-
-    - name: Docker - Fix keyring permissions
-      ansible.builtin.file:
-        path: /etc/apt/keyrings/docker.gpg
-        mode: a+r
-
-    - name: Docker - Add docker repository
-      ansible.builtin.apt_repository:
-        repo: >
-          deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg]
-          https://download.docker.com/linux/{{ ansible_facts['distribution'] | lower }}/
-          {{ ansible_facts['distribution_release'] }} stable
-        state: present
-
-    - name: Docker - Install
+    - name: Ensure required packages exist
       ansible.builtin.apt:
         pkg:
-          - bash-completion
-          - containerd.io
-          - docker-buildx-plugin
+          - ca-certificates
+          - curl
+          - gnupg
+        state: present
+        update_cache: true
+
+    - name: Ensure keyring directory exists
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: "0755"
+
+    - name: Download Docker GPG key (no dearmor)
+      ansible.builtin.get_url:
+        url: "https://download.docker.com/linux/{{ ansible_facts['distribution'] | lower }}/gpg"
+        dest: /etc/apt/keyrings/docker.asc
+        mode: "0644"
+
+    - name: Detect distro
+      ansible.builtin.command: bash -c '. /etc/os-release && echo ${UBUNTU_CODENAME:-$VERSION_CODENAME}'
+      register: distro_codename
+      changed_when: false
+
+    - name: Add docker.sources file (Debian/Ubuntu)
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/docker.sources
+        mode: "0644"
+        content: |
+          Types: deb
+          URIs: https://download.docker.com/linux/{{ ansible_facts['distribution'] | lower }}
+          Suites: {{ distro_codename.stdout }}
+          Components: stable
+          Signed-By: /etc/apt/keyrings/docker.asc
+
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+
+    - name: Install Docker packages
+      ansible.builtin.apt:
+        pkg:
           - docker-ce
           - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
           - docker-compose-plugin
+          - bash-completion
 
-# DNF-based systems (Fedora)
-- name: Docker - Install (Fedora)
-  when: ansible_facts['distribution'] == 'Fedora'
+- name: Docker - Install on (Fedora/CentOS)
+  when: ansible_facts['distribution'] == 'Fedora' or ansible_facts['distribution'] == 'CentOS'
   block:
-    - name: Docker - Add Docker repository
+    - name: Ensure dnf plugins installed
+      ansible.builtin.dnf:
+        name: dnf-plugins-core
+        state: present
+
+    - name: Add Docker CE repo
       ansible.builtin.yum_repository:
         name: docker-ce
-        description: Docker CE Stable - $basearch
-        baseurl: https://download.docker.com/linux/fedora/$releasever/$basearch/stable
+        description: Docker CE Repository
+        baseurl: "https://download.docker.com/linux/fedora/$releasever/$basearch/stable"
         enabled: true
         gpgcheck: true
         gpgkey: https://download.docker.com/linux/fedora/gpg
 
-    - name: Docker - Install
+    - name: Install Docker packages
       ansible.builtin.dnf:
         name:
-          - bash-completion
-          - containerd.io
-          - docker-buildx-plugin
           - docker-ce
           - docker-ce-cli
+          - containerd
           - docker-compose-plugin
+          - docker-buildx-plugin
+          - bash-completion
         state: present
 
 - name: Docker - Add docker group
@@ -86,23 +92,21 @@
     groups: docker
     append: true
 
-- name: Docker - Install docker completion
+- name: Docker - Install docker bash completion
   block:
-    - name: Docker - Get completion script content for checksum calculation
+    - name: Fetch completion content
       ansible.builtin.uri:
         url: https://raw.githubusercontent.com/docker/docker-ce/master/components/cli/contrib/completion/bash/docker
-        method: GET
         return_content: true
       register: docker_completion_content
 
-    - name: Docker - Calculate checksum of completion script
+    - name: Compute SHA256
       ansible.builtin.set_fact:
         docker_completion_sha256: "{{ docker_completion_content.content | hash('sha256') }}"
-      when: docker_completion_content is succeeded
 
-    - name: Docker - Download completion script
+    - name: Install docker.sh completion file
       ansible.builtin.get_url:
         url: https://raw.githubusercontent.com/docker/docker-ce/master/components/cli/contrib/completion/bash/docker
         dest: /etc/bash_completion.d/docker.sh
-        mode: +x
-        checksum: "{{ 'sha256:' + docker_completion_sha256 if docker_completion_sha256 is defined else omit }}"
+        mode: "0755"
+        checksum: "sha256:{{ docker_completion_sha256 }}"

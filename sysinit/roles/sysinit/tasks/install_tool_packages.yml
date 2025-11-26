@@ -1,0 +1,13 @@
+---
+# This task installs OS-specific packages required by a tool
+# Usage: include this with vars: { tool_name: "mkcert" }
+
+- name: "{{ tool_name }} - Install OS-specific package dependencies"
+  ansible.builtin.package:
+    name: "{{ sysinit_tool_packages[tool_name] }}"
+    state: present
+  become: true
+  when:
+    - sysinit_tool_packages is defined
+    - tool_name in sysinit_tool_packages
+    - sysinit_tool_packages[tool_name] | length > 0
