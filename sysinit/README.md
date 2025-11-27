@@ -72,9 +72,9 @@ The installer bootstraps tooling and a virtual environment for you; if you prefe
   pip install -r requirements.txt
   ansible-galaxy install -r requirements.yml
   ```
-- Pass Git identity to the playbook (required):
+- Run the playbook:
   ```bash
-  ansible-playbook playbook.yml -K -e "git_user_name=Your Name" -e "git_user_email=you@example.com"
+  ansible-playbook -i inventory/hosts.yml playbook.yml -K
   ```
 
 ## Development
