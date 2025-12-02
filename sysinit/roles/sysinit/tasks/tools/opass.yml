@@ -130,7 +130,7 @@
         state: present
 
 - name: 1Password - Install/Upgrade Arch Linux
-  when: ansible_distribution == 'ArchLinux'
+  when: ansible_distribution == 'Archlinux'
   block:
     - name: 1Password - Ensure base-devel and git are installed
       community.general.pacman:
@@ -138,42 +138,51 @@
           - base-devel
           - git
         state: present
+      become: true
 
-    - name: 1Password - Download GPG key for import
-      ansible.builtin.get_url:
-        url: https://downloads.1password.com/linux/keys/1password.asc
-        dest: /tmp/1password-arch.asc
-        mode: "0644"
-      register: onepassword_arch_key_download
-
-    - name: 1Password - Import 1Password GPG key
+    - name: 1Password - Check if 1Password is already installed
+      ansible.builtin.command: pacman -Q 1password
+      register: onepassword_installed
+      changed_when: false
+      failed_when: false
       become: false
+
+    - name: 1Password - Check if signing key exists
+      ansible.builtin.command: gpg --list-keys 3FEF9748469ADBE15DA7CA80AC2D62742012EA22
+      register: onepassword_key_exists
+      changed_when: false
+      failed_when: false
+      become: false
+      when: onepassword_installed.rc != 0
+
+    - name: 1Password - Import 1Password signing key
       ansible.builtin.shell: |
         set -o pipefail
-        gpg --import /tmp/1password-arch.asc
+        curl -sS https://downloads.1password.com/linux/keys/1password.asc | gpg --import
       args:
         executable: /bin/bash
-        creates: "/home/{{ aur_user }}/.gnupg/pubring.kbx"
-      environment:
-        GNUPGHOME: "/home/{{ aur_user }}/.gnupg"
-      become_user: "{{ aur_user }}"
-      changed_when: false
-
-    - name: 1Password - Clone 1Password AUR repository
       become: false
+      when:
+        - onepassword_installed.rc != 0
+        - onepassword_key_exists.rc != 0
+      register: key_import
+      changed_when: key_import.rc == 0
+
+    - name: 1Password - Clone 1Password AUR package
       ansible.builtin.git:
-        repo: https://aur.archlinux.org/1password.git
-        dest: "/home/{{ aur_user }}/1password"
+        repo: "https://aur.archlinux.org/1password.git"
+        dest: "/tmp/1password-aur"
+        version: HEAD
         update: true
-        version: master
-      become_user: "{{ aur_user }}"
-
-    - name: 1Password - Build and install 1Password from AUR
       become: false
-      ansible.builtin.shell: |
-        cd "/home/{{ aur_user }}/1password" && makepkg -si --noconfirm
+      when: onepassword_installed.rc != 0
+
+    - name: 1Password - Build and install 1Password
+      ansible.builtin.shell: makepkg -si --noconfirm --needed
       args:
-        chdir: "/home/{{ aur_user }}/1password"
+        chdir: "/tmp/1password-aur"
         executable: /bin/bash
-      become_user: "{{ aur_user }}"
-      changed_when: true
+      become: false
+      when: onepassword_installed.rc != 0
+      register: onepassword_build
+      changed_when: "'reinstalling' not in onepassword_build.stdout and 'up-to-date' not in onepassword_build.stdout"

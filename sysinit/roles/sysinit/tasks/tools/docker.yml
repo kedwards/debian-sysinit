@@ -81,16 +81,47 @@
           - bash-completion
         state: present
 
+- name: Docker - Install on (Arch Linux)
+  when: ansible_facts['distribution'] == 'Archlinux'
+  block:
+    - name: Install Docker packages
+      community.general.pacman:
+        name:
+          - docker
+          - docker-compose
+          - docker-buildx
+          - bash-completion
+        state: present
+      become: true
+
 - name: Docker - Add docker group
   ansible.builtin.group:
     name: docker
     state: present
+  become: true
 
 - name: Docker - Configure user
   ansible.builtin.user:
     name: "{{ sysinit_user }}"
     groups: docker
     append: true
+  become: true
+  register: docker_user_added
+
+- name: Docker - Enable and start Docker service
+  ansible.builtin.systemd:
+    name: docker
+    enabled: true
+    state: started
+  become: true
+
+- name: Docker - Activate group membership without logout
+  ansible.builtin.command: newgrp docker
+  become: false
+  become_user: "{{ sysinit_user }}"
+  when: docker_user_added.changed
+  changed_when: false
+  failed_when: false
 
 - name: Docker - Install docker bash completion
   block:

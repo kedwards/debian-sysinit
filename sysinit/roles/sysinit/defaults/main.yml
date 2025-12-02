@@ -5,6 +5,7 @@ sysinit_force_update: false
 sysinit_packages:
   - gcc
   - make
+  - rsync
   - unzip
   - xclip
   - xsel

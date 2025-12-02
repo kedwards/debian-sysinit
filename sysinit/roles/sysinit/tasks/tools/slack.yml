@@ -1,0 +1,121 @@
+---
+- name: Slack - Install on (Debian/Ubuntu)
+  when: ansible_facts['distribution'] == 'Debian' or ansible_facts['distribution'] == 'Ubuntu'
+  block:
+    - name: Slack - Set version
+      ansible.builtin.set_fact:
+        slack_version: "{{ slack_version | default('4.46.101') }}"
+
+    - name: Slack - Check if Slack exists
+      ansible.builtin.stat:
+        path: /usr/bin/slack
+      register: slack_exists_result
+
+    - name: Slack - Download and install Slack desktop
+      ansible.builtin.apt:
+        deb: "https://downloads.slack-edge.com/desktop-releases/linux/x64/{{ slack_version }}/slack-desktop-{{ slack_version }}-amd64.deb"
+      become: true
+      when: not slack_exists_result.stat.exists or upgrade | default(false)
+
+    - name: Slack - Set as default handler for slack:// URLs
+      ansible.builtin.command: xdg-mime default slack.desktop x-scheme-handler/slack
+      become: false
+      become_user: "{{ sysinit_user }}"
+      when: not slack_exists_result.stat.exists or upgrade | default(false)
+      changed_when: true
+
+- name: Slack - Install on (Fedora/CentOS)
+  when: ansible_facts['distribution'] == 'Fedora' or ansible_facts['distribution'] == 'CentOS'
+  block:
+    - name: Slack - Set version
+      ansible.builtin.set_fact:
+        slack_version: "{{ slack_version | default('4.46.101') }}"
+
+    - name: Slack - Check if Slack exists
+      ansible.builtin.stat:
+        path: /usr/bin/slack
+      register: slack_exists_result
+
+    - name: Slack - Download and install Slack desktop
+      ansible.builtin.dnf:
+        name: "https://downloads.slack-edge.com/desktop-releases/linux/x64/{{ slack_version }}/slack-{{ slack_version }}-0.1.el8.x86_64.rpm"
+        disable_gpg_check: true
+        state: present
+      become: true
+      when: not slack_exists_result.stat.exists or upgrade | default(false)
+
+    - name: Slack - Set as default handler for slack:// URLs
+      ansible.builtin.command: xdg-mime default slack.desktop x-scheme-handler/slack
+      become: false
+      become_user: "{{ sysinit_user }}"
+      when: not slack_exists_result.stat.exists or upgrade | default(false)
+      changed_when: true
+
+- name: Slack - Install on (Arch Linux)
+  when: ansible_facts['distribution'] == 'Archlinux'
+  block:
+    - name: Slack - Set version
+      ansible.builtin.set_fact:
+        slack_version: "{{ slack_version | default('4.46.101') }}"
+
+    - name: Slack - Check if Slack is already installed
+      ansible.builtin.stat:
+        path: /usr/bin/slack
+      register: slack_installed
+
+    - name: Slack - Ensure rpmextract is installed
+      community.general.pacman:
+        name:
+          - rpmextract
+        state: present
+      become: true
+      when: not slack_installed.stat.exists
+
+    - name: Slack - Create temporary directory for download
+      ansible.builtin.file:
+        path: /tmp/slack-install
+        state: directory
+        mode: "0755"
+      become: false
+      when: not slack_installed.stat.exists
+
+    - name: Slack - Download Slack .rpm package
+      ansible.builtin.get_url:
+        url: "https://downloads.slack-edge.com/desktop-releases/linux/x64/{{ slack_version }}/slack-{{ slack_version }}-0.1.el8.x86_64.rpm"
+        dest: "/tmp/slack-install/slack-{{ slack_version }}-0.1.el8.x86_64.rpm"
+        mode: "0644"
+      become: false
+      when: not slack_installed.stat.exists
+
+    - name: Slack - Extract RPM package
+      ansible.builtin.shell: |
+        cd /tmp/slack-install
+        rpmextract.sh slack-{{ slack_version }}-0.1.el8.x86_64.rpm
+      args:
+        executable: /bin/bash
+      become: false
+      when: not slack_installed.stat.exists
+      changed_when: true
+
+    - name: Slack - Copy extracted files to system
+      ansible.builtin.shell: |
+        cp -r /tmp/slack-install/usr/* /usr/
+      args:
+        executable: /bin/bash
+      become: true
+      when: not slack_installed.stat.exists
+      changed_when: true
+
+    - name: Slack - Set as default handler for slack:// URLs
+      ansible.builtin.command: xdg-mime default slack.desktop x-scheme-handler/slack
+      become: false
+      become_user: "{{ sysinit_user }}"
+      when: not slack_installed.stat.exists
+      changed_when: true
+
+    - name: Slack - Clean up temporary directory
+      ansible.builtin.file:
+        path: /tmp/slack-install
+        state: absent
+      become: false
+      when: not slack_installed.stat.exists

@@ -1,0 +1,83 @@
+---
+- name: Warp - Install on (Debian/Ubuntu)
+  when: ansible_facts['distribution'] == 'Debian' or ansible_facts['distribution'] == 'Ubuntu'
+  block:
+    - name: Warp - Set version
+      ansible.builtin.set_fact:
+        warp_version: "{{ warp_version | default('v0.2025.11.19.08.12.stable_06') }}"
+        warp_version_debian: "{{ warp_version_debian | default('0.2025.11.19.08.12.stable.06') }}"
+
+    - name: Warp - Check if Warp exists
+      ansible.builtin.stat:
+        path: /usr/bin/warp-terminal
+      register: warp_exists_result
+
+    - name: Warp - Download and install Warp terminal
+      ansible.builtin.apt:
+        deb: "https://releases.warp.dev/stable/{{ warp_version }}/warp-terminal_{{ warp_version_debian }}_amd64.deb"
+      become: true
+      when: not warp_exists_result.stat.exists or upgrade | default(false)
+
+- name: Warp - Install on (Fedora/CentOS)
+  when: ansible_facts['distribution'] == 'Fedora' or ansible_facts['distribution'] == 'CentOS'
+  block:
+    - name: Warp - Set version
+      ansible.builtin.set_fact:
+        warp_version: "{{ warp_version | default('v0.2025.11.19.08.12.stable_06') }}"
+
+    - name: Warp - Check if Warp exists
+      ansible.builtin.stat:
+        path: /usr/bin/warp-terminal
+      register: warp_exists_result
+
+    - name: Warp - Download and install Warp terminal
+      ansible.builtin.dnf:
+        name: "https://releases.warp.dev/stable/{{ warp_version }}/warp-terminal-{{ warp_version }}-1.x86_64.rpm"
+        disable_gpg_check: true
+        state: present
+      become: true
+      when: not warp_exists_result.stat.exists or upgrade | default(false)
+
+- name: Warp - Install on (Arch Linux)
+  when: ansible_facts['distribution'] == 'Archlinux'
+  block:
+    - name: Warp - Set version
+      ansible.builtin.set_fact:
+        warp_version: "{{ warp_version | default('v0.2025.11.19.08.12.stable_06') }}"
+
+    - name: Warp - Check if Warp is already installed
+      ansible.builtin.command: pacman -Q warp-terminal
+      register: warp_installed
+      changed_when: false
+      failed_when: false
+      become: false
+
+    - name: Warp - Create temporary directory for download
+      ansible.builtin.file:
+        path: /tmp/warp-install
+        state: directory
+        mode: "0755"
+      become: false
+      when: warp_installed.rc != 0
+
+    - name: Warp - Download Warp package
+      ansible.builtin.get_url:
+        url: "https://releases.warp.dev/stable/{{ warp_version }}/warp-terminal-{{ warp_version }}-1-x86_64.pkg.tar.zst"
+        dest: "/tmp/warp-install/warp-terminal-{{ warp_version }}-1-x86_64.pkg.tar.zst"
+        mode: "0644"
+      become: false
+      when: warp_installed.rc != 0
+
+    - name: Warp - Install Warp package
+      community.general.pacman:
+        name: "/tmp/warp-install/warp-terminal-{{ warp_version }}-1-x86_64.pkg.tar.zst"
+        state: present
+      become: true
+      when: warp_installed.rc != 0
+
+    - name: Warp - Clean up temporary directory
+      ansible.builtin.file:
+        path: /tmp/warp-install
+        state: absent
+      become: false
+      when: warp_installed.rc != 0

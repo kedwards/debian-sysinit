@@ -24,16 +24,17 @@
         suffix: awsssm
       register: awsssm_temp_dir
 
-    - name: AWS - SSM - Download tarball
+    - name: AWS - SSM - Download deb package
       ansible.builtin.get_url:
-        url: https://s3.amazonaws.com/session-manager-downloads/plugin/latest/linux_64bit/session-manager-plugin.rpm
-        dest: "{{ awsssm_temp_dir.path }}/session-manager-plugin.rpm"
+        url: https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb
+        dest: "{{ awsssm_temp_dir.path }}/session-manager-plugin.deb"
         mode: "0644"
 
-    - name: AWS - SSM - Extract RPM contents
+    - name: AWS - SSM - Extract deb contents
       ansible.builtin.shell: |
         cd "{{ awsssm_temp_dir.path }}"
-        rpm2cpio session-manager-plugin.rpm | cpio -idmv
+        ar x session-manager-plugin.deb
+        tar xf data.tar.gz
       args:
         executable: /bin/bash
         creates: "{{ awsssm_temp_dir.path }}/usr/local/sessionmanagerplugin"
