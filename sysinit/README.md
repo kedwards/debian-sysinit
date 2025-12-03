@@ -55,6 +55,12 @@ Before running the installer, ensure you have:
 ```bash
 wget -O - https://raw.githubusercontent.com/kedwards/sysinit/refs/heads/main/install.sh | bash
 ```
+or
+
+```bash
+CURL -sSL https://raw.githubusercontent.com/kedwards/sysinit/refs/heads/main/install.sh | bash
+```
+
 
 **Option 2: Clone locally, review, then run**
 ```bash
