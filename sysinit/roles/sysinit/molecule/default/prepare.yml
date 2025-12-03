@@ -103,30 +103,3 @@
         owner: "{{ test_user }}"
         group: "{{ test_user }}"
         recurse: true
-
-    - name: Allow passwordless sudo for wheel group (Arch)
-      ansible.builtin.lineinfile:
-        path: /etc/sudoers
-        state: present
-        regexp: '^%wheel ALL=\(ALL\) NOPASSWD: ALL'
-        line: '%wheel ALL=(ALL) NOPASSWD: ALL'
-        validate: 'visudo -cf %s'
-      when: initial_distribution == 'arch'
-
-    - name: Allow test user to run makepkg as root (Arch)
-      ansible.builtin.lineinfile:
-        path: /etc/sudoers
-        state: present
-        regexp: '^{{ test_user }} ALL=\(ALL\) NOPASSWD: /usr/bin/makepkg'
-        line: '{{ test_user }} ALL=(ALL) NOPASSWD: /usr/bin/makepkg'
-        validate: 'visudo -cf %s'
-      when: initial_distribution == 'arch'
-
-    - name: Allow passwordless sudo for sudo group (Debian/Ubuntu)
-      ansible.builtin.lineinfile:
-        path: /etc/sudoers
-        state: present
-        regexp: '^%sudo ALL=\(ALL:ALL\) NOPASSWD: ALL'
-        line: '%sudo ALL=(ALL:ALL) NOPASSWD: ALL'
-        validate: 'visudo -cf %s'
-      when: initial_distribution in ['debian', 'ubuntu']

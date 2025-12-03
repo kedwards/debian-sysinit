@@ -58,7 +58,7 @@ wget -O - https://raw.githubusercontent.com/kedwards/sysinit/refs/heads/main/ins
 or
 
 ```bash
-CURL -sSL https://raw.githubusercontent.com/kedwards/sysinit/refs/heads/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/kedwards/sysinit/refs/heads/main/install.sh | bash
 ```
 
 

@@ -119,6 +119,14 @@
     daemon_reload: true
   become: true
 
+- name: Docker - Activate group membership without logout
+  ansible.builtin.command: newgrp docker
+  become: false
+  become_user: "{{ sysinit_user }}"
+  when: docker_user_added.changed
+  changed_when: false
+  failed_when: false
+
 - name: Docker - Install docker bash completion
   block:
     - name: Fetch completion content
