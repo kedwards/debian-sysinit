@@ -1,6 +1,5 @@
 # Sysinit Role
 
-[![Ansible Galaxy](https://img.shields.io/ansible/role/sysinit.svg)](https://galaxy.ansible.com/kedwards/sysinit)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/kedwards/sysinit/blob/main/LICENSE)
 
 An Ansible role for system initialization and development environment configuration.

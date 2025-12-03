@@ -15,5 +15,3 @@ sysinit_tool_packages:
   docker:
     - docker
     - docker-compose
-  aws-ssm:
-    - rpmextract  # Provides rpm2cpio for extracting RPM files
