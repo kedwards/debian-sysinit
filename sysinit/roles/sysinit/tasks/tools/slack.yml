@@ -106,6 +106,14 @@
       when: not slack_installed.stat.exists
       changed_when: true
 
+    - name: Slack - Ensure xdg-utils is installed
+      community.general.pacman:
+        name:
+          - xdg-utils
+        state: present
+      become: true
+      when: not slack_installed.stat.exists
+
     - name: Slack - Set as default handler for slack:// URLs
       ansible.builtin.command: xdg-mime default slack.desktop x-scheme-handler/slack
       become: false

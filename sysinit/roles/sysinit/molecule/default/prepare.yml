@@ -37,7 +37,7 @@
     - name: Install Python and essential packages (PACMAN)
       ansible.builtin.raw: |
         pacman -Syu
-        pacman -S --noconfirm python python-pip openssh python-setuptools git curl wget gnupg sudo bison
+        pacman -S --noconfirm python python-pip openssh python-setuptools git curl wget gnupg sudo bison base-devel fakeroot
       register: install_python
       changed_when: install_python.rc == 0
       when: initial_distribution == 'arch'
@@ -64,9 +64,14 @@
     - name: Gather facts after Python installation
       ansible.builtin.setup:
 
+    - name: Set common non-root user fact
+      ansible.builtin.set_fact:
+        test_user: "{{ lookup('env', 'USER') }}"
+        aur_user: "{{ lookup('env', 'USER') }}"
+
     - name: Create test user
       ansible.builtin.user:
-        name: "{{ lookup('env', 'USER') }}"
+        name: "{{ test_user }}"
         state: present
         create_home: true
         shell: /bin/bash
@@ -75,26 +80,53 @@
 
     - name: Create .ssh directory for test user
       ansible.builtin.file:
-        path: "/home/{{ lookup('env', 'USER') }}/.ssh"
+        path: "/home/{{ test_user }}/.ssh"
         state: directory
         mode: "0755"
-        owner: "{{ lookup('env', 'USER') }}"
-        group: "{{ lookup('env', 'USER') }}"
+        owner: "{{ test_user }}"
+        group: "{{ test_user }}"
         recurse: true
 
     - name: Create .local/bin directory for test user
       ansible.builtin.file:
-        path: "/home/{{ lookup('env', 'USER') }}/.local/bin"
+        path: "/home/{{ test_user }}/.local/bin"
         state: directory
         mode: "0755"
-        owner: "{{ lookup('env', 'USER') }}"
-        group: "{{ lookup('env', 'USER') }}"
+        owner: "{{ test_user }}"
+        group: "{{ test_user }}"
         recurse: true
 
     - name: Set ownership of user home directory
       ansible.builtin.file:
-        path: "/home/{{ lookup('env', 'USER') }}"
+        path: "/home/{{ test_user }}"
         state: directory
-        owner: "{{ lookup('env', 'USER') }}"
-        group: "{{ lookup('env', 'USER') }}"
+        owner: "{{ test_user }}"
+        group: "{{ test_user }}"
         recurse: true
+
+    - name: Allow passwordless sudo for wheel group (Arch)
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers
+        state: present
+        regexp: '^%wheel ALL=\(ALL\) NOPASSWD: ALL'
+        line: '%wheel ALL=(ALL) NOPASSWD: ALL'
+        validate: 'visudo -cf %s'
+      when: initial_distribution == 'arch'
+
+    - name: Allow test user to run makepkg as root (Arch)
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers
+        state: present
+        regexp: '^{{ test_user }} ALL=\(ALL\) NOPASSWD: /usr/bin/makepkg'
+        line: '{{ test_user }} ALL=(ALL) NOPASSWD: /usr/bin/makepkg'
+        validate: 'visudo -cf %s'
+      when: initial_distribution == 'arch'
+
+    - name: Allow passwordless sudo for sudo group (Debian/Ubuntu)
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers
+        state: present
+        regexp: '^%sudo ALL=\(ALL:ALL\) NOPASSWD: ALL'
+        line: '%sudo ALL=(ALL:ALL) NOPASSWD: ALL'
+        validate: 'visudo -cf %s'
+      when: initial_distribution in ['debian', 'ubuntu']

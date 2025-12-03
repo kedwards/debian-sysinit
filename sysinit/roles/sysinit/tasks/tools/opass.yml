@@ -1,6 +1,6 @@
 ---
 - name: 1Password - Install/Upgrade (APT)
-  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+  when: ansible_facts['distribution'] == 'Debian' or ansible_facts['distribution'] == 'Ubuntu'
   block:
     - name: 1Password - Get system architecture
       ansible.builtin.command: dpkg --print-architecture
@@ -79,7 +79,7 @@
         state: present
 
 - name: 1Password - Install/Upgrade (DNF)
-  when: ansible_distribution == 'Fedora' or ansible_distribution == 'RedHat'
+  when: ansible_facts['distribution'] == 'Fedora' or ansible_facts['distribution'] == 'RedHat'
   block:
     - name: 1Password - Import 1Password GPG key
       ansible.builtin.rpm_key:
@@ -130,7 +130,7 @@
         state: present
 
 - name: 1Password - Install/Upgrade Arch Linux
-  when: ansible_distribution == 'Archlinux'
+  when: ansible_facts['distribution'] == 'Archlinux'
   block:
     - name: 1Password - Ensure base-devel and git are installed
       community.general.pacman:
@@ -140,49 +140,38 @@
         state: present
       become: true
 
-    - name: 1Password - Check if 1Password is already installed
-      ansible.builtin.command: pacman -Q 1password
-      register: onepassword_installed
+    - name: 1Password - Check if yay is installed
+      ansible.builtin.command: which yay
+      register: yay_check
       changed_when: false
       failed_when: false
       become: false
 
-    - name: 1Password - Check if signing key exists
-      ansible.builtin.command: gpg --list-keys 3FEF9748469ADBE15DA7CA80AC2D62742012EA22
-      register: onepassword_key_exists
-      changed_when: false
-      failed_when: false
-      become: false
-      when: onepassword_installed.rc != 0
+    - name: 1Password - Install yay if not present
+      when: yay_check.rc != 0
+      block:
+        - name: 1Password - Clone yay repository
+          ansible.builtin.git:
+            repo: "https://aur.archlinux.org/yay.git"
+            dest: "/tmp/yay-aur"
+            version: master
+            update: true
+          become_user: "{{ aur_user }}"
 
-    - name: 1Password - Import 1Password signing key
-      ansible.builtin.shell: |
-        set -o pipefail
-        curl -sS https://downloads.1password.com/linux/keys/1password.asc | gpg --import
+        - name: 1Password - Build and install yay
+          ansible.builtin.shell: makepkg -si --noconfirm --needed
+          args:
+            chdir: "/tmp/yay-aur"
+            executable: /bin/bash
+          become: true
+          become_user: "{{ aur_user }}"
+
+    - name: 1Password - Install from AUR using yay
+      ansible.builtin.shell: yay -S --noconfirm --needed 1password
       args:
         executable: /bin/bash
       become: false
-      when:
-        - onepassword_installed.rc != 0
-        - onepassword_key_exists.rc != 0
-      register: key_import
-      changed_when: key_import.rc == 0
-
-    - name: 1Password - Clone 1Password AUR package
-      ansible.builtin.git:
-        repo: "https://aur.archlinux.org/1password.git"
-        dest: "/tmp/1password-aur"
-        version: HEAD
-        update: true
-      become: false
-      when: onepassword_installed.rc != 0
-
-    - name: 1Password - Build and install 1Password
-      ansible.builtin.shell: makepkg -si --noconfirm --needed
-      args:
-        chdir: "/tmp/1password-aur"
-        executable: /bin/bash
-      become: false
-      when: onepassword_installed.rc != 0
-      register: onepassword_build
-      changed_when: "'reinstalling' not in onepassword_build.stdout and 'up-to-date' not in onepassword_build.stdout"
+      become_user: "{{ aur_user }}"
+      register: onepassword_install
+      changed_when: "'reinstalling' not in onepassword_install.stdout and 'up-to-date' not in onepassword_install.stdout"
+      when: ansible_facts['virtualization_type'] != 'docker'

@@ -1,4 +1,14 @@
+---
 version: "3"
+
+vars:
+  DEBUG: '{{.DEBUG | default "false"}}'
+  ENV: '{{.AWS_ENV | default "dev"}}'
+  PLAYBOOK: '{{.PLAYBOOK | default "playbooks/master.yml"}}'
+  PYTHON: python3
+  REDIRECT: '{{if eq .DEBUG "true"}}{{else}}2>&1 >/dev/null{{end}}'
+  REGION: '{{.REGION | default "us-west-2"}}'
+  VENV_DIR: .venv
 
 tasks:
   default:
@@ -19,14 +29,15 @@ tasks:
     cmds:
       - echo "✅ All linters passed"
 
-  lint:ansible:
+  lint-ansible:
     desc: Lint Ansible code
+    deps: [setup]
     cmds:
-      - bash -c 'source .venv/bin/activate && ansible-playbook --syntax-check playbook.yml'
-      - bash -c 'source .venv/bin/activate && ansible-lint playbook.yml roles/'
+      - echo "Running ansible-lint..."
+      - "{{.VENV_DIR}}/bin/ansible-lint playbook.yml"
       - echo "✅ Ansible code linted"
 
-  lint:shell:
+  lint-shell:
     desc: Lint shell code
     cmds:
       - find . -name "*.sh" -type f -not -path "./.venv/*" | xargs shellcheck -e SC1091
@@ -40,7 +51,7 @@ tasks:
       - echo "✅ YAML files formatted"
 
   # Molecule
-  molecule:test:
+  molecule-test:
     desc: Run Molecule tests for default scenario
     cmds:
       - bash -c 'source .venv/bin/activate && cd roles/sysinit && molecule test'
@@ -83,32 +94,20 @@ tasks:
       - bash -c 'source .venv/bin/activate && detect-secrets audit .secrets.baseline'
       - echo "✅ Secrets audited"
 
-  # Install
-  install:deps:
-    desc: Install dependencies
+  setup:
+    desc: Create virtual environment and install dependencies
     cmds:
-      - if ! command -v prettier >/dev/null 2>&1; then echo "⚠️ prettier not found"; exit 1; fi
-      - if ! command -v uv >/dev/null 2>&1; then echo "⚠️ uv not found"; exit 1; fi
-      - if ! command -v shellcheck >/dev/null 2>&1; then echo -e "⚠️ shellcheck not found"; exit 1; fi
-      - |+
-        uv venv --clear
-        uv pip install -r requirements.txt
-        uv pip install -r development.requirements.txt
-        bash -c 'source .venv/bin/activate && ansible-galaxy install -r requirements.yml'
-      - echo "✅ Dependencies installed"
+      - echo "Creating virtual environment..."
+      - "{{.PYTHON}} -m venv {{.VENV_DIR}} {{.REDIRECT}}"
+      - echo "Installing Python dependencies..."
+      - "{{.VENV_DIR}}/bin/pip install --upgrade pip {{.REDIRECT}}"
+      - "{{.VENV_DIR}}/bin/pip install -r requirements.txt {{.REDIRECT}}"
+      - echo "Installing Ansible collections..."
+      - "{{.VENV_DIR}}/bin/ansible-galaxy collection install -r collections/requirements.yml {{.REDIRECT}}"
+      - echo "Setup complete. Activate with 'source {{.VENV_DIR}}/bin/activate'"
 
   install:hooks:
     desc: Install pre-commit hooks
     cmds:
       - pre-commit install
       - echo "✅ Pre-commit hooks installed"
-
-  upgrade-deps:
-    desc: Upgrade Python dependencies
-    deps: ['install:deps']
-    cmds:
-      - uv pip install --upgrade pip
-      - uv pip install --upgrade -r requirements.txt
-      - uv pip install --upgrade -r development.requirements.txt
-      - bash -c 'source .venv/bin/activate && ansible-galaxy install --force -r requirements.yml'
-      - echo "✅ Dependencies upgraded"

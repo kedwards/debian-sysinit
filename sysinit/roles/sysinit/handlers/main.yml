@@ -30,3 +30,11 @@
   become: false
   changed_when: false
   listen: "reload profile"
+
+- name: Activate docker group
+  ansible.builtin.command: newgrp docker
+  become: false
+  become_user: "{{ sysinit_user }}"
+  changed_when: false
+  failed_when: false
+  listen: "activate docker group"

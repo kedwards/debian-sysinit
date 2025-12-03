@@ -13,7 +13,9 @@
   ansible.builtin.dnf:
     name: https://s3.amazonaws.com/session-manager-downloads/plugin/latest/linux_64bit/session-manager-plugin.rpm
     disable_gpg_check: true
-  when: (ansible_facts['distribution'] == 'Fedora' or ansible_facts['distribution'] == 'CentOS') and (not awsssm_exists_result.stat.exists or upgrade | default(false))
+  when:
+    - (ansible_facts['distribution'] == 'Fedora' or ansible_facts['distribution'] == 'CentOS')
+    - (not awsssm_exists_result.stat.exists or upgrade | default(false))
 
 - name: AWS - SSM - Install on Arch Linux
   when: ansible_facts['distribution'] == 'Archlinux' and (not awsssm_exists_result.stat.exists or upgrade | default(false))
