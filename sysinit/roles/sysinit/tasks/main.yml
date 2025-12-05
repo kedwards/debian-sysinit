@@ -3,7 +3,6 @@
   ansible.builtin.set_fact:
     sysinit_user: "{{ lookup('env', 'USER') }}"
     sysinit_user_home: "{{ lookup('env', 'HOME') }}"
-    aur_user: "{{ lookup('env', 'USER') }}"
 
 - name: Display system info
   ansible.builtin.debug:

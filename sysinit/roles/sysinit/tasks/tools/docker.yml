@@ -106,9 +106,12 @@
     groups: docker
     append: true
   become: true
-  notify: activate docker group
+  register: docker_user_added
+- name: Docker - Flush handlers to ensure docker group is activated
+  ansible.builtin.meta: flush_handlers
 
-- meta: flush_handlers
+- name: Docker - Flush handlers to ensure docker group is activated
+  ansible.builtin.meta: flush_handlers
 
 - name: Docker - Enable and start Docker service
   when: ansible_facts['service_mgr'] == 'systemd'
@@ -118,15 +121,6 @@
     state: started
     daemon_reload: true
   become: true
-
-- name: Docker - Activate group membership without logout
-  ansible.builtin.command: newgrp docker
-  become: false
-  become_user: "{{ sysinit_user }}"
-  when: docker_user_added.changed
-  changed_when: false
-  failed_when: false
-
 - name: Docker - Install docker bash completion
   block:
     - name: Fetch completion content

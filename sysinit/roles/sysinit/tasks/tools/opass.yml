@@ -140,42 +140,6 @@
         state: present
       become: true
 
-    #- name: 1Password - Check if yay is installed
-    #  ansible.builtin.command: which yay
-    #  register: yay_check
-    #  changed_when: false
-    #  failed_when: false
-    #  become: false
-
-    #- name: 1Password - Install yay if not present
-    #  when: yay_check.rc != 0
-    #  block:
-    #    - name: 1Password - Clone yay repository
-    #      ansible.builtin.git:
-    #        repo: "https://aur.archlinux.org/yay.git"
-    #        dest: "/tmp/yay-aur"
-    #        version: master
-    #        update: true
-    #      become_user: "{{ aur_user }}"
-
-    #    - name: 1Password - Build and install yay
-    #      ansible.builtin.shell: makepkg -si --noconfirm --needed
-    #      args:
-    #        chdir: "/tmp/yay-aur"
-    #        executable: /bin/bash
-    #      become: true
-    #      become_user: "{{ aur_user }}"
-
-    #- name: 1Password - Install from AUR using yay
-    #  ansible.builtin.shell: yay -S --noconfirm --needed 1password
-    #  args:
-    #    executable: /bin/bash
-    #  become: false
-    #  become_user: "{{ aur_user }}"
-    #  register: onepassword_install
-    #  changed_when: "'reinstalling' not in onepassword_install.stdout and 'up-to-date' not in onepassword_install.stdout"
-    #  when: ansible_facts['virtualization_type'] != 'docker'
-
     - name: 1Password - Check if 1Password is already installed
       ansible.builtin.command: pacman -Q 1password
       register: onepassword_installed
@@ -208,7 +172,7 @@
       ansible.builtin.git:
         repo: "https://aur.archlinux.org/1password.git"
         dest: "/tmp/1password-aur"
-        version: HEAD
+        version: master
         update: true
       become: false
       when: onepassword_installed.rc != 0

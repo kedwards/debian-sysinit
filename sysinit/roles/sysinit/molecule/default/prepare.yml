@@ -67,7 +67,6 @@
     - name: Set common non-root user fact
       ansible.builtin.set_fact:
         test_user: "{{ lookup('env', 'USER') }}"
-        aur_user: "{{ lookup('env', 'USER') }}"
 
     - name: Create test user
       ansible.builtin.user:
