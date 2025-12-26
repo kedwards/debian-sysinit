@@ -25,8 +25,10 @@ tasks:
   # Lint
   lint:
     desc: Run all linters
-    deps: [lint:ansible, lint:shell]
+    deps: [setup]
     cmds:
+      - task lint-ansible
+      - task lint-shell
       - echo "✅ All linters passed"
 
   lint-ansible:

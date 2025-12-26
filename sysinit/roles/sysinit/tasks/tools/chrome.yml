@@ -47,28 +47,11 @@
 - name: Chrome - Install on Arch Linux
   when: ansible_facts['distribution'] == 'Archlinux'
   block:
-    - name: Chrome - Ensure base-devel and git are installed
-      community.general.pacman:
-        name:
-          - base-devel
-          - git
-        state: present
-
-    - name: Chrome - Clone Google Chrome AUR repository
-      become: false
-      ansible.builtin.git:
-        repo: https://aur.archlinux.org/google-chrome.git
-        dest: "/home/{{ aur_user }}/google-chrome"
-        update: true
-        version: master
-      become_user: "{{ aur_user }}"
-
-    - name: Chrome - Build and install Google Chrome from AUR
+    - name: Chrome - Install using yay
       become: false
       ansible.builtin.shell: |
-        cd "/home/{{ aur_user }}/google-chrome" && makepkg -si --noconfirm
+        yay -S --noconfirm google-chrome
       args:
-        chdir: "/home/{{ aur_user }}/google-chrome"
         executable: /bin/bash
       become_user: "{{ aur_user }}"
       changed_when: true

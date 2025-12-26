@@ -121,6 +121,7 @@
     state: started
     daemon_reload: true
   become: true
+
 - name: Docker - Install docker bash completion
   block:
     - name: Fetch completion content

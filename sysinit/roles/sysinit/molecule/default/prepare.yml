@@ -67,6 +67,8 @@
     - name: Set common non-root user fact
       ansible.builtin.set_fact:
         test_user: "{{ lookup('env', 'USER') }}"
+        sysinit_user: "{{ lookup('env', 'USER') }}"
+        aur_user: "{{ lookup('env', 'USER') }}"
 
     - name: Create test user
       ansible.builtin.user:
@@ -76,6 +78,14 @@
         shell: /bin/bash
         groups: "{{ 'sudo' if initial_distribution in ['debian', 'ubuntu'] else 'wheel' }}"
         append: true
+
+    - name: Allow user to run makepkg without sudo password (Arch)
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers
+        state: present
+        line: "{{ test_user }} ALL=(ALL) NOPASSWD: ALL"
+        validate: /usr/sbin/visudo -cf %s
+      when: initial_distribution == 'arch'
 
     - name: Create .ssh directory for test user
       ansible.builtin.file:

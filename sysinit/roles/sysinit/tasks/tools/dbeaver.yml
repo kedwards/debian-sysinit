@@ -30,28 +30,11 @@
 - name: DBeaver - Install on Arch Linux
   when: ansible_facts['distribution'] == 'Archlinux'
   block:
-    - name: DBeaver - Ensure base-devel and git are installed
-      community.general.pacman:
-        name:
-          - base-devel
-          - git
-        state: present
-
-    - name: DBeaver - Clone DBeaver AUR repository
-      become: false
-      ansible.builtin.git:
-        repo: https://aur.archlinux.org/dbeaver.git
-        dest: "/home/{{ aur_user }}/dbeaver"
-        update: true
-        version: master
-      become_user: "{{ aur_user }}"
-
-    - name: DBeaver - Build and install DBeaver from AUR
+    - name: DBeaver - Install using yay
       become: false
       ansible.builtin.shell: |
-        cd "/home/{{ aur_user }}/dbeaver" && makepkg -si --noconfirm
+        yay -S --noconfirm dbeaver
       args:
-        chdir: "/home/{{ aur_user }}/dbeaver"
         executable: /bin/bash
       become_user: "{{ aur_user }}"
       changed_when: true

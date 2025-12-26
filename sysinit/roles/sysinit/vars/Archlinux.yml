@@ -5,7 +5,7 @@ sysinit_distro_packages:
 sysinit_tools:
   - aws-ssm
   - docker
-  - opass
+  # - opass
   - slack
   - warp
 
