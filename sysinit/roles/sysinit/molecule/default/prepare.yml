@@ -66,13 +66,11 @@
 
     - name: Set common non-root user fact
       ansible.builtin.set_fact:
-        test_user: "{{ lookup('env', 'USER') }}"
         sysinit_user: "{{ lookup('env', 'USER') }}"
-        aur_user: "{{ lookup('env', 'USER') }}"
 
     - name: Create test user
       ansible.builtin.user:
-        name: "{{ test_user }}"
+        name: "{{ sysinit_user }}"
         state: present
         create_home: true
         shell: /bin/bash
@@ -83,32 +81,32 @@
       ansible.builtin.lineinfile:
         path: /etc/sudoers
         state: present
-        line: "{{ test_user }} ALL=(ALL) NOPASSWD: ALL"
+        line: "{{ sysinit_user }} ALL=(ALL) NOPASSWD: ALL"
         validate: /usr/sbin/visudo -cf %s
       when: initial_distribution == 'arch'
 
     - name: Create .ssh directory for test user
       ansible.builtin.file:
-        path: "/home/{{ test_user }}/.ssh"
+        path: "/home/{{ sysinit_user }}/.ssh"
         state: directory
         mode: "0755"
-        owner: "{{ test_user }}"
-        group: "{{ test_user }}"
+        owner: "{{ sysinit_user }}"
+        group: "{{ sysinit_user }}"
         recurse: true
 
     - name: Create .local/bin directory for test user
       ansible.builtin.file:
-        path: "/home/{{ test_user }}/.local/bin"
+        path: "/home/{{ sysinit_user }}/.local/bin"
         state: directory
         mode: "0755"
-        owner: "{{ test_user }}"
-        group: "{{ test_user }}"
+        owner: "{{ sysinit_user }}"
+        group: "{{ sysinit_user }}"
         recurse: true
 
     - name: Set ownership of user home directory
       ansible.builtin.file:
-        path: "/home/{{ test_user }}"
+        path: "/home/{{ sysinit_user }}"
         state: directory
-        owner: "{{ test_user }}"
-        group: "{{ test_user }}"
+        owner: "{{ sysinit_user }}"
+        group: "{{ sysinit_user }}"
         recurse: true

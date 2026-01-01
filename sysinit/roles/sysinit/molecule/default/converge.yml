@@ -6,6 +6,5 @@
     sysinit_var: molecule_converge
     upgrade: false
     sysinit_user: "{{ lookup('env', 'USER') }}"
-    aur_user: "{{ lookup('env', 'USER') }}"
   roles:
     - role: sysinit
