@@ -1,6 +1,7 @@
 ---
 sysinit_distro_packages:
   - postgresql-client
+  - meld
 
 sysinit_tools:
   - aws-ssm
