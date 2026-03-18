@@ -35,6 +35,7 @@
       - xorg
       - xinit
       - xss-lock
+      - zenity
       - zip
 
 - name: I3 - Install packages

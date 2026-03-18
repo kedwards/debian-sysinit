@@ -19,14 +19,22 @@ sysinit_mise_plugins:
   - awscli
   - bat
   - chezmoi
+  - claude
+  - eksctl
   - eza
   - fd
   - fzf
-  - github-cli
+  - gemini-cli
   - git-worktree-wrapper
+  - github-cli
   - go
   - granted
   - jq
+  - kind
+  - kubectl
+  - lazydocker
+  - minikube
+  - localstack
   - mkcert
   - neovim
   - node
@@ -34,6 +42,7 @@ sysinit_mise_plugins:
   - python
   - rclone
   - ripgrep
+  - shellcheck
   - starship
   - task
   - usage
