@@ -4,7 +4,7 @@ set -euo pipefail
 
 SYSINIT_REPO="https://github.com/kedwards/sysinit.git"
 SCRIPT_DIR="/opt/sysinit"
-USER="root"
+USER="${USER:-$(whoami)}"
 
 # Default flag values
 ENABLE_SSH_SETUP=false
@@ -174,23 +174,22 @@ install_packages() {
 # Install mise and add
 # mise to PATH and activate
 install_mise() {
+  local mise_bin="${HOME}/.local/bin/mise"
+
   # Check if mise is already installed
-  if command -v "/usr/local/bin/mise" >/dev/null 2>&1; then
+  if [[ -x "$mise_bin" ]]; then
     echo "mise already installed, skipping installation"
-    eval "$(/usr/local/bin/mise activate bash)"
+    eval "$("$mise_bin" activate bash)"
     return
   fi
 
+  mkdir -p "${HOME}/.local/bin"
   mise_installer="$(mktemp -d)"
   gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys 0x7413A06D
   curl https://mise.jdx.dev/install.sh.sig | gpg --decrypt >"$mise_installer/mise_install.sh"
-  MISE_INSTALL_PATH=/usr/local/bin/mise sh "$mise_installer/mise_install.sh"
+  MISE_INSTALL_PATH="$mise_bin" sh "$mise_installer/mise_install.sh"
 
-  # Only add to bashrc if not already present
-  # if ! grep -q "mise activate bash" ~/.bashrc; then
-  #   echo "eval \"\$(/usr/local/bin/mise activate bash)\"" >>~/.bashrc
-  # fi
-  eval "$(/usr/local/bin/mise activate bash)"
+  eval "$("$mise_bin" activate bash)"
 }
 
 # Clone or pull sysinit repo
@@ -209,7 +208,7 @@ setup_python_env() {
   cd "$SCRIPT_DIR"
 
   # Ensure mise is in PATH and activated
-  export PATH="/usr/local/bin:$PATH"
+  export PATH="${HOME}/.local/bin:$PATH"
   if command -v mise >/dev/null 2>&1; then
     eval "$(mise activate bash)"
   else
