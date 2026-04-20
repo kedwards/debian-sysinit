@@ -194,7 +194,7 @@ setup_python_env() {
   fi
 
   mise trust -a
-  mise use --global uv
+  mise use --global uv chezmoi
   eval "$(mise activate bash)"
 
   if [[ ! -d ".venv" ]] || ! .venv/bin/python -c "import sysinit" 2>/dev/null; then
