@@ -248,7 +248,6 @@ setup_python_env() {
 # Run ansible playbook
 run_ansible() {
   ansible-playbook playbook.yml \
-    -K \
     -e "git_user_name=${GIT_USER_NAME}" \
     -e "git_user_email=${GIT_USER_EMAIL}"
 }
