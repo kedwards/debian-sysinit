@@ -2,12 +2,13 @@
 
 set -euo pipefail
 
-PROMPT_COMMAND="${PROMPT_COMMAND:-}"
-SYSINIT_REPO=https://github.com/kedwards/sysinit.git
-script_dir="$HOME/sysinit"
+SYSINIT_REPO="https://github.com/kedwards/sysinit.git"
+SCRIPT_DIR="/opt/sysinit"
+USER="${USER:-$(whoami)}"
 
 # Default flag values
 ENABLE_SSH_SETUP=false
+ASK_BECOME_PASS=false
 
 # Display usage information
 usage() {
@@ -17,19 +18,22 @@ Usage: $0 [OPTIONS]
 Install and configure system using sysinit repository.
 
 OPTIONS:
-  -s, --enable-ssh   Enable SSH agent setup (disabled by default)
-  -h, --help         Display this help message
+  -s, --enable-ssh        Enable SSH agent setup (disabled by default)
+  -k, --ask-become-pass   Pass -K to ansible-playbook (prompt for sudo password)
+  -h, --help              Display this help message
 
 EXAMPLES:
-  # Install without SSH setup (default)
+  # Install without SSH setup (default — for ISO/AMI with NOPASSWD sudo)
   $0
 
+  # Install interactively with sudo password prompt
+  $0 -k
+
   # Install with SSH setup enabled
-  $0 --enable-ssh
-  $0 -s
+  $0 --enable-ssh -s
 
   # Download and run with SSH setup enabled
-  wget -O - https://raw.githubusercontent.com/withreach/sysinit/refs/heads/main/install.sh | bash -s -- --enable-ssh
+  curl -fsSL https://raw.githubusercontent.com/kedwards/sysinit/main/install-raw.sh | bash -s -- --enable-ssh
 
 EOF
 }
@@ -40,6 +44,10 @@ parse_args() {
     case $1 in
       -s|--enable-ssh)
         ENABLE_SSH_SETUP=true
+        shift
+        ;;
+      -k|--ask-become-pass)
+        ASK_BECOME_PASS=true
         shift
         ;;
       -h|--help)
@@ -57,71 +65,51 @@ parse_args() {
 
 # Fix ownership of .venv directory and contents
 fix_venv_ownership() {
-  if [[ -d "$script_dir/.venv" ]]; then
-    echo "🔧 Fixing .venv ownership..."
-    # Fix ownership of .venv directory and all its contents
-    sudo chown -R "$USER:$USER" "$script_dir/.venv" 2>/dev/null || {
-      echo "⚠️  Warning: Could not fix .venv ownership, but continuing..."
-    }
+  if [[ -d "$SCRIPT_DIR/.venv" ]]; then
+    sudo chown -R "$USER:$USER" "$SCRIPT_DIR/.venv" 2>/dev/null || true
   fi
 }
 
 cleanup() {
-  if command -v deactivate >/dev/null; then
+  if command -v deactivate >/dev/null 2>&1; then
     deactivate || true
   fi
-  # Only clean up temp files, preserve .venv for idempotency
-  rm -rf "${mise_installer:-/tmp}/mise_install.sh" || true
-  # Fix .venv ownership if it exists
+  rm -rf "${mise_installer:-}" || true
   fix_venv_ownership
 }
 trap cleanup ERR EXIT
+
+# Detect package manager — ordered to handle overlapping release files (e.g. Fedora)
+get_package_manager() {
+  if [[ -f /etc/fedora-release ]]; then
+    echo "dnf"
+  elif [[ -f /etc/redhat-release ]]; then
+    echo "yum"
+  elif [[ -f /etc/debian_version ]]; then
+    echo "apt"
+  elif [[ -f /etc/arch-release ]]; then
+    echo "pacman"
+  elif [[ -f /etc/SuSE-release ]]; then
+    echo "zypper"
+  elif [[ -f /etc/alpine-release ]]; then
+    echo "apk"
+  else
+    echo "unknown"
+  fi
+}
 
 # Detect packages based on os type
 get_packages_for_pm() {
   local pm="$1"
   case "$pm" in
-  apt)
-    echo "curl git gpg"
-    ;;
-  pacman)
-    echo "curl git gnupg"
-    ;;
-  yum)
-    echo "curl git gnupg2"
-    ;;
-  dnf)
-    echo "curl git gnupg2 python3-libdnf5"
-    ;;
-  zypper)
-    echo "curl git gpg2"
-    ;;
-  apk)
-    echo "curl git gnupg"
-    ;;
-  *)
-    echo "curl git gnupg"
-    ;;
+  apt)    echo "curl git gpg" ;;
+  pacman) echo "curl git gnupg" ;;
+  yum)    echo "curl git gnupg2" ;;
+  dnf)    echo "curl git gnupg2 python3-libdnf5" ;;
+  zypper) echo "curl git gpg2" ;;
+  apk)    echo "curl git gnupg" ;;
+  *)      echo "curl git gnupg" ;;
   esac
-}
-
-# Detect package manager
-get_package_manager() {
-  declare -A os_info=(
-    ["/etc/redhat-release"]="yum"
-    ["/etc/arch-release"]="pacman"
-    ["/etc/debian_version"]="apt"
-    ["/etc/fedora-release"]="dnf"
-    ["/etc/SuSE-release"]="zypper"
-    ["/etc/alpine-release"]="apk"
-  )
-  for f in "${!os_info[@]}"; do
-    if [[ -f "$f" ]]; then
-      echo "${os_info[$f]}"
-      return
-    fi
-  done
-  echo "unknown"
 }
 
 # Install required packages
@@ -134,14 +122,10 @@ install_packages() {
   case "$pm" in
   apt)
     sudo apt-get update
-    sudo apt-get upgrade -y
     # shellcheck disable=SC2086
     sudo apt-get install -y $packages
-    sudo apt autoremove -y
     ;;
   dnf)
-    sudo dnf update -y
-    # shellcheck disable=SC2086
     sudo dnf install -y $packages
     ;;
   pacman)
@@ -150,7 +134,6 @@ install_packages() {
     sudo pacman -S --noconfirm $packages
     ;;
   yum)
-    sudo yum update -y
     # shellcheck disable=SC2086
     sudo yum install -y $packages
     ;;
@@ -171,50 +154,41 @@ install_packages() {
   esac
 }
 
-# Install mise and add
-# mise to PATH and activate
+# Install mise to ~/.local/bin and activate
 install_mise() {
-  # Check if mise is already installed
-  if command -v "$HOME/.local/bin/mise" >/dev/null 2>&1; then
+  local mise_bin="${HOME}/.local/bin/mise"
+
+  if [[ -x "$mise_bin" ]]; then
     echo "mise already installed, skipping installation"
-    export PATH="$HOME/.local/bin:$PATH"
-    eval "$("$HOME/.local/bin/mise" activate bash)"
+    eval "$("$mise_bin" activate bash)"
     return
   fi
 
+  mkdir -p "${HOME}/.local/bin"
   mise_installer="$(mktemp -d)"
   gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys 0x7413A06D
   curl https://mise.jdx.dev/install.sh.sig | gpg --decrypt >"$mise_installer/mise_install.sh"
-  sh "$mise_installer/mise_install.sh"
-  export PATH="$HOME/.local/bin:$PATH"
+  MISE_INSTALL_PATH="$mise_bin" sh "$mise_installer/mise_install.sh"
 
-  # Only add to bashrc if not already present
-  if ! grep -q "mise activate bash" ~/.bashrc; then
-    echo "eval \"\$($HOME/.local/bin/mise activate bash)\"" >>~/.bashrc
-  fi
-  eval "$("$HOME/.local/bin/mise" activate bash)"
+  eval "$("$mise_bin" activate bash)"
 }
 
-# Clone or pull sysinit repo
+# Clone repo, or re-clone if the directory exists but is not a git repo
 sync_repo() {
-  if [[ -d "$script_dir" ]]; then
-    # @TODO: save users changes if any
-    git -C "$script_dir" pull
+  if [[ -d "$SCRIPT_DIR/.git" ]]; then
+    git -C "$SCRIPT_DIR" pull
   else
-    git clone -b main --single-branch $SYSINIT_REPO "$script_dir"
+    rm -rf "$SCRIPT_DIR"
+    git clone -b main --single-branch "$SYSINIT_REPO" "$SCRIPT_DIR"
   fi
 }
 
-# Setup and activate virtual environment
-# Install required dependencies
+# Setup and activate virtual environment, install required dependencies
 setup_python_env() {
-  cd "$script_dir"
+  cd "$SCRIPT_DIR"
 
-  # Ensure mise is in PATH and activated
-  export PATH="$HOME/.local/bin:$PATH"
-  if command -v mise >/dev/null 2>&1; then
-    eval "$(mise activate bash)"
-  else
+  export PATH="${HOME}/.local/bin:$PATH"
+  if ! command -v mise >/dev/null 2>&1; then
     echo "Error: mise not found in PATH"
     exit 1
   fi
@@ -222,21 +196,11 @@ setup_python_env() {
   mise trust -a
   mise use --global uv
   eval "$(mise activate bash)"
-  export PATH="$HOME/.local/share/mise/shims:$PATH"
-  sleep 2
-  mise reshim
 
-  # Only create venv if it doesn't exist or if sysinit package isn't installed
   if [[ ! -d ".venv" ]] || ! .venv/bin/python -c "import sysinit" 2>/dev/null; then
-    # Fix ownership before attempting to recreate .venv
     if [[ -d ".venv" ]]; then
-      echo "🔧 Fixing .venv ownership before recreation..."
-      sudo chown -R "$USER:$USER" ".venv" 2>/dev/null || {
-        echo "⚠️  Could not fix ownership, removing .venv manually..."
-        sudo rm -rf ".venv"
-      }
+      sudo chown -R "$USER:$USER" ".venv" 2>/dev/null || sudo rm -rf ".venv"
     fi
-
     uv venv --clear
     # shellcheck disable=SC1091
     source ".venv/bin/activate"
@@ -249,24 +213,24 @@ setup_python_env() {
 
 # Run ansible playbook
 run_ansible() {
+  local become_args=()
+  [[ "$ASK_BECOME_PASS" == "true" ]] && become_args=(-K)
   ansible-playbook playbook.yml \
-    -K \
+    "${become_args[@]}" \
     -e "git_user_name=${GIT_USER_NAME}" \
     -e "git_user_email=${GIT_USER_EMAIL}"
 }
 
 # Check and collect required Git configuration
 setup_git_config() {
-  # Check for environment variables first
   GIT_USER_NAME="${GIT_USER_NAME:-$(git config --global user.name 2>/dev/null || true)}"
   GIT_USER_EMAIL="${GIT_USER_EMAIL:-$(git config --global user.email 2>/dev/null || true)}"
 
-  # create default git credentials
-  if [ -z "$GIT_USER_NAME" ]; then
+  if [[ -z "$GIT_USER_NAME" ]]; then
     GIT_USER_NAME="${USER:-$(whoami)}"
   fi
 
-  if [ -z "$GIT_USER_EMAIL" ]; then
+  if [[ -z "$GIT_USER_EMAIL" ]]; then
     local hostname
     hostname=$(hostname 2>/dev/null || echo "localhost")
     GIT_USER_EMAIL="${USER:-$(whoami)}@${hostname}"
@@ -274,67 +238,58 @@ setup_git_config() {
 
   echo "Git configuration: $GIT_USER_NAME <$GIT_USER_EMAIL>"
 
-  # Export for use in ansible
   export GIT_USER_NAME
   export GIT_USER_EMAIL
 }
 
 # Setup SSH agent for GitHub access
 setup_ssh_agent() {
-  local ssh_env="$HOME/.ssh/agent-env"
+  local ssh_dir="${HOME}/.ssh"
+  local ssh_env="${ssh_dir}/agent-env"
   local existing_agent=false
   local keys_loaded=false
   local is_interactive=false
 
-  # Check if we have an interactive terminal
   if [ -t 0 ] && [ -t 1 ]; then
     is_interactive=true
   fi
 
-  echo "🔑 Setting up SSH agent and keys..."
+  echo "Setting up SSH agent and keys..."
 
-  # Ensure .ssh directory exists
-  mkdir -p "$HOME/.ssh"
-  chmod 700 "$HOME/.ssh"
+  mkdir -p "$ssh_dir"
+  chmod 700 "$ssh_dir"
 
-  # Check if there's already a working SSH agent with keys
+  # Use existing agent if available with keys loaded
   if [ -n "${SSH_AUTH_SOCK:-}" ] && [ -n "${SSH_AGENT_PID:-}" ]; then
     if kill -0 "$SSH_AGENT_PID" 2>/dev/null && ssh-add -l >/dev/null 2>&1; then
-      echo "✅ Found existing SSH agent with keys loaded, using it"
-      echo "   Keys loaded: $(ssh-add -l | wc -l)"
+      echo "Found existing SSH agent with keys loaded ($(ssh-add -l | wc -l) keys)"
       export SSH_AUTH_SOCK
       export SSH_AGENT_PID
       return 0
     fi
   fi
 
-  # If no existing agent, check if we have one saved in agent-env
-  if [ "$existing_agent" = false ] && [ -f "$ssh_env" ]; then
+  # Check saved agent-env
+  if [ -f "$ssh_env" ]; then
     # shellcheck source=/dev/null
     source "$ssh_env" >/dev/null 2>&1 || true
     if [ -n "${SSH_AGENT_PID:-}" ] && kill -0 "$SSH_AGENT_PID" 2>/dev/null; then
       if ssh-add -l >/dev/null 2>&1; then
-        echo "✅ Found existing SSH agent in $ssh_env with keys loaded"
-        echo "   Keys loaded: $(ssh-add -l | wc -l)"
+        echo "Found existing SSH agent in $ssh_env with keys loaded"
         existing_agent=true
         keys_loaded=true
       else
-        echo "📋 Found existing SSH agent in $ssh_env but no keys loaded"
         existing_agent=true
       fi
     fi
   fi
 
-  # Start new agent only if we don't have a working one
+  # Start a new agent if needed
   if [ "$existing_agent" = false ]; then
-    echo "🚀 Starting new SSH agent..."
-    # Kill any stale agents first
     if [ -f "$ssh_env" ]; then
       # shellcheck source=/dev/null
       source "$ssh_env" >/dev/null 2>&1 || true
-      if [ -n "${SSH_AGENT_PID:-}" ] && kill -0 "$SSH_AGENT_PID" 2>/dev/null; then
-        kill "$SSH_AGENT_PID" 2>/dev/null || true
-      fi
+      [ -n "${SSH_AGENT_PID:-}" ] && kill "$SSH_AGENT_PID" 2>/dev/null || true
     fi
 
     ssh-agent >"$ssh_env"
@@ -342,147 +297,58 @@ setup_ssh_agent() {
     # shellcheck disable=SC1090
     source "$ssh_env" >/dev/null
 
-    # Verify agent is running
     if [ -z "${SSH_AGENT_PID:-}" ] || ! kill -0 "$SSH_AGENT_PID" 2>/dev/null; then
-      echo "❌ Error: Failed to start SSH agent"
+      echo "Error: Failed to start SSH agent"
       exit 1
     fi
-    echo "✅ SSH agent started successfully"
+    echo "SSH agent started"
   fi
 
-  # If we don't have keys loaded, try to load them
+  # Load keys if needed
   if [ "$keys_loaded" = false ]; then
-    echo "🔍 Looking for SSH keys to load..."
-
-    # Look for SSH keys to add
     local keys_found=false
     local keys_added=false
 
-    for key in ~/.ssh/id_rsa ~/.ssh/id_ed25519 ~/.ssh/id_ecdsa ~/.ssh/id_dsa; do
-      if [ -f "$key" ]; then
-        keys_found=true
-        echo "   Found SSH key: $key"
+    for key in "${HOME}/.ssh/id_ed25519" "${HOME}/.ssh/id_ecdsa" "${HOME}/.ssh/id_rsa"; do
+      [ -f "$key" ] || continue
+      keys_found=true
 
-        # First try without passphrase (for unencrypted keys)
-        if ssh-add "$key" 2>/dev/null; then
-          echo "   ✅ Successfully added $key (no passphrase required)"
+      if ssh-add "$key" 2>/dev/null; then
+        echo "Loaded $key"
+        keys_added=true
+        break
+      elif [ "$is_interactive" = true ]; then
+        if ssh-add "$key"; then
+          echo "Loaded $key (with passphrase)"
           keys_added=true
           break
-        else
-          # Check if key is encrypted by trying to read it
-          if ssh-keygen -y -f "$key" >/dev/null 2>&1; then
-            echo "   ⚠️  Key $key is not encrypted but failed to load"
-          else
-            echo "   🔐 Key $key appears to be encrypted"
-
-            # If we have an interactive terminal, try to prompt for passphrase
-            if [ "$is_interactive" = true ]; then
-              echo "   🔑 Prompting for passphrase..."
-              if ssh-add "$key"; then
-                echo "   ✅ Successfully added $key with passphrase"
-                keys_added=true
-                break
-              else
-                echo "   ❌ Failed to add $key even with passphrase"
-              fi
-            else
-              echo "   ⏸️  Cannot prompt for passphrase (no interactive terminal)"
-            fi
-          fi
         fi
       fi
     done
 
-    # Handle the case where no keys were found
     if [ "$keys_found" = false ]; then
-      echo ""
-      echo "❌ No SSH keys found in ~/.ssh/"
-      echo ""
-      echo "📝 To fix this, generate an SSH key pair:"
-      echo "   ssh-keygen -t ed25519 -C \"your-email@example.com\""
-      echo ""
-      echo "Then run this script again."
-      echo ""
+      echo "No SSH keys found in ${HOME}/.ssh/ — generate one with: ssh-keygen -t ed25519"
       exit 1
     fi
 
-    # Handle the case where keys were found but none could be loaded
     if [ "$keys_added" = false ]; then
-      echo ""
-      if [ "$is_interactive" = true ]; then
-        echo "❌ Could not load any SSH keys, even with interactive prompts."
-        echo ""
-        echo "This might be due to:"
-        echo "   • Invalid or corrupted key files"
-        echo "   • Permission issues"
-        echo "   • Incorrect passphrase"
-        echo ""
-        echo "🔧 Try these troubleshooting steps:"
-        echo "   1. Check key permissions: ls -la ~/.ssh/"
-        echo "   2. Test key manually: ssh-add ~/.ssh/id_rsa"
-        echo "   3. Verify key format: ssh-keygen -l -f ~/.ssh/id_rsa"
-        echo ""
-        exit 1
-      else
-        echo "⚠️  SSH keys found but require manual loading (no interactive terminal available)"
-        echo ""
-        echo "🎯 SOLUTION: Choose one of these options:"
-        echo ""
-        echo "Option 1 - Pre-load your SSH key, then re-run:"
-        echo "   # Load your SSH key first"
-        if [ -f "$ssh_env" ]; then
-          echo "   source $ssh_env"
-        else
-          echo "   eval \$(ssh-agent -s)"
-        fi
-        echo "   ssh-add ~/.ssh/id_rsa  # (or your key file)"
-        echo "   # Then re-run the installer"
-        echo "   wget -O - https://raw.githubusercontent.com/withreach/sysinit/refs/heads/main/install.sh | bash"
-        echo ""
-        echo "Option 2 - Run the script interactively:"
-        echo "   # Download and run interactively"
-        echo "   wget https://raw.githubusercontent.com/withreach/sysinit/refs/heads/main/install.sh"
-        echo "   chmod +x install.sh"
-        echo "   ./install.sh"
-        echo ""
-        echo "Option 3 - Use an unencrypted key (less secure):"
-        echo "   ssh-keygen -t ed25519 -f ~/.ssh/id_sysinit -N \"\""
-        echo "   # Then re-run this script"
-        echo ""
-        echo "💡 For security, Option 1 or 2 are recommended."
-        echo ""
-        exit 1
-      fi
+      echo "SSH keys found but could not be loaded (encrypted and no interactive terminal?)"
+      exit 1
     fi
   fi
 
-  # Check if any keys were found
-  if [ "$keys_found" = false ]; then
-    echo "No SSH keys found in ~/.ssh/"
-    echo "Please generate an SSH key pair:"
-    echo "  ssh-keygen -t ed25519 -C \"email@tld\""
-    echo "Then run this script again."
-    exit 1
-  fi
-
-  # Final verification that we have working SSH keys
   if ! ssh-add -l >/dev/null 2>&1; then
-    echo "❌ Error: SSH agent is running but no keys are loaded"
+    echo "Error: SSH agent running but no keys loaded"
     exit 1
   fi
 
-  echo "✅ SSH agent setup complete!"
-  echo "   🔑 Keys loaded: $(ssh-add -l | wc -l)"
-  echo "   📋 Agent PID: $SSH_AGENT_PID"
-
-  # Export environment for Ansible
+  echo "SSH agent ready ($(ssh-add -l | wc -l) keys loaded, PID: $SSH_AGENT_PID)"
   export SSH_AUTH_SOCK
   export SSH_AGENT_PID
 }
 
-# Main execution with better error handling
+# Main execution
 main() {
-  # Parse command line arguments
   parse_args "$@"
 
   install_packages
@@ -490,17 +356,12 @@ main() {
   sync_repo
   setup_git_config
 
-  # Conditionally run SSH setup based on flag
   if [[ "$ENABLE_SSH_SETUP" == "true" ]]; then
-    echo "🔑 Setting up SSH agent..."
     setup_ssh_agent
-  else
-    echo "⏭️  Skipping SSH agent setup (use --enable-ssh to enable)"
   fi
 
   setup_python_env
   run_ansible
 }
 
-# Run main function
 main "$@"
