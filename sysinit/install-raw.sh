@@ -197,18 +197,18 @@ install_mise() {
 
 # Clone or pull sysinit repo
 sync_repo() {
-  if [[ -d "$script_dir" ]]; then
+  if [[ -d "$SCRIPT_DIR" ]]; then
     # @TODO: save users changes if any
-    git -C "$script_dir" pull
+    git -C "$SCRIPT_DIR" pull
   else
-    git clone -b main --single-branch $SYSINIT_REPO "$script_dir"
+    git clone -b main --single-branch $SYSINIT_REPO "$SCRIPT_DIR"
   fi
 }
 
 # Setup and activate virtual environment
 # Install required dependencies
 setup_python_env() {
-  cd "$script_dir"
+  cd "$SCRIPT_DIR"
 
   # Ensure mise is in PATH and activated
   export PATH="$HOME/.local/bin:$PATH"
