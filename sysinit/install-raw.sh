@@ -184,7 +184,7 @@ install_mise() {
   mise_installer="$(mktemp -d)"
   gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys 0x7413A06D
   curl https://mise.jdx.dev/install.sh.sig | gpg --decrypt >"$mise_installer/mise_install.sh"
-  sh "$mise_installer/mise_install.sh"
+  MISE_INSTALL_PATH=/usr/local/bin/mise sh "$mise_installer/mise_install.sh"
 
   # Only add to bashrc if not already present
   # if ! grep -q "mise activate bash" ~/.bashrc; then
