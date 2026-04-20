@@ -11,8 +11,8 @@ sysinit_packages:
   - xsel
   - zip
 
-sysinit_sys_tools:
-  - mise
+sysinit_sys_tools: []
+  # - mise
 
 sysinit_mise_plugins:
   - amazon-ecr-credential-helper
