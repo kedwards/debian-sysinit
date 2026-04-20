@@ -175,10 +175,9 @@ install_packages() {
 # mise to PATH and activate
 install_mise() {
   # Check if mise is already installed
-  if command -v "$HOME/.local/bin/mise" >/dev/null 2>&1; then
+  if command -v "/usr/local/bin/mise" >/dev/null 2>&1; then
     echo "mise already installed, skipping installation"
-    export PATH="$HOME/.local/bin:$PATH"
-    eval "$("$HOME/.local/bin/mise" activate bash)"
+    eval "$(/usr/local/bin/mise activate bash)"
     return
   fi
 
@@ -186,13 +185,12 @@ install_mise() {
   gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys 0x7413A06D
   curl https://mise.jdx.dev/install.sh.sig | gpg --decrypt >"$mise_installer/mise_install.sh"
   sh "$mise_installer/mise_install.sh"
-  export PATH="$HOME/.local/bin:$PATH"
 
   # Only add to bashrc if not already present
-  if ! grep -q "mise activate bash" ~/.bashrc; then
-    echo "eval \"\$($HOME/.local/bin/mise activate bash)\"" >>~/.bashrc
-  fi
-  eval "$("$HOME/.local/bin/mise" activate bash)"
+  # if ! grep -q "mise activate bash" ~/.bashrc; then
+  #   echo "eval \"\$(/usr/local/bin/mise activate bash)\"" >>~/.bashrc
+  # fi
+  eval "$(/usr/local/bin/mise activate bash)"
 }
 
 # Clone or pull sysinit repo
@@ -211,7 +209,7 @@ setup_python_env() {
   cd "$SCRIPT_DIR"
 
   # Ensure mise is in PATH and activated
-  export PATH="$HOME/.local/bin:$PATH"
+  export PATH="/usr/local/bin:$PATH"
   if command -v mise >/dev/null 2>&1; then
     eval "$(mise activate bash)"
   else
@@ -222,9 +220,9 @@ setup_python_env() {
   mise trust -a
   mise use --global uv
   eval "$(mise activate bash)"
-  export PATH="$HOME/.local/share/mise/shims:$PATH"
-  sleep 2
-  mise reshim
+  # export PATH="/$HOME/.local/share/mise/shims:$PATH"
+  # sleep 2
+  # mise reshim
 
   # Only create venv if it doesn't exist or if sysinit package isn't installed
   if [[ ! -d ".venv" ]] || ! .venv/bin/python -c "import sysinit" 2>/dev/null; then
@@ -281,7 +279,7 @@ setup_git_config() {
 
 # Setup SSH agent for GitHub access
 setup_ssh_agent() {
-  local ssh_env="$HOME/.ssh/agent-env"
+  local ssh_env="/root/.ssh/agent-env"
   local existing_agent=false
   local keys_loaded=false
   local is_interactive=false
@@ -294,8 +292,8 @@ setup_ssh_agent() {
   echo "🔑 Setting up SSH agent and keys..."
 
   # Ensure .ssh directory exists
-  mkdir -p "$HOME/.ssh"
-  chmod 700 "$HOME/.ssh"
+  mkdir -p "/root/.ssh"
+  chmod 700 "/root/.ssh"
 
   # Check if there's already a working SSH agent with keys
   if [ -n "${SSH_AUTH_SOCK:-}" ] && [ -n "${SSH_AGENT_PID:-}" ]; then
