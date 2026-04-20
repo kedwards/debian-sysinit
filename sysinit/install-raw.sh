@@ -57,10 +57,10 @@ parse_args() {
 
 # Fix ownership of .venv directory and contents
 fix_venv_ownership() {
-  if [[ -d "$script_dir/.venv" ]]; then
+  if [[ -d "$SCRIPT_DIR/.venv" ]]; then
     echo "🔧 Fixing .venv ownership..."
     # Fix ownership of .venv directory and all its contents
-    sudo chown -R "$USER:$USER" "$script_dir/.venv" 2>/dev/null || {
+    sudo chown -R "$USER:$USER" "$SCRIPT_DIR/.venv" 2>/dev/null || {
       echo "⚠️  Warning: Could not fix .venv ownership, but continuing..."
     }
   fi
