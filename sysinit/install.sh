@@ -129,9 +129,8 @@ install_packages() {
     sudo dnf install -y $packages
     ;;
   pacman)
-    sudo pacman -Syu --noconfirm
     # shellcheck disable=SC2086
-    sudo pacman -S --noconfirm $packages
+    sudo pacman -S --needed --noconfirm $packages
     ;;
   yum)
     # shellcheck disable=SC2086
