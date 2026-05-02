@@ -1,0 +1,85 @@
+---
+version: "3"
+
+vars:
+  ISO: debian-13.4.0-amd64-netinst.iso
+  DISK: '{{.ISO | replace "amd64-netinst" "sysinit" | replace ".iso" ".qcow2"}}'
+  DISK_SIZE: 20G
+  MEM: 4G
+  CPUS: 2
+  SSH_PORT: '{{.SSH_PORT | default "2222"}}'
+  USERNAME: debian
+  USER_PASSWORD: debian
+  PRESEED_PORT: 8080
+  INSTALL_DISK: /dev/vda
+
+tasks:
+  create-disk:
+    desc: Create the QEMU disk image
+    cmds:
+      - qemu-img create -f qcow2 {{.DISK}} {{.DISK_SIZE}}
+    status:
+      - test -f {{.DISK}}
+
+  extract-installer:
+    desc: Extract kernel and initrd from the ISO
+    cmds:
+      - 7z e {{.ISO}} install.amd/vmlinuz install.amd/initrd.gz -o. -y
+    status:
+      - test -f vmlinuz
+      - test -f initrd.gz
+
+  preseed-render:
+    desc: Render preseed.cfg with variable substitutions
+    cmds:
+      - |
+        sed \
+          -e 's|@@DISK@@|{{.INSTALL_DISK}}|g' \
+          -e 's|@@USERNAME@@|{{.USERNAME}}|g' \
+          -e 's|@@USER_PASSWORD@@|{{.USER_PASSWORD}}|g' \
+          preseed.cfg.tmpl > preseed.cfg
+
+  install:
+    desc: Run unattended Debian install via preseed
+    deps: [create-disk, extract-installer, preseed-render]
+    cmds:
+      - |
+        python3 -m http.server {{.PRESEED_PORT}} --bind 0.0.0.0 &
+        HTTP_PID=$!
+
+        qemu-system-x86_64 \
+          -enable-kvm \
+          -m {{.MEM}} \
+          -smp {{.CPUS}} \
+          -kernel vmlinuz \
+          -initrd initrd.gz \
+          -append "auto=true priority=critical preseed/url=http://10.0.2.2:{{.PRESEED_PORT}}/preseed.cfg" \
+          -drive file={{.DISK}},format=qcow2,if=virtio \
+          -cdrom {{.ISO}} \
+          -netdev "user,id=net0,hostfwd=tcp::{{.SSH_PORT}}-:22" \
+          -device virtio-net-pci,netdev=net0 \
+          -boot once=d \
+          -no-reboot \
+          -display gtk
+
+        kill $HTTP_PID 2>/dev/null || true
+
+  boot:
+    desc: Boot the installed disk image
+    cmds:
+      - |
+        qemu-system-x86_64 \
+          -enable-kvm \
+          -m {{.MEM}} \
+          -smp {{.CPUS}} \
+          -drive file={{.DISK}},format=qcow2,if=virtio \
+          -netdev user,id=net0,hostfwd=tcp::{{.SSH_PORT}}-:22 \
+          -device virtio-net-pci,netdev=net0 \
+          -boot c \
+          -display gtk
+
+  clean:
+    desc: Remove the disk image and extracted installer files
+    prompt: "This will delete {{.DISK}}, vmlinuz, initrd.gz, and preseed.rendered.cfg — are you sure?"
+    cmds:
+      - rm -f {{.DISK}} vmlinuz initrd.gz preseed.cfg
