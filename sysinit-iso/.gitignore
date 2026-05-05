@@ -1,5 +1,6 @@
+.task/
 preseed.cfg
 vmlinuz
 initrd.gz
-debian-*.iso
-debian-*.qcow2
+*.iso
+*.qcow2
