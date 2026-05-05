@@ -215,6 +215,8 @@ run_assertions() {
   assert       "$SSH_USER has NOPASSWD sudo"  "sudo -n true"
   assert       "authorized_keys present"      "test -s \$HOME/.ssh/authorized_keys"
   assert_output "home directory owner"        "$SSH_USER"  "stat -c %U \$HOME"
+  assert       "cloud-init completed"         "cloud-init status --wait"
+  assert       "cloud-init MOTD written"      "grep -q 'cloud-init first boot' /etc/motd"
 
   echo ""
   echo "Results: ${PASS} passed, ${FAIL} failed"

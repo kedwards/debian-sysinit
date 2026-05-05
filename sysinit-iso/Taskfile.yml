@@ -17,7 +17,7 @@ vars:
   # Display mode for QEMU
   # "gtk" for graphical
   # "none" for headless
-  QEMU_DISPLAY: '{{.QEMU_DISPLAY | default "gtk"}}'
+  QEMU_DISPLAY: '{{.QEMU_DISPLAY | default "none"}}'
 
   # /dev/vda  = virtio (QEMU default)
   # /dev/sda  = bare metal SATA / IDE
@@ -40,6 +40,18 @@ tasks:
     cmds:
       - rm -f {{.TEST_DISK}} {{.TEST_ISO}}
       - rm -f {{.DISK}}
+  manual-test:
+    desc: Install the ISO to a persistent disk and boot for manual SSH login
+    deps: [build]
+    env:
+      TEST_ISO: "{{.TEST_ISO}}"
+      TEST_DISK: "{{.TEST_DISK}}"
+      SSH_PORT: "{{.SSH_PORT}}"
+      SSH_USER: "{{.USER_NAME}}"
+      QEMU_DISPLAY: "gtk"
+    cmds:
+      - bash scripts/manual-test.sh
+
   test:
     desc: Run the automated install + first-boot bootstrap assertion suite
     deps: [clean, build]

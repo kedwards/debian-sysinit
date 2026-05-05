@@ -74,7 +74,11 @@ d-i preseed/late_command string \
     in-target chmod 700 /home/@@USER_NAME@@/.ssh; \
     in-target chmod 600 /home/@@USER_NAME@@/.ssh/authorized_keys; \
     in-target sh -c "printf '@@USER_NAME@@ ALL=(ALL) NOPASSWD:ALL\n' > /etc/sudoers.d/@@USER_NAME@@"; \
-    in-target chmod 0440 /etc/sudoers.d/@@USER_NAME@@
+    in-target chmod 0440 /etc/sudoers.d/@@USER_NAME@@; \
+    in-target mkdir -p /var/lib/cloud/seed/nocloud; \
+    in-target sh -c "printf 'instance-id: iid-sysinit\nlocal-hostname: debian\n' > /var/lib/cloud/seed/nocloud/meta-data"; \
+    in-target sh -c "printf '%s\n' '#cloud-config' 'runcmd:' '  - echo \"cloud-init first boot at \$(date -u)\" > /etc/motd' > /var/lib/cloud/seed/nocloud/user-data"; \
+    in-target sh -c "printf 'datasource_list: [NoCloud, None]\n' > /etc/cloud/cloud.cfg.d/99-sysinit.cfg"
 
 ### ---------- Finish ----------
 d-i finish-install/reboot_in_progress note
