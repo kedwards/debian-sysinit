@@ -1,6 +1,8 @@
 ---
 sysinit_debug: false
 sysinit_force_update: false
+sysinit_manage_systemd_resolved: true
+sysinit_systemd_resolved_stub_path: /run/systemd/resolve/stub-resolv.conf
 
 sysinit_packages:
   - gcc
