@@ -1,123 +1,174 @@
 # sysinit-iso
 
-Builds a custom Debian netinst ISO for unattended `sysinit` installs.
+Builds and tests Debian `sysinit` bootstrap media through two local workflows:
 
-The generated ISO starts from the current Debian `amd64` netinst image, injects a rendered preseed file into the installer initrd, and rewrites the BIOS and UEFI bootloader entries so the installer runs automatically.
+- a remastered Debian netinst ISO for unattended installer-based installs
+- a Debian generic cloud image overlay with a NoCloud seed ISO for first-boot bootstrap
+
+Both workflows are intended for local QEMU-based validation and rely on the same shared SSH/test helpers.
 
 ## What this repository contains
 
-- `Taskfile.yml` — convenience tasks for building, cleaning, and running the QEMU-based test flow
-- `preseed.cfg.tmpl` — the unattended Debian installer template
-- `scripts/build.sh` — downloads, verifies, modifies, and rebuilds the ISO
-- `scripts/test.sh` — boots the generated ISO in QEMU, completes an install, then verifies first boot over SSH
-- `scripts/lib/common.sh` — shared SSH key discovery and test helpers
+- `Taskfile.yml` — convenience tasks for ISO and cloud-image build/test flows
+- `preseed.cfg.tmpl` — the unattended Debian installer template used by the ISO flow
+- `seed/user-data` — cloud-init template used by the cloud-image flow
+- `scripts/build.sh` — downloads, verifies, modifies, and rebuilds the Debian installer ISO
+- `scripts/test.sh` — boots the generated ISO in QEMU and validates the installed system
+  plus first-boot cloud-init and `sysinit` bootstrap behavior
+- `scripts/build-image.sh` — downloads the Debian generic cloud image, generates a NoCloud seed ISO, and creates a QCOW2 overlay
+- `scripts/test-image.sh` — boots the cloud image in QEMU and validates the first-boot bootstrap path
+- `scripts/lib/common.sh` — shared SSH key discovery, cloud-init rendering, and QEMU helper functions
+- `scripts/lib/cloud-image-test.sh` — shared cloud-image test harness
 
-## What the generated installer does
+## What each workflow does
 
-By default, the custom ISO:
+### Installer ISO workflow
 
-- installs Debian 13 (Trixie) from the current netinst image
-- performs an unattended install using LVM on a target disk
-- creates a `devops` user with password `devops`
-- adds the user to `sudo` with passwordless sudo
-- installs `openssh-server`, `sudo`, `cloud-init`, and `qemu-guest-agent`
-- injects your SSH public key into the installed system
-- enables SSH and `qemu-guest-agent`
+The custom ISO:
+
+- starts from the current Debian 13 `amd64` netinst image
+- injects a rendered preseed file into the installer initrd
+- rewrites BIOS and UEFI boot entries so the installer runs automatically
+- installs Debian with LVM on the selected target disk
+- creates a `devops` user by default
+- installs `openssh-server`, `sudo`, `curl`, `git`, `gnupg`, `cloud-init`, and `qemu-guest-agent`
+- injects your SSH public key and enables SSH access
+- seeds local NoCloud data so cloud-init configures and starts `sysinit-bootstrap.service` on first boot
+
+### Cloud image workflow
+
+The cloud-image path:
+
+- downloads the current Debian 13 generic cloud image
+- verifies its SHA512 checksum
+- renders `seed/user-data` with your SSH key and chosen username
+- builds a NoCloud seed ISO with `cloud-localds`
+- creates a QCOW2 overlay backed by the downloaded Debian base image
+- boots the VM and runs a local `sysinit` cloud-init bootstrap on first boot
+- validates bootstrap completion, SSH access, sudo setup, Docker, systemd-resolved, and tool installation
 
 ## Prerequisites
 
-For builds:
+Common tools:
 
 - `bash`
 - `curl`
+- `ssh`
+- `qemu-system-x86_64`
+- `qemu-img`
 - `sha256sum`
+- `sha512sum`
+
+ISO workflow:
+
 - `python3`
 - `xorriso`
 - `cpio`
 - `gzip`
 - `dd`
 
-For tests:
+Cloud image workflow:
 
-- `qemu-system-x86_64`
-- `qemu-img`
-- `ssh`
-- KVM access is recommended for reasonable test speed
+- `cloud-localds`
 
 Optional:
 
 - `task` if you want to use `Taskfile.yml`
 - a local SSH public/private key pair in `~/.ssh/`, or a 1Password SSH agent
+- KVM access for faster QEMU runs
 
 ## SSH key handling
 
 The build and test scripts try to discover SSH credentials automatically:
 
-- public key: `SSH_PUBKEY` environment variable, then `~/.ssh/id_ed25519.pub`, then `~/.ssh/id_rsa.pub`, then the 1Password SSH agent
-- private key for tests: `~/.ssh/id_ed25519`, then `~/.ssh/id_rsa`, then the 1Password SSH agent
+- public key: `SSH_PUBKEY`, then `~/.ssh/id_ed25519.pub`, `~/.ssh/id_rsa.pub`, `~/.ssh/id_ecdsa.pub`, then the 1Password SSH agent
+- private key for tests: `~/.ssh/id_ed25519`, `~/.ssh/id_rsa`, `~/.ssh/id_ecdsa`, then the 1Password SSH agent
 
 If no usable SSH key is found, the build or test command exits with an error.
 
 ## Usage
 
-### Build the custom ISO
-
-Using Task:
+### Build the custom installer ISO
 
 ```bash path=null start=null
 task build
 ```
 
-Using the script directly:
+or:
 
 ```bash path=null start=null
 bash scripts/build.sh
 ```
 
-The build script will:
-
-1. download the current Debian `amd64` netinst ISO if it is not already cached in the repository root
-2. verify its SHA256 checksum
-3. render `preseed.cfg.tmpl` with your selected values
-4. inject the rendered preseed into the installer initrd
-5. rebuild the ISO as a new `*-sysinit.iso` artifact in the repository root
-
-### Run the automated test
-
-Using Task:
+### Test the installer ISO workflow
 
 ```bash path=null start=null
 task test
 ```
 
-Using the script directly:
+or:
 
 ```bash path=null start=null
 TEST_ISO=./debian-13.4.0-sysinit.iso bash scripts/test.sh
 ```
 
-The test flow:
+The ISO test flow now:
 
-1. creates a fresh qcow2 disk
-2. boots the generated ISO in QEMU
-3. waits for the unattended install to finish
-4. boots the installed disk
-5. connects over SSH and verifies the expected user, SSH, and sudo setup
+1. installs Debian from the custom ISO
+2. boots the installed disk
+3. waits for SSH
+4. waits for first-boot cloud-init to seed and start `sysinit-bootstrap.service`
+5. asserts bootstrap completion, Docker, `systemd-resolved`, `mise`, `chezmoi`, sudo, and service health
+
+### Build the cloud image overlay and seed ISO
+
+```bash path=null start=null
+task image:build
+```
+
+or:
+
+```bash path=null start=null
+bash scripts/build-image.sh
+```
+
+### Test the cloud image workflow
+
+```bash path=null start=null
+task image:test
+```
+
+or:
+
+```bash path=null start=null
+IMAGE=./debian-13-generic-sysinit.qcow2 SEED_ISO=./debian-13-generic-sysinit-seed.iso bash scripts/test-image.sh
+```
+
+### Manual cloud image boot and SSH
+
+```bash path=null start=null
+task image:run
+task image:ssh
+```
 
 ## Common configuration
 
 These environment variables are supported through `Taskfile.yml` and/or the scripts:
 
-- `USER_NAME` — install user name, default `devops`
-- `USER_PASSWORD` — install user password, default `devops`
+- `USER_NAME` — install/bootstrap user name, default `devops`
+- `USER_PASSWORD` — install user password for the ISO path, default `devops`
 - `SSH_PUBKEY` — explicit public key content to inject
-- `SSH_PORT` — forwarded host SSH port for tests, default `2222`
+- `SSH_PORT` — forwarded host SSH port, default `2222`
 - `QEMU_DISPLAY` — `gtk` or `none`
-- `KEEP_TEST_DISK` — set to `1` to preserve the qcow2 disk after tests
-- `DISK` / `INSTALL_DISK` — target install disk inside the guest, default `/dev/vda`
-- `OUTPUT_ISO` — output path for the generated ISO when calling `scripts/build.sh` directly
-- `TEST_ISO` — ISO path to boot when calling `scripts/test.sh` directly
-- `TEST_DISK` — qcow2 path to use during testing
+- `KEEP_TEST_DISK` — set to `1` to preserve the ISO qcow2 disk after tests
+- `DISK` / `INSTALL_DISK` — target install disk inside the ISO guest, default `/dev/vda`
+- `OUTPUT_ISO` — output path for `scripts/build.sh`
+- `TEST_ISO` — ISO path for `scripts/test.sh`
+- `TEST_DISK` — ISO test disk path for `scripts/test.sh`
+- `OUTPUT_IMAGE` — output cloud overlay path for `scripts/build-image.sh`
+- `OUTPUT_SEED` — output seed ISO path for `scripts/build-image.sh`
+- `IMAGE` — cloud image overlay path for `scripts/test-image.sh`
+- `SEED_ISO` — seed ISO path for `scripts/test-image.sh`
 
 Examples:
 
@@ -130,7 +181,7 @@ SSH_PORT=2223 QEMU_DISPLAY=none KEEP_TEST_DISK=1 task test
 ```
 
 ```bash path=null start=null
-DISK=/dev/nvme0n1 OUTPUT_ISO=./custom-sysinit.iso bash scripts/build.sh
+USER_NAME=alice OUTPUT_IMAGE=./custom-cloud.qcow2 OUTPUT_SEED=./custom-seed.iso bash scripts/build-image.sh
 ```
 
 ## Output artifacts
@@ -138,19 +189,23 @@ DISK=/dev/nvme0n1 OUTPUT_ISO=./custom-sysinit.iso bash scripts/build.sh
 Typical generated files in the repository root:
 
 - upstream Debian netinst ISO, for example `debian-13.4.0-amd64-netinst.iso`
-- custom ISO, for example `debian-13.4.0-sysinit.iso`
-- test disk image, for example `debian-13.4.0-sysinit.qcow2`
+- custom installer ISO, for example `debian-13.4.0-sysinit.iso`
+- installer test disk, for example `debian-13.4.0-sysinit.qcow2`
+- upstream Debian cloud image, `debian-13-generic-amd64.qcow2`
+- custom cloud overlay, `debian-13-generic-sysinit.qcow2`
+- NoCloud seed ISO, `debian-13-generic-sysinit-seed.iso`
 
 These artifacts are ignored by git.
 
 ## Notable implementation details
 
-- The preseed file is placed inside `install.amd/initrd.gz`, so it is available early in the installer boot process.
+- The ISO workflow injects the preseed file into `install.amd/initrd.gz`, so it is available early in the installer boot process.
 - Both `isolinux` and `grub` configs are rewritten, so the ISO works for BIOS and UEFI boots.
-- The original Debian ISO checksum is verified before any modification occurs.
-- The rebuilt ISO refreshes `md5sum.txt` before packing the final image.
+- The ISO workflow refreshes `md5sum.txt` before packing the final image.
+- The cloud-image workflow uses a QCOW2 overlay backed by the downloaded Debian base image, so repeated tests can start from a clean overlay without duplicating the base image.
+- Both workflows render the same cloud-init `user-data`, so the first-boot bootstrap behavior stays aligned between the ISO and cloud-image paths.
 
 ## Notes
 
 - The defaults are convenient for local testing, not hardened production installs.
-- Passwordless sudo and the default `devops/devops` credentials should be overridden for any real use.
+- Passwordless sudo and the default `devops` credentials should be overridden for any real use.

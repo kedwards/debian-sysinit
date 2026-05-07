@@ -21,6 +21,7 @@ ISOARCH="amd64"
 BASE_URL="https://cdimage.debian.org/debian-cd/current/$ISOARCH/iso-cd"
 SHA256_URL="$BASE_URL/SHA256SUMS"
 PRESEED_TEMPLATE="$PROJECT_DIR/preseed.cfg.tmpl"
+SEED_TEMPLATE="$PROJECT_DIR/seed/user-data"
 WORK_DIR="$(mktemp -d /tmp/debian-iso-build.XXXXXX)"
 ISO_EXTRACT="$WORK_DIR/iso"
 trap 'chmod -R +w "$WORK_DIR" 2>/dev/null; rm -rf "$WORK_DIR"' EXIT
@@ -78,6 +79,10 @@ create_preseed_config() {
       -e "s|@@USER_NAME@@|$USER_NAME|g" \
       -e "s|@@USER_PASSWORD@@|$USER_PASSWORD|g" \
       "$PRESEED_TEMPLATE" > "$WORK_DIR/preseed.cfg"
+
+  echo "Rendering NoCloud user-data ..."
+  render_cloud_init_user_data "$SEED_TEMPLATE" "$WORK_DIR/sysinit-user-data" "$USER_NAME" "$USER_PASSWORD" "$SSH_PUB_KEY"
+  cp "$WORK_DIR/sysinit-user-data" "$ISO_EXTRACT/sysinit-user-data"
 }
 
 # ---------------------------------------------------------------------------

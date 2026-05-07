@@ -1,0 +1,170 @@
+#cloud-config
+# Build-time substitutions:
+#   @@USERNAME@@           — Linux username created on first boot (default: devops)
+#   @@SSH_PUBKEY@@         — SSH public key for initial access before bootstrap runs
+#   @@USER_PASSWORD_HASH@@ — SHA-512 hash of USER_PASSWORD; enables console login
+
+users:
+  - name: @@USERNAME@@
+    groups: [sudo]
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    lock_passwd: false
+    passwd: @@USER_PASSWORD_HASH@@
+    ssh_authorized_keys:
+      - @@SSH_PUBKEY@@
+
+package_update: true
+
+packages:
+  - curl
+  - git
+  - gnupg
+  - sudo
+
+write_files:
+  - path: /etc/systemd/resolved.conf.d/99-qemu-dns.conf
+    permissions: "0644"
+    content: |
+      [Resolve]
+      DNS=10.0.2.3
+      FallbackDNS=1.1.1.1 8.8.8.8
+      Domains=~.
+  - path: /usr/local/lib/sysinit/bootstrap.sh
+    permissions: "0755"
+    content: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+      export DEBIAN_FRONTEND=noninteractive
+
+      USER_NAME="@@USERNAME@@"
+      USER_HOME="/home/${USER_NAME}"
+      BOOTSTRAP_ROOT="/opt/sysinit"
+      BOOTSTRAP_SENTINEL="${BOOTSTRAP_ROOT}/.bootstrapped"
+
+      log() {
+        printf '[sysinit-bootstrap] %s\n' "$*"
+      }
+
+      sudo mkdir -p "$BOOTSTRAP_ROOT"
+      sudo chown "$USER_NAME:$USER_NAME" "$BOOTSTRAP_ROOT"
+
+      log "Installing base packages"
+      sudo apt-get update
+      sudo apt-get install -y \
+        systemd-resolved \
+        ca-certificates \
+        curl \
+        dirmngr \
+        gcc \
+        git \
+        gnupg \
+        make \
+        meld \
+        postgresql-client \
+        rsync \
+        sudo \
+        unzip \
+        xclip \
+        xsel \
+        zip
+
+      log "Configuring systemd-resolved"
+      sudo mkdir -p /etc/systemd/resolved.conf.d
+      sudo ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+      sudo systemctl enable systemd-resolved
+      sudo systemctl restart systemd-resolved
+
+      log "Installing AWS Session Manager plugin"
+      if ! command -v session-manager-plugin >/dev/null 2>&1 && ! command -v sessionmanagerplugin >/dev/null 2>&1; then
+        tmp_deb="$(mktemp /tmp/session-manager-plugin.XXXXXX.deb)"
+        curl -fsSL -o "$tmp_deb" https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb
+        sudo dpkg -i "$tmp_deb"
+        rm -f "$tmp_deb"
+      fi
+
+      if command -v session-manager-plugin >/dev/null 2>&1 && ! command -v sessionmanagerplugin >/dev/null 2>&1; then
+        sudo ln -sf "$(command -v session-manager-plugin)" /usr/local/bin/sessionmanagerplugin
+      fi
+
+      log "Installing Docker"
+      if [[ ! -f /etc/apt/sources.list.d/docker.sources ]]; then
+        sudo install -m 0755 -d /etc/apt/keyrings
+        curl -fsSL https://download.docker.com/linux/debian/gpg | sudo tee /etc/apt/keyrings/docker.asc >/dev/null
+        sudo chmod a+r /etc/apt/keyrings/docker.asc
+        . /etc/os-release
+        cat <<EOF >/tmp/docker.sources
+      Types: deb
+      URIs: https://download.docker.com/linux/debian
+      Suites: ${VERSION_CODENAME}
+      Components: stable
+      Signed-By: /etc/apt/keyrings/docker.asc
+      EOF
+        sudo mv /tmp/docker.sources /etc/apt/sources.list.d/docker.sources
+      fi
+
+      sudo apt-get update
+      sudo apt-get install -y \
+        bash-completion \
+        containerd.io \
+        docker-buildx-plugin \
+        docker-ce \
+        docker-ce-cli \
+        docker-compose-plugin
+      sudo groupadd -f docker
+      sudo usermod -aG docker "$USER_NAME"
+      sudo systemctl enable docker
+      sudo systemctl start docker
+
+      log "Installing mise"
+      if [[ ! -x "$USER_HOME/.local/bin/mise" ]]; then
+        tmp_dir="$(mktemp -d /tmp/mise-install.XXXXXX)"
+        mkdir -p "$USER_HOME/.local/bin"
+        gpg --batch --keyserver hkps://keyserver.ubuntu.com --recv-keys 0x7413A06D
+        curl -fsSL https://mise.jdx.dev/install.sh.sig | gpg --decrypt >"$tmp_dir/mise-install.sh"
+        chmod +x "$tmp_dir/mise-install.sh"
+        MISE_INSTALL_PATH="$USER_HOME/.local/bin/mise" sh "$tmp_dir/mise-install.sh"
+        rm -rf "$tmp_dir"
+      fi
+
+      log "Installing uv and chezmoi"
+      env PATH="$USER_HOME/.local/bin:$PATH" "$USER_HOME/.local/bin/mise" use --global --yes uv chezmoi
+
+      log "Completing bootstrap"
+      mkdir -p "$BOOTSTRAP_ROOT"
+      touch "$BOOTSTRAP_SENTINEL"
+  - path: /etc/systemd/system/sysinit-bootstrap.service
+    permissions: "0644"
+    content: |
+      [Unit]
+      Description=Sysinit Bootstrap
+      After=network-online.target nss-lookup.target
+      Wants=network-online.target nss-lookup.target
+      ConditionPathExists=!/opt/sysinit/.bootstrapped
+
+      [Service]
+      Type=oneshot
+      RemainAfterExit=yes
+      User=@@USERNAME@@
+      Group=@@USERNAME@@
+      Environment=HOME=/home/@@USERNAME@@
+      WorkingDirectory=/home/@@USERNAME@@
+      ExecStart=/usr/local/lib/sysinit/bootstrap.sh
+      Restart=on-failure
+      RestartSec=15
+      StartLimitIntervalSec=600
+      StartLimitBurst=10
+      StandardOutput=journal
+      StandardError=journal
+
+      [Install]
+      WantedBy=multi-user.target
+
+runcmd:
+  - mkdir -p /opt
+  - chown @@USERNAME@@:@@USERNAME@@ /opt
+  - mkdir -p /etc/systemd/resolved.conf.d
+  - systemctl restart systemd-resolved
+  - systemctl daemon-reload
+  - systemctl enable sysinit-bootstrap.service
+  - systemctl start sysinit-bootstrap.service

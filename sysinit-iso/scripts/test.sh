@@ -16,6 +16,7 @@ QEMU_DISPLAY="${QEMU_DISPLAY:-none}"
 
 INSTALL_TIMEOUT="${INSTALL_TIMEOUT:-300}"
 BOOT_TIMEOUT="${BOOT_TIMEOUT:-60}"
+BOOTSTRAP_TIMEOUT="${BOOTSTRAP_TIMEOUT:-1800}"
 
 # If TEST_DISK is not set, create a temp disk and remove it on exit
 REMOVE_TEST_DISK_ON_EXIT=0
@@ -209,14 +210,49 @@ boot_installed_disk() {
 }
 
 # ---------------------------------------------------------------------------
+wait_for_bootstrap() {
+  echo "Waiting for sysinit bootstrap service (up to ${BOOTSTRAP_TIMEOUT}s) ..."
+  local elapsed=0
+  while ! ssh_cmd "test -f /opt/sysinit/.bootstrapped"; do
+    if ssh_cmd "systemctl is-failed sysinit-bootstrap.service" 2>/dev/null; then
+      echo ""
+      echo "ERROR: sysinit-bootstrap.service failed:"
+      ssh_cmd "journalctl -u sysinit-bootstrap --no-pager -n 50" || true
+      exit 1
+    fi
+    sleep 15
+    elapsed=$((elapsed + 15))
+    printf "\r  ...%ss elapsed" "$elapsed"
+    if [[ $elapsed -ge $BOOTSTRAP_TIMEOUT ]]; then
+      echo ""
+      echo "ERROR: Timed out after ${BOOTSTRAP_TIMEOUT}s waiting for bootstrap"
+      ssh_cmd "journalctl -u sysinit-bootstrap --no-pager -n 50" || true
+      exit 1
+    fi
+  done
+  echo ""
+  echo "  Bootstrap complete after ${elapsed}s"
+}
+
+# ---------------------------------------------------------------------------
 run_assertions() {
   echo "Running assertions ..."
-
-  assert       "$SSH_USER has NOPASSWD sudo"  "sudo -n true"
-  assert       "authorized_keys present"      "test -s \$HOME/.ssh/authorized_keys"
-  assert_output "home directory owner"        "$SSH_USER"  "stat -c %U \$HOME"
-  assert       "cloud-init completed"         "cloud-init status --wait"
-  assert       "cloud-init MOTD written"      "grep -q 'cloud-init first boot' /etc/motd"
+  assert       "cloud-init completed"                "cloud-init status --wait"
+  assert       "bootstrap sentinel exists"           "test -f /opt/sysinit/.bootstrapped"
+  assert       "bootstrap script installed"          "test -x /usr/local/lib/sysinit/bootstrap.sh"
+  assert       "mise installed"                      "test -x \$HOME/.local/bin/mise"
+  assert       "chezmoi installed"                   "bash -lc 'CHEZMOI_PATH=\"\$(\"\$HOME\"/.local/bin/mise which chezmoi 2>/dev/null)\" && test -n \"\$CHEZMOI_PATH\" && test -x \"\$CHEZMOI_PATH\"'"
+  assert       "systemd-resolved active"             "systemctl is-active systemd-resolved"
+  assert       "AWS SSM installed"                   "command -v session-manager-plugin >/dev/null 2>&1 || command -v sessionmanagerplugin >/dev/null 2>&1"
+  assert       "docker installed"                    "command -v docker >/dev/null 2>&1"
+  assert       "docker service active"               "systemctl is-active docker"
+  assert       "$SSH_USER is in docker group"        "id -nG | grep -qw docker"
+  assert       "$SSH_USER has NOPASSWD sudo"         "sudo -n true"
+  assert       "authorized_keys present"             "test -s \$HOME/.ssh/authorized_keys"
+  assert_output "home directory owner"               "$SSH_USER" "stat -c %U \$HOME"
+  assert       "bootstrap service active/exited"     "systemctl is-active sysinit-bootstrap.service"
+  assert       "bootstrap service not failed"        "! systemctl is-failed sysinit-bootstrap.service"
+  assert       "/opt/sysinit owned by $SSH_USER"     "[ \"\$(stat -c %U /opt/sysinit)\" = $SSH_USER ]"
 
   echo ""
   echo "Results: ${PASS} passed, ${FAIL} failed"
@@ -236,4 +272,5 @@ preflight_checks
 setup_ssh_test_auth
 run_installer
 boot_installed_disk
+wait_for_bootstrap
 run_assertions

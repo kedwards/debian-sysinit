@@ -7,6 +7,9 @@ vars:
   TEST_ISO: '{{.ISO | replace "amd64-netinst" "sysinit"}}'
   TEST_DISK: '{{.ISO | replace "amd64-netinst" "sysinit" | replace ".iso" ".qcow2"}}'
   KEEP_TEST_DISK: '{{.KEEP_TEST_DISK | default "0"}}'
+  CLOUD_BASE_IMAGE: debian-13-generic-amd64.qcow2
+  CLOUD_IMAGE: debian-13-generic-sysinit.qcow2
+  CLOUD_SEED_ISO: debian-13-generic-sysinit-seed.iso
 
   # Default user credentials
   USER_NAME: '{{.USER_NAME | default "devops"}}'
@@ -36,10 +39,10 @@ tasks:
       - bash scripts/build.sh
 
   clean:
-    desc: Remove the disk image and extracted installer files
+    desc: Remove generated ISO, image, and local test disk artifacts
     cmds:
-      - rm -f {{.TEST_DISK}} {{.TEST_ISO}}
-      - rm -f {{.DISK}}
+      - rm -f {{.TEST_DISK}} {{.TEST_ISO}} {{.CLOUD_IMAGE}} {{.CLOUD_SEED_ISO}}
+
   manual-test:
     desc: Install the ISO to a persistent disk and boot for manual SSH login
     deps: [build]
@@ -53,7 +56,7 @@ tasks:
       - bash scripts/manual-test.sh
 
   test:
-    desc: Run the automated install + first-boot bootstrap assertion suite
+    desc: Run the automated installer ISO test suite
     deps: [clean, build]
     env:
       TEST_ISO: "{{.TEST_ISO}}"
@@ -64,3 +67,52 @@ tasks:
       KEEP_TEST_DISK: "{{.KEEP_TEST_DISK}}"
     cmds:
       - bash scripts/test.sh
+
+  image:build:
+    desc: Build the Debian cloud image overlay and NoCloud seed ISO
+    run: always
+    env:
+      USER_NAME: "{{.USER_NAME}}"
+      USER_PASSWORD: "{{.USER_PASSWORD}}"
+      OUTPUT_IMAGE: "{{.CLOUD_IMAGE}}"
+      OUTPUT_SEED: "{{.CLOUD_SEED_ISO}}"
+    cmds:
+      - bash scripts/build-image.sh
+
+  image:test:
+    desc: Run the automated cloud image bootstrap test suite
+    deps: [image:build]
+    env:
+      IMAGE: "{{.CLOUD_IMAGE}}"
+      SEED_ISO: "{{.CLOUD_SEED_ISO}}"
+      SSH_PORT: "{{.SSH_PORT}}"
+      SSH_USER: "{{.USER_NAME}}"
+      QEMU_DISPLAY: "{{.QEMU_DISPLAY}}"
+      BUILD_HINT: "task image:build"
+    cmds:
+      - bash scripts/test-image.sh
+
+  image:run:
+    desc: Boot the cloud image manually with SSH forwarding
+    deps: [image:build]
+    env:
+      IMAGE: "{{.CLOUD_IMAGE}}"
+      SEED_ISO: "{{.CLOUD_SEED_ISO}}"
+      SSH_PORT: "{{.SSH_PORT}}"
+    cmds:
+      - >-
+        qemu-system-x86_64
+        -enable-kvm
+        -m 2048
+        -smp 2
+        -drive file="{{.CLOUD_IMAGE}}",format=qcow2,if=virtio
+        -drive file="{{.CLOUD_SEED_ISO}}",media=cdrom,readonly=on
+        -netdev user,id=net0,hostfwd=tcp::{{.SSH_PORT}}-:22
+        -device e1000,netdev=net0
+        -device virtio-rng-pci
+        -display gtk
+
+  image:ssh:
+    desc: SSH into the running cloud image VM
+    cmds:
+      - ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p {{.SSH_PORT}} {{.USER_NAME}}@localhost

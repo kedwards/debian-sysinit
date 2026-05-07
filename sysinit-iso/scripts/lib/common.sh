@@ -3,7 +3,7 @@ resolve_ssh_pubkey() {
 
   if [[ -z "$ssh_pubkey" ]]; then
     local keyfile
-    for keyfile in ~/.ssh/id_ed25519.pub ~/.ssh/id_rsa.pub; do
+    for keyfile in ~/.ssh/id_ed25519.pub ~/.ssh/id_rsa.pub ~/.ssh/id_ecdsa.pub; do
       [[ -f "$keyfile" ]] && ssh_pubkey="$(cat "$keyfile")" && break
     done
   fi
@@ -31,7 +31,7 @@ setup_ssh_test_auth() {
   SSH_AUTH_SOCK_OVERRIDE=""
 
   local keyfile
-  for keyfile in ~/.ssh/id_ed25519 ~/.ssh/id_rsa; do
+  for keyfile in ~/.ssh/id_ed25519 ~/.ssh/id_rsa ~/.ssh/id_ecdsa; do
     [[ -f "$keyfile" ]] && SSH_KEY="$keyfile" && break
   done
 
@@ -45,6 +45,11 @@ setup_ssh_test_auth() {
   fi
 }
 
+set_kvm_args() {
+  KVM_ARGS=()
+  [[ -w /dev/kvm ]] && KVM_ARGS=(-enable-kvm)
+}
+
 render_cloud_init_user_data() {
   local template_path="$1"
   local output_path="$2"
@@ -52,9 +57,13 @@ render_cloud_init_user_data() {
   local user_password="$4"
   local ssh_pubkey="$5"
 
+  local hashed_password
+  hashed_password="$(openssl passwd -6 "$user_password")"
+
   sed -e "s|@@USERNAME@@|$username|g" \
       -e "s|@@SSH_PUBKEY@@|$ssh_pubkey|g" \
       -e "s|@@USER_PASSWORD@@|$user_password|g" \
+      -e "s|@@USER_PASSWORD_HASH@@|$hashed_password|g" \
       "$template_path" > "$output_path"
 }
 
