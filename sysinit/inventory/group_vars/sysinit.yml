@@ -1,0 +1,2 @@
+---
+sysinit_var: group_vars/sysinit.yml

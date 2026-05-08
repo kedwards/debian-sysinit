@@ -1,0 +1,165 @@
+---
+- name: Docker - Install on (Debian/Ubuntu)
+  when: ansible_facts['distribution'] == 'Debian' or ansible_facts['distribution'] == 'Ubuntu'
+  block:
+    - name: Ensure required packages exist
+      ansible.builtin.apt:
+        pkg:
+          - ca-certificates
+          - curl
+          - gnupg
+        state: present
+        update_cache: true
+
+    - name: Ensure keyring directory exists
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: "0755"
+
+    - name: Download Docker GPG key (no dearmor)
+      ansible.builtin.get_url:
+        url: "https://download.docker.com/linux/{{ ansible_facts['distribution'] | lower }}/gpg"
+        dest: /etc/apt/keyrings/docker.asc
+        mode: "0644"
+
+    - name: Detect distro
+      ansible.builtin.command: bash -c '. /etc/os-release && echo ${UBUNTU_CODENAME:-$VERSION_CODENAME}'
+      register: distro_codename
+      changed_when: false
+
+    - name: Add docker.sources file (Debian/Ubuntu)
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/docker.sources
+        mode: "0644"
+        content: |
+          Types: deb
+          URIs: https://download.docker.com/linux/{{ ansible_facts['distribution'] | lower }}
+          Suites: {{ distro_codename.stdout }}
+          Components: stable
+          Signed-By: /etc/apt/keyrings/docker.asc
+
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+
+    - name: Install Docker packages
+      ansible.builtin.apt:
+        pkg:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+          - bash-completion
+
+- name: Docker - Install on (Fedora/CentOS)
+  when: ansible_facts['distribution'] == 'Fedora' or ansible_facts['distribution'] == 'CentOS'
+  block:
+    - name: Ensure dnf plugins installed
+      ansible.builtin.dnf:
+        name: dnf-plugins-core
+        state: present
+
+    - name: Add Docker CE repo
+      ansible.builtin.yum_repository:
+        name: docker-ce
+        description: Docker CE Repository
+        baseurl: "https://download.docker.com/linux/fedora/$releasever/$basearch/stable"
+        enabled: true
+        gpgcheck: true
+        gpgkey: https://download.docker.com/linux/fedora/gpg
+
+    - name: Install Docker packages
+      ansible.builtin.dnf:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd
+          - docker-compose-plugin
+          - docker-buildx-plugin
+          - bash-completion
+        state: present
+
+- name: Docker - Install on (Arch Linux)
+  when: ansible_facts['distribution'] == 'Archlinux'
+  block:
+    - name: Install Docker packages
+      community.general.pacman:
+        name:
+          - docker
+          - docker-compose
+          - docker-buildx
+          - bash-completion
+        state: present
+      become: true
+
+- name: Docker - Add docker group
+  ansible.builtin.group:
+    name: docker
+    state: present
+  become: true
+
+- name: Docker - Configure user
+  ansible.builtin.user:
+    name: "{{ sysinit_user }}"
+    groups: docker
+    append: true
+  become: true
+  register: docker_user_added
+- name: Docker - Flush handlers to ensure docker group is activated
+  ansible.builtin.meta: flush_handlers
+
+- name: Docker - Flush handlers to ensure docker group is activated
+  ansible.builtin.meta: flush_handlers
+
+- name: Docker - Check running kernel modules directory
+  ansible.builtin.stat:
+    path: "/lib/modules/{{ ansible_kernel }}"
+  register: docker_kernel_modules_dir
+
+- name: Docker - Fail clearly when reboot is required before Docker start
+  ansible.builtin.fail:
+    msg: >-
+      Docker cannot be started because the running kernel {{ ansible_kernel }}
+      does not have a matching modules directory at /lib/modules/{{ ansible_kernel }}.
+      A kernel package was likely upgraded during bootstrap, so reboot before retrying Docker startup.
+  when:
+    - ansible_facts['service_mgr'] == 'systemd'
+    - not docker_kernel_modules_dir.stat.exists
+
+- name: Docker - Enable and start Docker service
+  when: ansible_facts['service_mgr'] == 'systemd'
+  ansible.builtin.systemd:
+    name: docker
+    enabled: true
+    state: started
+    daemon_reload: true
+  become: true
+
+- name: Docker - Activate group membership without logout
+  ansible.builtin.command: newgrp docker
+  become: false
+  become_user: "{{ sysinit_user }}"
+  when: docker_user_added.changed
+  changed_when: false
+  failed_when: false
+
+- name: Docker - Install docker bash completion
+  block:
+    - name: Fetch completion content
+      ansible.builtin.uri:
+        url: https://raw.githubusercontent.com/docker/docker-ce/master/components/cli/contrib/completion/bash/docker
+        return_content: true
+      register: docker_completion_content
+
+    - name: Compute SHA256
+      ansible.builtin.set_fact:
+        docker_completion_sha256: "{{ docker_completion_content.content | hash('sha256') }}"
+
+    - name: Install docker.sh completion file
+      ansible.builtin.get_url:
+        url: https://raw.githubusercontent.com/docker/docker-ce/master/components/cli/contrib/completion/bash/docker
+        dest: /etc/bash_completion.d/docker.sh
+        mode: "0755"
+        checksum: "sha256:{{ docker_completion_sha256 }}"

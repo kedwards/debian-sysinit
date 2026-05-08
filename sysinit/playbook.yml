@@ -1,0 +1,10 @@
+---
+- name: System Initialization
+  hosts: "{{ host | default('localhost') }}"
+  become: true
+  gather_facts: true
+  vars:
+    upgrade: false
+    sysinit_var: system_initialization
+  roles:
+    - sysinit

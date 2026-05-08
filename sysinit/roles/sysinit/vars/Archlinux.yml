@@ -1,0 +1,16 @@
+---
+sysinit_distro_packages:
+  - postgresql
+
+sysinit_tools:
+  - aws-ssm
+  - docker
+  - slack
+  - warp
+
+sysinit_tool_packages:
+  mkcert:
+    - nss
+  docker:
+    - docker
+    - docker-compose

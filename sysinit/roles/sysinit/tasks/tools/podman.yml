@@ -1,0 +1,116 @@
+---
+- name: Podman - Install on (Debian/Ubuntu)
+  when: ansible_facts['distribution'] == 'Debian' or ansible_facts['distribution'] == 'Ubuntu'
+  block:
+    - name: Ensure required packages exist
+      ansible.builtin.apt:
+        pkg:
+          - ca-certificates
+          - curl
+          - gnupg
+        state: present
+        update_cache: true
+
+    - name: Ensure keyring directory exists
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: "0755"
+
+    - name: Download Podman GPG key
+      ansible.builtin.get_url:
+        url: "https://download.opensuse.org/repositories/devel:/kubic:/libpod:/unstable/xUbuntu_{{ ansible_facts['distribution_version'] }}/Release.key"
+        dest: /etc/apt/keyrings/podman.asc
+        mode: "0644"
+
+    - name: Add Podman repository (Debian/Ubuntu)
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/podman.sources
+        mode: "0644"
+        content: |
+          Types: deb
+          URIs: https://download.opensuse.org/repositories/devel:/kubic:/libpod:/unstable/xUbuntu_{{ ansible_facts['distribution_version'] }}
+          Suites: /
+          Signed-By: /etc/apt/keyrings/podman.asc
+
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+
+    - name: Install Podman packages
+      ansible.builtin.apt:
+        pkg:
+          - podman
+          - podman-compose
+          - buildah
+          - skopeo
+          - bash-completion
+
+- name: Podman - Install on (Fedora/CentOS)
+  when: ansible_facts['distribution'] == 'Fedora' or ansible_facts['distribution'] == 'CentOS'
+  block:
+    - name: Install Podman packages
+      ansible.builtin.dnf:
+        name:
+          - podman
+          - podman-compose
+          - buildah
+          - skopeo
+          - bash-completion
+        state: present
+
+- name: Podman - Install on (Arch Linux)
+  when: ansible_facts['distribution'] == 'Archlinux'
+  block:
+    - name: Update pacman database
+      community.general.pacman:
+        update_cache: true
+      become: true
+
+    - name: Install Podman packages
+      community.general.pacman:
+        name:
+          - podman
+          - podman-compose
+          - buildah
+          - skopeo
+          - bash-completion
+        state: present
+      become: true
+
+- name: Podman - Configure user for rootless containers
+  ansible.builtin.user:
+    name: "{{ sysinit_user }}"
+    append: true
+  become: true
+
+- name: Podman - Enable and start Podman socket (systemd)
+  when: ansible_facts['service_mgr'] == 'systemd'
+  ansible.builtin.systemd:
+    name: podman.socket
+    enabled: true
+    state: started
+    scope: user
+  become: true
+  become_user: "{{ sysinit_user }}"
+
+- name: Podman - Install podman bash completion
+  block:
+    - name: Ensure bash completion directory exists
+      ansible.builtin.file:
+        path: /etc/bash_completion.d
+        state: directory
+        mode: "0755"
+      become: true
+
+    - name: Generate podman completion
+      ansible.builtin.shell: podman completion bash > /etc/bash_completion.d/podman.sh
+      args:
+        creates: /etc/bash_completion.d/podman.sh
+      become: true
+
+    - name: Set podman completion permissions
+      ansible.builtin.file:
+        path: /etc/bash_completion.d/podman.sh
+        mode: "0755"
+      become: true

@@ -1,0 +1,68 @@
+---
+- name: Postman - Set installation path
+  ansible.builtin.set_fact:
+    postman_install_path: "{{ sysinit_user_home }}/.local"
+
+- name: Postman - Set binary path
+  ansible.builtin.set_fact:
+    postman_bin: "{{ sysinit_local_bin }}/postman"
+
+- name: Postman - Check if already exists
+  ansible.builtin.stat:
+    path: "{{ postman_install_path }}/Postman"
+  register: postman_exists_result
+
+- name: Postman - Download and extract archive
+  ansible.builtin.unarchive:
+    src: https://dl.pstmn.io/download/latest/linux64
+    dest: "{{ postman_install_path }}"
+    creates: "{{ postman_install_path }}/Postman"
+    remote_src: true
+    owner: "{{ sysinit_user }}"
+    group: "{{ sysinit_user }}"
+  become: true
+  become_user: "{{ sysinit_user }}"
+  when: not postman_exists_result.stat.exists or upgrade | default(false)
+
+- name: Postman - Create symlink to binary
+  ansible.builtin.file:
+    src: "{{ postman_install_path }}/Postman/Postman"
+    dest: "{{ postman_bin }}"
+    state: link
+    owner: "{{ sysinit_user }}"
+    group: "{{ sysinit_user }}"
+  become: true
+  become_user: "{{ sysinit_user }}"
+
+- name: Postman - Add execute permission to binary
+  ansible.builtin.file:
+    path: "{{ postman_bin }}"
+    mode: u+x
+  become: true
+  become_user: "{{ sysinit_user }}"
+
+- name: Postman - Create desktop entry
+  ansible.builtin.copy:
+    content: |
+      [Desktop Entry]
+      Version=1.0
+      Type=Application
+      Name=Postman
+      Comment=API Development Environment
+      Exec={{ postman_bin }}
+      Icon={{ postman_install_path }}/Postman/app/resources/app/assets/icon.png
+      Terminal=false
+      Categories=Development;WebDevelopment;
+      StartupWMClass=Postman
+      MimeType=x-scheme-handler/postman;
+    dest: "{{ sysinit_applications_dir }}/postman.desktop"
+    mode: "0644"
+    owner: root
+    group: root
+  become: true
+
+- name: Postman - Update desktop database
+  ansible.builtin.command:
+    cmd: "update-desktop-database {{ sysinit_applications_dir }}"
+  become: true
+  changed_when: false

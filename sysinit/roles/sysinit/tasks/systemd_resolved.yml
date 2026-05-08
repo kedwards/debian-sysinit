@@ -1,0 +1,35 @@
+---
+- name: Ensure systemd-resolved is installed
+  ansible.builtin.package:
+    name: systemd-resolved
+    state: present
+  become: true
+  when: ansible_facts['distribution'] in ['Debian', 'Ubuntu']
+  register: systemd_resolved_package_result
+
+- name: Ensure systemd-resolved is enabled and started
+  ansible.builtin.systemd:
+    name: systemd-resolved
+    enabled: true
+    state: started
+  become: true
+  when: ansible_facts['distribution'] in ['Debian', 'Ubuntu']
+
+- name: Ensure /etc/resolv.conf points to the systemd-resolved stub
+  ansible.builtin.file:
+    src: "{{ sysinit_systemd_resolved_stub_path }}"
+    dest: /etc/resolv.conf
+    state: link
+    force: true
+  become: true
+  when: ansible_facts['distribution'] in ['Debian', 'Ubuntu']
+
+- name: Restart systemd-resolved after initial install
+  ansible.builtin.systemd:
+    name: systemd-resolved
+    state: restarted
+  become: true
+  when:
+    - ansible_facts['distribution'] in ['Debian', 'Ubuntu']
+    - systemd_resolved_package_result is defined
+    - systemd_resolved_package_result.changed
