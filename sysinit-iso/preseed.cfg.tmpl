@@ -1,0 +1,89 @@
+### =========================
+### Debian 13 (Trixie) FAST PRESEED
+### =========================
+
+### ---------- Localization ----------
+d-i debian-installer/locale string en_US.UTF-8
+d-i keyboard-configuration/xkb-keymap select us
+
+### ---------- Network ----------
+d-i netcfg/choose_interface select auto
+d-i netcfg/get_hostname string debian
+d-i netcfg/get_domain string local
+d-i netcfg/disable_dhcp boolean false
+
+### ---------- Mirror ----------
+d-i mirror/country string manual
+d-i mirror/http/hostname string deb.debian.org
+d-i mirror/http/directory string /debian
+d-i mirror/suite string trixie
+d-i mirror/http/proxy string
+d-i apt-setup/use_mirror boolean true
+d-i apt-setup/no_mirror boolean false
+d-i apt-setup/cdrom/set-first boolean false
+d-i apt-setup/disable-cdrom-entries boolean true
+
+### ---------- Time ----------
+d-i clock-setup/utc boolean true
+d-i time/zone string UTC
+d-i clock-setup/ntp boolean true
+
+### ---------- Partitioning ----------
+d-i partman-auto/disk string @@DISK@@
+d-i partman-auto/method string lvm
+d-i partman-auto-lvm/guided_size string max
+d-i partman-auto/choose_recipe select atomic
+d-i partman-lvm/confirm boolean true
+d-i partman-lvm/confirm_nooverwrite boolean true
+d-i partman/confirm boolean true
+d-i partman/confirm_nooverwrite boolean true
+d-i partman/choose_partition select finish
+
+### ---------- Users ----------
+d-i passwd/root-login boolean false
+d-i passwd/user-fullname string @@USER_NAME@@
+d-i passwd/username string @@USER_NAME@@
+d-i passwd/user-password password @@USER_PASSWORD@@
+d-i passwd/user-password-again password @@USER_PASSWORD@@
+d-i passwd/user-default-groups string sudo
+
+### ---------- Packages ----------
+tasksel tasksel/first multiselect standard
+
+d-i pkgsel/include string \
+  openssh-server \
+  sudo \
+  curl \
+  git \
+  gnupg \
+  cloud-init \
+  qemu-guest-agent
+
+d-i pkgsel/upgrade select none
+popularity-contest popularity-contest/participate boolean false
+
+### ---------- Bootloader ----------
+d-i grub-installer/only_debian boolean true
+d-i grub-installer/bootdev string @@DISK@@
+
+### ---------- Late commands ----------
+d-i preseed/late_command string \
+    in-target sed -i '/cdrom/d' /etc/apt/sources.list; \
+    in-target systemctl enable ssh; \
+    in-target systemctl enable qemu-guest-agent; \
+    in-target mkdir -p /opt; \
+    in-target chown @@USER_NAME@@:@@USER_NAME@@ /opt; \
+    in-target mkdir -p /home/@@USER_NAME@@/.ssh; \
+    in-target sh -c "printf '%s\n' '@@SSH_PUB_KEY@@' > /home/@@USER_NAME@@/.ssh/authorized_keys"; \
+    in-target chown -R @@USER_NAME@@:@@USER_NAME@@ /home/@@USER_NAME@@/.ssh; \
+    in-target chmod 700 /home/@@USER_NAME@@/.ssh; \
+    in-target chmod 600 /home/@@USER_NAME@@/.ssh/authorized_keys; \
+    in-target sh -c "printf '@@USER_NAME@@ ALL=(ALL) NOPASSWD:ALL\n' > /etc/sudoers.d/@@USER_NAME@@"; \
+    in-target chmod 0440 /etc/sudoers.d/@@USER_NAME@@; \
+    in-target mkdir -p /var/lib/cloud/seed/nocloud; \
+    in-target sh -c "printf 'instance-id: iid-sysinit\nlocal-hostname: debian\n' > /var/lib/cloud/seed/nocloud/meta-data"; \
+    cp /cdrom/sysinit-user-data /target/var/lib/cloud/seed/nocloud/user-data; \
+    in-target sh -c "printf 'datasource_list: [NoCloud, None]\n' > /etc/cloud/cloud.cfg.d/99-sysinit.cfg"
+
+### ---------- Finish ----------
+d-i finish-install/reboot_in_progress note
