@@ -17,6 +17,10 @@ vars:
   SSH_PORT: '{{.SSH_PORT | default "2222"}}'
   SSH_PUB_KEY: '{{.SSH_PUB_KEY | default ""}}'
 
+  # wifi
+  WIFI_SSID: '{{.WIFI_SSID | default ""}}'
+  WiFI_PASSWORD: '{{.WIFI_PASSWORD | default ""}}'
+
   # Display mode for QEMU
   # "gtk" for graphical
   # "none" for headless
@@ -35,6 +39,8 @@ tasks:
       DISK: "{{.INSTALL_DISK}}"
       USER_NAME: "{{.USER_NAME}}"
       USER_PASSWORD: "{{.USER_PASSWORD}}"
+      WIFI_SSID: "{{.WIFI_SSID}}"
+      WiFI_PASSWORD: "{{.WIFI_PASSWORD}}"
     cmds:
       - bash scripts/build.sh
 

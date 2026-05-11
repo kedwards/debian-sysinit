@@ -1,5 +1,5 @@
 ### =========================
-### Debian 13 (Trixie) FAST PRESEED
+### Debian 13
 ### =========================
 
 ### ---------- Localization ----------
@@ -11,6 +11,8 @@ d-i netcfg/choose_interface select auto
 d-i netcfg/get_hostname string debian
 d-i netcfg/get_domain string local
 d-i netcfg/disable_dhcp boolean false
+
+@@WIFI_CONFIG@@
 
 ### ---------- Mirror ----------
 d-i mirror/country string manual

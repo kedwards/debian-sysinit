@@ -74,11 +74,32 @@ extract_iso() {
 # ---------------------------------------------------------------------------
 create_preseed_config() {
   echo "Rendering preseed template ..."
+
+  # Build optional WiFi block — set WIFI_SSID + WIFI_PASSWORD to enable
+  local wifi_tmp="$WORK_DIR/wifi.cfg"
+  if [[ -n "${WIFI_SSID:-}" && -n "${WIFI_PASSWORD:-}" ]]; then
+    {
+      printf '### ---------- Wifi ----------\n'
+      printf 'd-i\tnetcfg/choose_interface\tselect %s\n' "${WIFI_INTERFACE:-wlp0s20f3}"
+      printf 'd-i\tnetcfg/get_domain\tstring %s\n'      "${WIFI_DOMAIN:-local}"
+      printf 'd-i\tnetcfg/get_hostname\tstring %s\n'    "${WIFI_HOSTNAME:-debian}"
+      printf 'd-i\tnetcfg/wireless_security_type\tselect wpa\n'
+      printf 'd-i\tnetcfg/wireless_show_essids\tselect %s\n' "$WIFI_SSID"
+      printf 'd-i\tnetcfg/wireless_wpa\tstring %s\n'   "$WIFI_PASSWORD"
+    } > "$wifi_tmp"
+  else
+    touch "$wifi_tmp"
+  fi
+
   sed -e "s|@@DISK@@|$DISK|g" \
       -e "s|@@SSH_PUB_KEY@@|$SSH_PUB_KEY|g" \
       -e "s|@@USER_NAME@@|$USER_NAME|g" \
       -e "s|@@USER_PASSWORD@@|$USER_PASSWORD|g" \
-      "$PRESEED_TEMPLATE" > "$WORK_DIR/preseed.cfg"
+      "$PRESEED_TEMPLATE" \
+    | awk -v wifi="$wifi_tmp" '
+        /@@WIFI_CONFIG@@/ { while ((getline ln < wifi) > 0) print ln; next }
+        { print }
+      ' > "$WORK_DIR/preseed.cfg"
 
   echo "Rendering NoCloud user-data ..."
   render_cloud_init_user_data "$SEED_TEMPLATE" "$WORK_DIR/sysinit-user-data" "$USER_NAME" "$USER_PASSWORD" "$SSH_PUB_KEY"
