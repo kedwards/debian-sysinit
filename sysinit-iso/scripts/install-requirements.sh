@@ -8,6 +8,7 @@ fi
 
 APT_PACKAGES=(
   bash
+  cloud-image-utils
   coreutils
   cpio
   curl

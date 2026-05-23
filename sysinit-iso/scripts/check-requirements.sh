@@ -15,6 +15,7 @@ check_cmd() {
 
 REQUIRED_CMDS=(
   bash
+  cloud-localds
   curl
   ssh
   qemu-system-x86_64
