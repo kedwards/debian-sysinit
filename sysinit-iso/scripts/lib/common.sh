@@ -76,3 +76,31 @@ instance-id: iid-$(date +%s)
 local-hostname: $hostname
 EOF
 }
+
+resolve_debian_netinst_iso() {
+  local isoarch="amd64"
+  local base_url="https://cdimage.debian.org/debian-cd/current/$isoarch/iso-cd"
+  local sha256_url="$base_url/SHA256SUMS"
+
+  local checksum_content
+  checksum_content="$(curl -fsSL --connect-timeout 5 --max-time 30 "$sha256_url" 2>/dev/null || true)"
+  [[ -z "$checksum_content" ]] && { echo "ERROR: Failed to fetch SHA256SUMS from $sha256_url" >&2; return 1; }
+
+  local iso_file expected_sha
+  iso_file="$(awk '!/edu/ && !/mac/ && /netinst/ { print $2; exit }' <<<"$checksum_content")"
+  [[ -z "$iso_file" ]] && { echo "ERROR: Could not determine ISO filename from $sha256_url" >&2; return 1; }
+
+  expected_sha="$(awk -v name="$iso_file" '$2 == name { print $1; exit }' <<<"$checksum_content")"
+
+  echo "$iso_file|$expected_sha"
+}
+
+resolve_sysinit_iso() {
+  local project_dir="$1"
+  local iso_info
+  iso_info="$(resolve_debian_netinst_iso)" || return 1
+
+  local iso_file="${iso_info%|*}"
+  local sysinit_iso="${iso_file/-amd64-netinst/-sysinit}"
+  echo "$project_dir/$sysinit_iso"
+}

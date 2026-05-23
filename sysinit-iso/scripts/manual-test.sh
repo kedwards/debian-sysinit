@@ -2,6 +2,9 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+# shellcheck source=scripts/lib/common.sh
+source "$SCRIPT_DIR/lib/common.sh"
 
 ISO="${TEST_ISO:-}"
 SSH_PORT="${SSH_PORT:-2222}"
@@ -27,7 +30,17 @@ preflight_checks() {
   for cmd in qemu-system-x86_64 qemu-img; do
     command -v "$cmd" &>/dev/null || { echo "ERROR: $cmd not found"; exit 1; }
   done
+
+  if [[ -z "$ISO" ]]; then
+    ISO="$(resolve_sysinit_iso "$PROJECT_DIR")" || { echo "ERROR: Failed to determine sysinit ISO name"; exit 1; }
+  fi
+
   [[ -n "$ISO" && -f "$ISO" ]] || { echo "ERROR: ISO not found — run 'task build' first"; exit 1; }
+
+  if [[ -z "$TEST_DISK" ]]; then
+    TEST_DISK="${ISO/.iso/.qcow2}"
+  fi
+
   [[ -n "$TEST_DISK" ]] || { echo "ERROR: TEST_DISK not set"; exit 1; }
 }
 

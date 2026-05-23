@@ -19,7 +19,6 @@ DISK="${DISK:-/dev/vda}"
 # Debian netinstall
 ISOARCH="amd64"
 BASE_URL="https://cdimage.debian.org/debian-cd/current/$ISOARCH/iso-cd"
-SHA256_URL="$BASE_URL/SHA256SUMS"
 PRESEED_TEMPLATE="$PROJECT_DIR/preseed.cfg.tmpl"
 SEED_TEMPLATE="$PROJECT_DIR/seed/user-data"
 WORK_DIR="$(mktemp -d /tmp/debian-iso-build.XXXXXX)"
@@ -36,11 +35,11 @@ preflight_checks() {
 
 # ---------------------------------------------------------------------------
 download_and_verify_iso() {
-  CHECKSUM_CONTENT="$(curl -fsSL --connect-timeout 5 --max-time 30 "$SHA256_URL" 2>/dev/null || true)"
-  [[ -z "$CHECKSUM_CONTENT" ]] && { echo "ERROR: Failed to fetch SHA256SUMS from $SHA256_URL"; exit 1; }
+  local iso_info
+  iso_info="$(resolve_debian_netinst_iso)" || exit 1
 
-  ISO_FILE="$(awk '!/edu/ && !/mac/ && /netinst/ { print $2; exit }' <<<"$CHECKSUM_CONTENT")"
-  EXPECTED_SHA="$(awk -v name="$ISO_FILE" '$2 == name { print $1; exit }' <<<"$CHECKSUM_CONTENT")"
+  ISO_FILE="${iso_info%|*}"
+  EXPECTED_SHA="${iso_info#*|}"
   ISO_DOWNLOAD="$PROJECT_DIR/$ISO_FILE"
   OUTPUT_ISO="${OUTPUT_ISO:-$PROJECT_DIR/${ISO_FILE/-amd64-netinst/-sysinit}}"
 

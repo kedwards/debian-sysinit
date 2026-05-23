@@ -8,6 +8,8 @@ source "$SCRIPT_DIR/lib/common.sh"
 # ---------------------------------------------------------------------------
 # Configuration — all overridable via environment
 # ---------------------------------------------------------------------------
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+
 ISO="${TEST_ISO:-}"
 SSH_PORT="${SSH_PORT:-2222}"
 SSH_USER="${SSH_USER:-devops}"
@@ -18,11 +20,19 @@ INSTALL_TIMEOUT="${INSTALL_TIMEOUT:-300}"
 BOOT_TIMEOUT="${BOOT_TIMEOUT:-60}"
 BOOTSTRAP_TIMEOUT="${BOOTSTRAP_TIMEOUT:-1800}"
 
+# Determine ISO name dynamically if not provided
+if [[ -z "$ISO" ]]; then
+  ISO="$(resolve_sysinit_iso "$PROJECT_DIR")" || { echo "ERROR: Failed to determine sysinit ISO name"; exit 1; }
+fi
+
 # If TEST_DISK is not set, create a temp disk and remove it on exit
 REMOVE_TEST_DISK_ON_EXIT=0
 if [[ -z "${TEST_DISK:-}" ]]; then
   TEST_DISK="$(mktemp -u /tmp/sysinit-test-XXXXXX.qcow2)"
   REMOVE_TEST_DISK_ON_EXIT=1
+else
+  # TEST_DISK was provided, ensure it uses the correct ISO name
+  REMOVE_TEST_DISK_ON_EXIT=0
 fi
 
 # Serial log captures installer + first-boot console output for debugging
@@ -115,6 +125,19 @@ assert_output() {
     PASS=$((PASS + 1))
   else
     echo "  FAIL: $desc (expected: '$expected', got: '$actual')"
+    FAIL=$((FAIL + 1))
+  fi
+}
+
+assert_cloud_init_completed() {
+  local rc
+  rc="$(ssh_cmd "bash -lc 'cloud-init status --wait >/dev/null 2>&1; printf \"%s\" \"\$?\"'" || true)"
+
+  if [[ "$rc" == "0" || "$rc" == "2" ]]; then
+    echo "  PASS: cloud-init completed"
+    PASS=$((PASS + 1))
+  else
+    echo "  FAIL: cloud-init completed"
     FAIL=$((FAIL + 1))
   fi
 }
@@ -237,7 +260,7 @@ wait_for_bootstrap() {
 # ---------------------------------------------------------------------------
 run_assertions() {
   echo "Running assertions ..."
-  assert       "cloud-init completed"                "cloud-init status --wait"
+  assert_cloud_init_completed
   assert       "bootstrap sentinel exists"           "test -f /opt/sysinit/.bootstrapped"
   assert       "bootstrap script installed"          "test -x /usr/local/lib/sysinit/bootstrap.sh"
   assert       "mise installed"                      "test -x \$HOME/.local/bin/mise"

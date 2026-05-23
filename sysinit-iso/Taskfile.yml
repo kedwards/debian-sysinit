@@ -2,10 +2,6 @@
 version: "3"
 
 vars:
-  # ISO image for the installer
-  ISO: debian-13.4.0-amd64-netinst.iso
-  TEST_ISO: '{{.ISO | replace "amd64-netinst" "sysinit"}}'
-  TEST_DISK: '{{.ISO | replace "amd64-netinst" "sysinit" | replace ".iso" ".qcow2"}}'
   KEEP_TEST_DISK: '{{.KEEP_TEST_DISK | default "0"}}'
   CLOUD_BASE_IMAGE: debian-13-generic-amd64.qcow2
   CLOUD_IMAGE: debian-13-generic-sysinit.qcow2
@@ -32,6 +28,16 @@ vars:
   INSTALL_DISK: /dev/vda
 
 tasks:
+  doctor:
+    desc: Verify host tools required for ISO build and test workflows are installed
+    cmds:
+      - bash scripts/check-requirements.sh
+
+  deps:install:
+    desc: Install host packages required for ISO build and test workflows
+    cmds:
+      - bash scripts/install-requirements.sh
+
   build:
     desc: Build the custom installer ISO
     run: always
@@ -47,14 +53,12 @@ tasks:
   clean:
     desc: Remove generated ISO, image, and local test disk artifacts
     cmds:
-      - rm -f {{.TEST_DISK}} {{.TEST_ISO}} {{.CLOUD_IMAGE}} {{.CLOUD_SEED_ISO}}
+      - rm -f debian-*-sysinit.iso debian-*-sysinit.qcow2 {{.CLOUD_IMAGE}} {{.CLOUD_SEED_ISO}}
 
   manual-test:
     desc: Install the ISO to a persistent disk and boot for manual SSH login
     deps: [build]
     env:
-      TEST_ISO: "{{.TEST_ISO}}"
-      TEST_DISK: "{{.TEST_DISK}}"
       SSH_PORT: "{{.SSH_PORT}}"
       SSH_USER: "{{.USER_NAME}}"
       QEMU_DISPLAY: "gtk"
@@ -65,8 +69,6 @@ tasks:
     desc: Run the automated installer ISO test suite
     deps: [clean, build]
     env:
-      TEST_ISO: "{{.TEST_ISO}}"
-      TEST_DISK: "{{.TEST_DISK}}"
       SSH_PORT: "{{.SSH_PORT}}"
       SSH_USER: "{{.USER_NAME}}"
       QEMU_DISPLAY: "{{.QEMU_DISPLAY}}"
