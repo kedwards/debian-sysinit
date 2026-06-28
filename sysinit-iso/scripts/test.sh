@@ -11,6 +11,7 @@ source "$SCRIPT_DIR/lib/common.sh"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
 ISO="${TEST_ISO:-}"
+SSH_HOST="${SSH_HOST:-127.0.0.1}"
 SSH_PORT="${SSH_PORT:-2222}"
 SSH_USER="${SSH_USER:-devops}"
 KEEP_TEST_DISK="${KEEP_TEST_DISK:-0}"
@@ -80,6 +81,7 @@ preflight_checks() {
 # ---------------------------------------------------------------------------
 ssh_cmd() {
   local ssh_args=(
+    -F /dev/null
     -o StrictHostKeyChecking=no
     -o UserKnownHostsFile=/dev/null
     -o ConnectTimeout=5
@@ -90,9 +92,9 @@ ssh_cmd() {
 
   # shellcheck disable=SC2029
   if [[ -n "$SSH_AUTH_SOCK_OVERRIDE" ]]; then
-    SSH_AUTH_SOCK="$SSH_AUTH_SOCK_OVERRIDE" ssh "${ssh_args[@]}" "${SSH_USER}@localhost" "$@" 2>/dev/null
+    SSH_AUTH_SOCK="$SSH_AUTH_SOCK_OVERRIDE" ssh "${ssh_args[@]}" "${SSH_USER}@${SSH_HOST}" "$@" 2>/dev/null
   else
-    ssh "${ssh_args[@]}" "${SSH_USER}@localhost" "$@" 2>/dev/null
+    ssh "${ssh_args[@]}" "${SSH_USER}@${SSH_HOST}" "$@" 2>/dev/null
   fi
 }
 
@@ -131,13 +133,13 @@ assert_output() {
 
 assert_cloud_init_completed() {
   local rc
-  rc="$(ssh_cmd "bash -lc 'cloud-init status --wait >/dev/null 2>&1; printf \"%s\" \"\$?\"'" || true)"
+  rc="$(ssh_cmd "cloud-init status --wait >/dev/null 2>&1; printf '%s' \$?" || true)"
 
   if [[ "$rc" == "0" || "$rc" == "2" ]]; then
     echo "  PASS: cloud-init completed"
     PASS=$((PASS + 1))
   else
-    echo "  FAIL: cloud-init completed"
+    echo "  FAIL: cloud-init completed (rc=${rc:-<empty>})"
     FAIL=$((FAIL + 1))
   fi
 }
@@ -159,7 +161,7 @@ run_installer() {
     -smp 2 \
     -drive "file=$ISO,media=cdrom,readonly=on" \
     -drive "file=$TEST_DISK,format=qcow2,if=virtio" \
-    -netdev "user,id=net0,hostfwd=tcp::${SSH_PORT}-:22" \
+    -netdev "user,id=net0,hostfwd=tcp:${SSH_HOST}:${SSH_PORT}-:22" \
     -device e1000,netdev=net0 \
     -device virtio-rng-pci \
     -serial "file:$SERIAL_LOG" \
@@ -199,7 +201,7 @@ boot_installed_disk() {
     -m 2048 \
     -smp 2 \
     -drive "file=$TEST_DISK,format=qcow2,if=virtio" \
-    -netdev "user,id=net0,hostfwd=tcp::${SSH_PORT}-:22" \
+    -netdev "user,id=net0,hostfwd=tcp:${SSH_HOST}:${SSH_PORT}-:22" \
     -device e1000,netdev=net0 \
     -device virtio-rng-pci \
     -serial "file:$SERIAL_LOG" \

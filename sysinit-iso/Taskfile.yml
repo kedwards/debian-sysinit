@@ -10,6 +10,7 @@ vars:
   # Default user credentials
   USER_NAME: '{{.USER_NAME | default "devops"}}'
   USER_PASSWORD: '{{.USER_PASSWORD | default "devops"}}'
+  SSH_HOST: '{{.SSH_HOST | default "127.0.0.1"}}'
   SSH_PORT: '{{.SSH_PORT | default "2222"}}'
   SSH_PUB_KEY: '{{.SSH_PUB_KEY | default ""}}'
 
@@ -28,27 +29,135 @@ vars:
   INSTALL_DISK: /dev/vda
 
 tasks:
-  doctor:
-    desc: Verify host tools required for ISO build and test workflows are installed
-    cmds:
-      - bash scripts/check-requirements.sh
+  # host:doctor:
+  #   desc: Wrapper for docker:doctor
+  #   cmds:
+  #     - task scripts/check-requirements.sh
 
-  deps:install:
-    desc: Install host packages required for ISO build and test workflows
-    cmds:
-      - bash scripts/install-requirements.sh
+  # host:deps:install:
+  #   desc: Install host packages required for ISO build and test workflows
+  #   cmds:
+  #     - bash scripts/install-requirements.sh
 
-  build:
-    desc: Build the custom installer ISO
-    run: always
+  # doctor:
+  #   desc: Verify containerized tools required for ISO build and test workflows
+  #   deps: [sysinit-builder]
+  #   cmds:
+  #     - HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose run --rm sysinit-iso bash scripts/check-requirements.sh
+
+  # build:
+  #   desc: Wrapper for docker:iso:build
+  #   env:
+  #     DISK: "{{.INSTALL_DISK}}"
+  #     USER_NAME: "{{.USER_NAME}}"
+  #     USER_PASSWORD: "{{.USER_PASSWORD}}"
+  #     WIFI_SSID: "{{.WIFI_SSID}}"
+  #     WiFI_PASSWORD: "{{.WIFI_PASSWORD}}"
+  #   cmds:
+  #     - task docker:iso:build
+
+  # test:
+  #   desc: Wrapper for docker:iso:test
+  #   env:
+  #     SSH_PORT: "{{.SSH_PORT}}"
+  #     SSH_USER: "{{.USER_NAME}}"
+  #     QEMU_DISPLAY: "{{.QEMU_DISPLAY}}"
+  #     KEEP_TEST_DISK: "{{.KEEP_TEST_DISK}}"
+  #   cmds:
+  #     - task docker:iso:test
+
+  # image:build:
+  #   desc: Wrapper for docker:cloud:build
+  #   env:
+  #     USER_NAME: "{{.USER_NAME}}"
+  #     USER_PASSWORD: "{{.USER_PASSWORD}}"
+  #     OUTPUT_IMAGE: "{{.CLOUD_IMAGE}}"
+  #     OUTPUT_SEED: "{{.CLOUD_SEED_ISO}}"
+  #   cmds:
+  #     - task docker:cloud:build
+
+  # image:test:
+  #   desc: Wrapper for docker:cloud:test
+  #   env:
+  #     IMAGE: "{{.CLOUD_IMAGE}}"
+  #     SEED_ISO: "{{.CLOUD_SEED_ISO}}"
+  #     SSH_HOST: "{{.SSH_HOST}}"
+  #     SSH_PORT: "{{.SSH_PORT}}"
+  #     SSH_USER: "{{.USER_NAME}}"
+  #     QEMU_DISPLAY: "{{.QEMU_DISPLAY}}"
+  #   cmds:
+  #     - task docker:cloud:test
+
+  sysinit-builder:
+    desc: Build the workspace container image used for sysinit-iso workflows
+    sources:
+      - Dockerfile
+      - compose.yml
+      - .dockerignore
+    status:
+      - docker image inspect sysinit-iso-sysinit-iso:latest >/dev/null 2>&1
+    cmds:
+      - docker compose build sysinit-iso
+
+  shell:
+    desc: Open an interactive bash shell inside the workspace container
+    deps: [sysinit-builder]
+    cmds:
+      - HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose run --rm sysinit-iso bash
+
+  iso:build:
+    desc: Build the custom installer ISO inside the workspace container
+    deps: [sysinit-builder]
+    status:
+      - ls debian-*-sysinit.iso >/dev/null 2>&1
     env:
       DISK: "{{.INSTALL_DISK}}"
       USER_NAME: "{{.USER_NAME}}"
       USER_PASSWORD: "{{.USER_PASSWORD}}"
       WIFI_SSID: "{{.WIFI_SSID}}"
-      WiFI_PASSWORD: "{{.WIFI_PASSWORD}}"
+      WIFI_PASSWORD: "{{.WiFI_PASSWORD}}"
     cmds:
-      - bash scripts/build.sh
+      - HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose run --rm sysinit-iso bash scripts/build.sh
+
+  iso:test:
+    desc: Run the automated installer ISO test suite inside the workspace container
+    deps: [iso:build]
+    env:
+      BOOT_TIMEOUT: "180"
+      SSH_HOST: "127.0.0.1"
+      SSH_PORT: "{{.SSH_PORT}}"
+      SSH_USER: "{{.USER_NAME}}"
+      QEMU_DISPLAY: "{{.QEMU_DISPLAY}}"
+      KEEP_TEST_DISK: "{{.KEEP_TEST_DISK}}"
+    cmds:
+      - HOST_UID=$(id -u) HOST_GID=$(id -g) KVM_GID=$(stat -c %g /dev/kvm) docker compose run --rm sysinit-iso bash scripts/test.sh
+
+  cloud:build:
+    desc: Build the Debian cloud image overlay and NoCloud seed ISO inside the workspace container
+    deps: [sysinit-builder]
+    status:
+      - test -f {{.CLOUD_IMAGE}}
+      - test -f {{.CLOUD_SEED_ISO}}
+    env:
+      USER_NAME: "{{.USER_NAME}}"
+      USER_PASSWORD: "{{.USER_PASSWORD}}"
+      OUTPUT_IMAGE: "{{.CLOUD_IMAGE}}"
+      OUTPUT_SEED: "{{.CLOUD_SEED_ISO}}"
+    cmds:
+      - HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose run --rm sysinit-iso bash scripts/build-image.sh
+
+  cloud:test:
+    desc: Run the automated cloud image bootstrap test suite inside the workspace container
+    deps: [cloud:build]
+    env:
+      SSH_HOST: "127.0.0.1"
+      IMAGE: "{{.CLOUD_IMAGE}}"
+      SEED_ISO: "{{.CLOUD_SEED_ISO}}"
+      SSH_PORT: "{{.SSH_PORT}}"
+      SSH_USER: "{{.USER_NAME}}"
+      QEMU_DISPLAY: "{{.QEMU_DISPLAY}}"
+    cmds:
+      - HOST_UID=$(id -u) HOST_GID=$(id -g) KVM_GID=$(stat -c %g /dev/kvm) docker compose run --rm sysinit-iso bash scripts/test-image.sh
 
   clean:
     desc: Remove generated ISO, image, and local test disk artifacts
@@ -57,55 +166,20 @@ tasks:
 
   manual-test:
     desc: Install the ISO to a persistent disk and boot for manual SSH login
-    deps: [build]
+    deps: [iso:build]
     env:
       SSH_PORT: "{{.SSH_PORT}}"
       SSH_USER: "{{.USER_NAME}}"
       QEMU_DISPLAY: "gtk"
     cmds:
       - bash scripts/manual-test.sh
-
-  test:
-    desc: Run the automated installer ISO test suite
-    deps: [clean, build]
-    env:
-      SSH_PORT: "{{.SSH_PORT}}"
-      SSH_USER: "{{.USER_NAME}}"
-      QEMU_DISPLAY: "{{.QEMU_DISPLAY}}"
-      KEEP_TEST_DISK: "{{.KEEP_TEST_DISK}}"
-    cmds:
-      - bash scripts/test.sh
-
-  image:build:
-    desc: Build the Debian cloud image overlay and NoCloud seed ISO
-    run: always
-    env:
-      USER_NAME: "{{.USER_NAME}}"
-      USER_PASSWORD: "{{.USER_PASSWORD}}"
-      OUTPUT_IMAGE: "{{.CLOUD_IMAGE}}"
-      OUTPUT_SEED: "{{.CLOUD_SEED_ISO}}"
-    cmds:
-      - bash scripts/build-image.sh
-
-  image:test:
-    desc: Run the automated cloud image bootstrap test suite
-    deps: [image:build]
-    env:
-      IMAGE: "{{.CLOUD_IMAGE}}"
-      SEED_ISO: "{{.CLOUD_SEED_ISO}}"
-      SSH_PORT: "{{.SSH_PORT}}"
-      SSH_USER: "{{.USER_NAME}}"
-      QEMU_DISPLAY: "{{.QEMU_DISPLAY}}"
-      BUILD_HINT: "task image:build"
-    cmds:
-      - bash scripts/test-image.sh
-
   image:run:
     desc: Boot the cloud image manually with SSH forwarding
     deps: [image:build]
     env:
       IMAGE: "{{.CLOUD_IMAGE}}"
       SEED_ISO: "{{.CLOUD_SEED_ISO}}"
+      SSH_HOST: "{{.SSH_HOST}}"
       SSH_PORT: "{{.SSH_PORT}}"
     cmds:
       - >-
@@ -115,12 +189,14 @@ tasks:
         -smp 2
         -drive file="{{.CLOUD_IMAGE}}",format=qcow2,if=virtio
         -drive file="{{.CLOUD_SEED_ISO}}",media=cdrom,readonly=on
-        -netdev user,id=net0,hostfwd=tcp::{{.SSH_PORT}}-:22
+        -netdev user,id=net0,hostfwd=tcp:{{.SSH_HOST}}:{{.SSH_PORT}}-:22
         -device e1000,netdev=net0
         -device virtio-rng-pci
         -display gtk
 
   image:ssh:
     desc: SSH into the running cloud image VM
+    env:
+      SSH_HOST: "{{.SSH_HOST}}"
     cmds:
-      - ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p {{.SSH_PORT}} {{.USER_NAME}}@localhost
+      - ssh -F /dev/null -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p {{.SSH_PORT}} {{.USER_NAME}}@{{.SSH_HOST}}

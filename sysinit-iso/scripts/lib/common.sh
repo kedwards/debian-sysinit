@@ -7,6 +7,9 @@ resolve_ssh_pubkey() {
       [[ -f "$keyfile" ]] && ssh_pubkey="$(cat "$keyfile")" && break
     done
   fi
+  if [[ -z "$ssh_pubkey" && -n "${SSH_AUTH_SOCK:-}" && -S "${SSH_AUTH_SOCK}" ]]; then
+    ssh_pubkey="$(ssh-add -L 2>/dev/null | head -1)"
+  fi
 
   if [[ -z "$ssh_pubkey" && -S "${HOME}/.1password/agent.sock" ]]; then
     ssh_pubkey="$(SSH_AUTH_SOCK="${HOME}/.1password/agent.sock" ssh-add -L 2>/dev/null | head -1)"
@@ -34,6 +37,9 @@ setup_ssh_test_auth() {
   for keyfile in ~/.ssh/id_ed25519 ~/.ssh/id_rsa ~/.ssh/id_ecdsa; do
     [[ -f "$keyfile" ]] && SSH_KEY="$keyfile" && break
   done
+  if [[ -z "$SSH_KEY" && -n "${SSH_AUTH_SOCK:-}" && -S "${SSH_AUTH_SOCK}" ]]; then
+    SSH_AUTH_SOCK_OVERRIDE="${SSH_AUTH_SOCK}"
+  fi
 
   if [[ -z "$SSH_KEY" && -S "${HOME}/.1password/agent.sock" ]]; then
     SSH_AUTH_SOCK_OVERRIDE="${HOME}/.1password/agent.sock"

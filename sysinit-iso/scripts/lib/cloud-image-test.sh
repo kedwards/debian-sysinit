@@ -7,6 +7,7 @@ source "$SCRIPT_DIR/common.sh"
 TEST_IMAGE="${TEST_IMAGE:-$(mktemp -u /tmp/sysinit-test-XXXXXX.qcow2)}"
 SERIAL_LOG="${SERIAL_LOG:-$(mktemp /tmp/sysinit-serial-XXXXXX.log)}"
 QEMU_PID=""
+SSH_HOST="${SSH_HOST:-127.0.0.1}"
 SSH_KEY=""
 SSH_AUTH_SOCK_OVERRIDE=""
 PASS=0
@@ -17,6 +18,7 @@ fail() { echo "  FAIL: $1"; FAIL=$((FAIL + 1)); }
 
 ssh_cmd() {
   local ssh_args=(
+    -F /dev/null
     -o StrictHostKeyChecking=no
     -o UserKnownHostsFile=/dev/null
     -o ConnectTimeout=5
@@ -26,9 +28,9 @@ ssh_cmd() {
   [[ -n "$SSH_KEY" ]] && ssh_args+=(-i "$SSH_KEY")
 
   if [[ -n "$SSH_AUTH_SOCK_OVERRIDE" ]]; then
-    SSH_AUTH_SOCK="$SSH_AUTH_SOCK_OVERRIDE" ssh "${ssh_args[@]}" "$SSH_USER@localhost" "$@" 2>/dev/null
+    SSH_AUTH_SOCK="$SSH_AUTH_SOCK_OVERRIDE" ssh "${ssh_args[@]}" "$SSH_USER@$SSH_HOST" "$@" 2>/dev/null
   else
-    ssh "${ssh_args[@]}" "$SSH_USER@localhost" "$@" 2>/dev/null
+    ssh "${ssh_args[@]}" "$SSH_USER@$SSH_HOST" "$@" 2>/dev/null
   fi
 }
 
@@ -59,7 +61,21 @@ require_cloud_image_test_prereqs() {
 }
 
 resolve_backing_file() {
-  qemu-img info "$IMAGE" | sed -n 's/^backing file: //p' | sed 's/ (actual path:.*)//' | head -1
+  local backing_file
+  backing_file="$(qemu-img info "$IMAGE" | sed -n 's/^backing file: //p' | sed 's/ (actual path:.*)//' | head -1)"
+
+  python3 - "$IMAGE" "$backing_file" <<'PY'
+import os
+import sys
+
+image_path = sys.argv[1]
+backing_file = sys.argv[2]
+
+if os.path.isabs(backing_file):
+    print(backing_file)
+else:
+    print(os.path.abspath(os.path.join(os.path.dirname(image_path), backing_file)))
+PY
 }
 
 wait_for_ssh() {
@@ -172,7 +188,7 @@ run_cloud_image_test() {
     -smp 2 \
     -drive "file=$TEST_IMAGE,format=qcow2,if=virtio" \
     -drive "file=$SEED_ISO,media=cdrom,readonly=on" \
-    -netdev "user,id=net0,hostfwd=tcp::${SSH_PORT}-:22" \
+    -netdev "user,id=net0,hostfwd=tcp:${SSH_HOST}:${SSH_PORT}-:22" \
     -device e1000,netdev=net0 \
     -device virtio-rng-pci \
     -display "$QEMU_DISPLAY" \

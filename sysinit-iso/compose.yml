@@ -1,0 +1,45 @@
+services:
+  sysinit-iso:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    network_mode: host
+    user: ${HOST_UID:-1000}:${HOST_GID:-1000}
+    working_dir: /workspace
+    environment:
+      BOOTSTRAP_TIMEOUT: ${BOOTSTRAP_TIMEOUT:-}
+      BOOT_TIMEOUT: ${BOOT_TIMEOUT:-}
+      CLOUDINIT_TIMEOUT: ${CLOUDINIT_TIMEOUT:-}
+      HOME: /tmp/sysinit-home
+      DISK: ${DISK:-/dev/vda}
+      IMAGE: ${IMAGE:-}
+      INSTALL_TIMEOUT: ${INSTALL_TIMEOUT:-}
+      KEEP_TEST_DISK: ${KEEP_TEST_DISK:-0}
+      OUTPUT_IMAGE: ${OUTPUT_IMAGE:-}
+      OUTPUT_ISO: ${OUTPUT_ISO:-}
+      OUTPUT_SEED: ${OUTPUT_SEED:-}
+      QEMU_DISPLAY: ${QEMU_DISPLAY:-none}
+      SEED_ISO: ${SEED_ISO:-}
+      SSH_HOST: ${SSH_HOST:-}
+      SSH_AUTH_SOCK: /tmp/sysinit-home/ssh-agent.sock
+      SSH_PORT: ${SSH_PORT:-2222}
+      SSH_PUBKEY: ${SSH_PUBKEY:-}
+      SSH_USER: ${SSH_USER:-}
+      TEST_DISK: ${TEST_DISK:-}
+      TEST_ISO: ${TEST_ISO:-}
+      USER_NAME: ${USER_NAME:-devops}
+      USER_PASSWORD: ${USER_PASSWORD:-devops}
+      WIFI_PASSWORD: ${WIFI_PASSWORD:-}
+      WIFI_SSID: ${WIFI_SSID:-}
+    volumes:
+      - .:/workspace
+      - ${HOME}/.ssh:/tmp/sysinit-home/.ssh:ro
+      - ${SSH_AUTH_SOCK:-/dev/null}:/tmp/sysinit-home/ssh-agent.sock
+      - ${HOME}/.1password:/tmp/sysinit-home/.1password
+    devices:
+      - /dev/kvm:/dev/kvm
+    group_add:
+      - ${KVM_GID:-993}
+    stdin_open: true
+    tty: true
+    command: bash

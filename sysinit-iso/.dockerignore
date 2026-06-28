@@ -1,0 +1,7 @@
+.git
+.task
+preseed.cfg
+vmlinuz
+initrd.gz
+*.iso
+*.qcow2

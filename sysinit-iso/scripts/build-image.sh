@@ -60,6 +60,8 @@ create_seed_iso() {
   local meta_data="$WORK_DIR/meta-data"
   local ssh_pubkey
 
+  mkdir -p "$(dirname "$OUTPUT_SEED")"
+
   ssh_pubkey="$(resolve_ssh_pubkey)"
   [[ -n "$ssh_pubkey" ]] || { echo "ERROR: No SSH public key found (checked ~/.ssh/ and 1Password agent)"; exit 1; }
 
@@ -72,8 +74,14 @@ create_seed_iso() {
 
 create_overlay_image() {
   echo "[4/4] Creating QCOW2 overlay (20G)..."
+  mkdir -p "$(dirname "$OUTPUT_IMAGE")"
   rm -f "$OUTPUT_IMAGE"
-  qemu-img create -f qcow2 -F qcow2 -b "$DEBIAN_IMAGE_CACHED" "$OUTPUT_IMAGE" 20G
+
+  local output_dir backing_file
+  output_dir="$(dirname "$OUTPUT_IMAGE")"
+  backing_file="$(python3 -c 'import os,sys; print(os.path.relpath(sys.argv[1], sys.argv[2]))' "$DEBIAN_IMAGE_CACHED" "$output_dir")"
+
+  qemu-img create -f qcow2 -F qcow2 -b "$backing_file" "$OUTPUT_IMAGE" 20G
 }
 
 preflight_checks
