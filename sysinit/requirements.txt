@@ -1,4 +1,0 @@
-ansible==13.0.0
-ansible-core==2.20.0
-detect-secrets==1.5.0
-github3.py==4.0.1
