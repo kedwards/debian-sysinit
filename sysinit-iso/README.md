@@ -22,12 +22,30 @@ Both workflows are intended for local QEMU-based validation and rely on the same
 
 ## What each workflow does
 
+### Boot menu / network options
+
+The custom ISO presents a boot menu with these entries:
+
+- **Automated Install (Ethernet)** — default, auto-selected after a short timeout.
+  Fully unattended over wired DHCP. This is what the automated test uses.
+- **Automated Install (enter WiFi)** — non-default. The installer prompts for the
+  network interface, nearby SSID, and WPA passphrase, then continues unattended for
+  everything else. Use this when you don't know the WiFi params at build time.
+- **Automated Install (baked WiFi)** — only present when you set `WIFI_SSID` and
+  `WIFI_PASSWORD` at build time; those credentials are baked into this entry so the
+  install runs fully unattended over WiFi.
+
+WiFi requires the wireless firmware to be present in the installer. Current Debian 13
+netinst images bundle `non-free-firmware` (including `firmware-iwlwifi`), so Intel
+adapters appear automatically; if a base image ever ships without it, the WiFi entries
+won't find the adapter.
+
 ### Installer ISO workflow
 
 The custom ISO:
 
 - starts from the current Debian 13 `amd64` netinst image
-- injects a rendered preseed file into the installer initrd
+- injects rendered preseed files into the installer initrd
 - rewrites BIOS and UEFI boot entries so the installer runs automatically
 - installs Debian with LVM on the selected target disk
 - creates a `devops` user by default
@@ -158,6 +176,11 @@ These environment variables are supported through `Taskfile.yml` and/or the scri
 - `USER_NAME` — install/bootstrap user name, default `devops`
 - `USER_PASSWORD` — install user password for the ISO path, default `devops`
 - `SSH_PUBKEY` — explicit public key content to inject
+- `WIFI_SSID` / `WIFI_PASSWORD` — set both to add a non-default "baked WiFi" boot
+  entry with these credentials baked in; leave unset to omit that entry (the
+  interactive "enter WiFi" entry is always available regardless)
+- `WIFI_INTERFACE` / `WIFI_HOSTNAME` / `WIFI_DOMAIN` — optional overrides for the
+  baked "home WiFi" entry, default `wlp0s20f3` / `debian` / `local`
 - `SSH_PORT` — forwarded host SSH port, default `2222`
 - `QEMU_DISPLAY` — `gtk` or `none`
 - `KEEP_TEST_DISK` — set to `1` to preserve the ISO qcow2 disk after tests
