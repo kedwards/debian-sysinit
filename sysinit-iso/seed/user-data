@@ -27,7 +27,7 @@ write_files:
     permissions: "0644"
     content: |
       [Resolve]
-      DNS=10.0.2.3
+      DNS=
       FallbackDNS=1.1.1.1 8.8.8.8
       Domains=~.
   - path: /usr/local/lib/sysinit/bootstrap.sh
@@ -93,14 +93,13 @@ write_files:
         curl -fsSL https://download.docker.com/linux/debian/gpg | sudo tee /etc/apt/keyrings/docker.asc >/dev/null
         sudo chmod a+r /etc/apt/keyrings/docker.asc
         . /etc/os-release
-        cat <<EOF >/tmp/docker.sources
+        sudo tee /etc/apt/sources.list.d/docker.sources >/dev/null <<EOF
       Types: deb
       URIs: https://download.docker.com/linux/debian
       Suites: ${VERSION_CODENAME}
       Components: stable
       Signed-By: /etc/apt/keyrings/docker.asc
       EOF
-        sudo mv /tmp/docker.sources /etc/apt/sources.list.d/docker.sources
       fi
 
       sudo apt-get update
@@ -141,6 +140,8 @@ write_files:
       After=network-online.target nss-lookup.target
       Wants=network-online.target nss-lookup.target
       ConditionPathExists=!/opt/sysinit/.bootstrapped
+      StartLimitIntervalSec=600
+      StartLimitBurst=10
 
       [Service]
       Type=oneshot
@@ -152,8 +153,6 @@ write_files:
       ExecStart=/usr/local/lib/sysinit/bootstrap.sh
       Restart=on-failure
       RestartSec=15
-      StartLimitIntervalSec=600
-      StartLimitBurst=10
       StandardOutput=journal
       StandardError=journal
 
@@ -164,7 +163,8 @@ runcmd:
   - mkdir -p /opt
   - chown @@USERNAME@@:@@USERNAME@@ /opt
   - mkdir -p /etc/systemd/resolved.conf.d
-  - systemctl restart systemd-resolved
+  # systemd-resolved is installed later by bootstrap.sh; only restart if already present
+  - systemctl restart systemd-resolved 2>/dev/null || true
   - systemctl daemon-reload
   - systemctl enable sysinit-bootstrap.service
   - systemctl start sysinit-bootstrap.service

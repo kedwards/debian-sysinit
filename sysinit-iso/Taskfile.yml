@@ -16,7 +16,7 @@ vars:
 
   # wifi
   WIFI_SSID: '{{.WIFI_SSID | default ""}}'
-  WiFI_PASSWORD: '{{.WIFI_PASSWORD | default ""}}'
+  WIFI_PASSWORD: '{{.WIFI_PASSWORD | default ""}}'
 
   # Display mode for QEMU
   # "gtk" for graphical
@@ -26,7 +26,7 @@ vars:
   # /dev/vda  = virtio (QEMU default)
   # /dev/sda  = bare metal SATA / IDE
   # /dev/nvme0n1 = NVMe
-  INSTALL_DISK: /dev/vda
+  INSTALL_DISK: '{{.INSTALL_DISK | default "/dev/vda"}}'
 
 tasks:
   # host:doctor:
@@ -52,7 +52,7 @@ tasks:
   #     USER_NAME: "{{.USER_NAME}}"
   #     USER_PASSWORD: "{{.USER_PASSWORD}}"
   #     WIFI_SSID: "{{.WIFI_SSID}}"
-  #     WiFI_PASSWORD: "{{.WIFI_PASSWORD}}"
+  #     WIFI_PASSWORD: "{{.WIFI_PASSWORD}}"
   #   cmds:
   #     - task docker:iso:build
 
@@ -115,7 +115,7 @@ tasks:
       USER_NAME: "{{.USER_NAME}}"
       USER_PASSWORD: "{{.USER_PASSWORD}}"
       WIFI_SSID: "{{.WIFI_SSID}}"
-      WIFI_PASSWORD: "{{.WiFI_PASSWORD}}"
+      WIFI_PASSWORD: "{{.WIFI_PASSWORD}}"
     cmds:
       - HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose run --rm sysinit-iso bash scripts/build.sh
 
