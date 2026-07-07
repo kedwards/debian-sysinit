@@ -3,6 +3,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      # Use the host network during build so apt can reach Debian mirrors.
+      # BuildKit otherwise inherits the host's IPv6-only nameservers, which are
+      # unroutable from the build sandbox and cause DNS resolution failures.
+      network: host
     network_mode: host
     user: ${HOST_UID:-1000}:${HOST_GID:-1000}
     working_dir: /workspace
