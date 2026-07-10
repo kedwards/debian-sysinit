@@ -15,6 +15,7 @@ vars:
   SSH_PUB_KEY: '{{.SSH_PUB_KEY | default ""}}'
 
   # wifi
+  WIFI_INTERFACE: '{{.WIFI_INTERFACE | default "auto"}}'
   WIFI_SSID: '{{.WIFI_SSID | default ""}}'
   WIFI_PASSWORD: '{{.WIFI_PASSWORD | default ""}}'
 
@@ -26,7 +27,7 @@ vars:
   # /dev/vda  = virtio (QEMU default)
   # /dev/sda  = bare metal SATA / IDE
   # /dev/nvme0n1 = NVMe
-  INSTALL_DISK: '{{.INSTALL_DISK | default "/dev/vda"}}'
+  DISK: '{{.DISK | default "/dev/vda"}}'
 
 tasks:
   # host:doctor:
@@ -48,7 +49,7 @@ tasks:
   # build:
   #   desc: Wrapper for docker:iso:build
   #   env:
-  #     DISK: "{{.INSTALL_DISK}}"
+  #     DISK: "{{.DISK}}"
   #     USER_NAME: "{{.USER_NAME}}"
   #     USER_PASSWORD: "{{.USER_PASSWORD}}"
   #     WIFI_SSID: "{{.WIFI_SSID}}"
@@ -111,13 +112,27 @@ tasks:
     status:
       - ls debian-*-sysinit.iso >/dev/null 2>&1
     env:
-      DISK: "{{.INSTALL_DISK}}"
+      DISK: "{{.DISK}}"
       USER_NAME: "{{.USER_NAME}}"
       USER_PASSWORD: "{{.USER_PASSWORD}}"
+      WIFI_INTERFACE: "{{.WIFI_INTERFACE}}"
       WIFI_SSID: "{{.WIFI_SSID}}"
       WIFI_PASSWORD: "{{.WIFI_PASSWORD}}"
     cmds:
       - HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose run --rm sysinit-iso bash scripts/build.sh
+
+  preseed:render:
+    desc: Render preseed.cfg variants from the template and verify their syntax with debconf-set-selections
+    deps: [sysinit-builder]
+    env:
+      DISK: "{{.DISK}}"
+      USER_NAME: "{{.USER_NAME}}"
+      USER_PASSWORD: "{{.USER_PASSWORD}}"
+      WIFI_INTERFACE: "{{.WIFI_INTERFACE}}"
+      WIFI_SSID: "{{.WIFI_SSID}}"
+      WIFI_PASSWORD: "{{.WIFI_PASSWORD}}"
+    cmds:
+      - HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose run --rm sysinit-iso bash scripts/render-preseed.sh
 
   iso:test:
     desc: Run the automated installer ISO test suite inside the workspace container

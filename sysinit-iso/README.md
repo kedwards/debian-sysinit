@@ -13,12 +13,17 @@ Both workflows are intended for local QEMU-based validation and rely on the same
 - `preseed.cfg.tmpl` — the unattended Debian installer template used by the ISO flow
 - `seed/user-data` — cloud-init template used by the cloud-image flow
 - `scripts/build.sh` — downloads, verifies, modifies, and rebuilds the Debian installer ISO
+- `scripts/render-preseed.sh` — renders the preseed variants from the template and checks their
+  syntax, without touching the installer ISO
 - `scripts/test.sh` — boots the generated ISO in QEMU and validates the installed system
   plus first-boot cloud-init and `sysinit` bootstrap behavior
 - `scripts/build-image.sh` — downloads the Debian generic cloud image, generates a NoCloud seed ISO, and creates a QCOW2 overlay
 - `scripts/test-image.sh` — boots the cloud image in QEMU and validates the first-boot bootstrap path
-- `scripts/lib/common.sh` — shared SSH key discovery, cloud-init rendering, and QEMU helper functions
+- `scripts/lib/common.sh` — shared SSH key discovery, cloud-init rendering, preseed rendering/verification, and QEMU helper functions
 - `scripts/lib/cloud-image-test.sh` — shared cloud-image test harness
+- `reference/full-preseed-dump.cfg` — a `debconf-get-selections --installer` dump captured after a
+  successful manual install; the master list of valid `d-i` question names, owners, and types for
+  cross-checking `preseed.cfg.tmpl` by hand
 
 ## What each workflow does
 
@@ -118,6 +123,25 @@ or:
 bash scripts/build.sh
 ```
 
+### Render and verify the preseed files
+
+```bash path=null start=null
+task preseed:render
+```
+
+or:
+
+```bash path=null start=null
+bash scripts/render-preseed.sh
+```
+
+Renders `preseed.cfg`, `preseed-wifi.cfg`, and (when `WIFI_SSID`/`WIFI_PASSWORD` are set)
+`preseed-baked-wifi.cfg` from `preseed.cfg.tmpl` into `build/`, then checks each with
+`debconf-set-selections -c` — the standard Debian syntax checker, run with no side effects. This
+is much faster than `task build` since it skips downloading and repacking the installer ISO; use
+it while iterating on `preseed.cfg.tmpl`. If a question name/type is wrong, cross-check it against
+`reference/full-preseed-dump.cfg`.
+
 ### Test the installer ISO workflow
 
 ```bash path=null start=null
@@ -180,11 +204,13 @@ These environment variables are supported through `Taskfile.yml` and/or the scri
   entry with these credentials baked in; leave unset to omit that entry (the
   interactive "enter WiFi" entry is always available regardless)
 - `WIFI_INTERFACE` / `WIFI_HOSTNAME` / `WIFI_DOMAIN` — optional overrides for the
-  baked "home WiFi" entry, default `wlp0s20f3` / `debian` / `local`
+  baked "home WiFi" entry, default `auto` / `debian` / `local`. Only set
+  `WIFI_INTERFACE` if the target has more than one wireless adapter and
+  auto-detection picks the wrong one.
 - `SSH_PORT` — forwarded host SSH port, default `2222`
 - `QEMU_DISPLAY` — `gtk` or `none`
 - `KEEP_TEST_DISK` — set to `1` to preserve the ISO qcow2 disk after tests
-- `DISK` / `INSTALL_DISK` — target install disk inside the ISO guest, default `/dev/vda`
+- `DISK` — target install disk inside the ISO guest, default `/dev/vda`
 - `OUTPUT_ISO` — output path for `scripts/build.sh`
 - `TEST_ISO` — ISO path for `scripts/test.sh`
 - `TEST_DISK` — ISO test disk path for `scripts/test.sh`

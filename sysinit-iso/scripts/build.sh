@@ -70,68 +70,12 @@ extract_iso() {
   chmod -R +w "$ISO_EXTRACT"
 }
 
-# ---------------------------------------------------------------------------
-# Render the preseed template with shared substitutions, replacing the
-# @@NETWORK_CONFIG@@ placeholder with the contents of the given network snippet.
-render_preseed_variant() {
-  local net_snippet="$1"
-  local output="$2"
-
-  sed -e "s|@@DISK@@|$DISK|g" \
-      -e "s|@@SSH_PUB_KEY@@|$SSH_PUB_KEY|g" \
-      -e "s|@@USER_NAME@@|$USER_NAME|g" \
-      -e "s|@@USER_PASSWORD@@|$USER_PASSWORD|g" \
-      "$PRESEED_TEMPLATE" \
-    | awk -v net="$net_snippet" '
-        /@@NETWORK_CONFIG@@/ { while ((getline ln < net) > 0) print ln; next }
-        { print }
-      ' > "$output"
-}
-
 create_preseed_config() {
   echo "Rendering preseed variants ..."
-
-  # Each variant differs only in its network block, injected in place of the
-  # @@NETWORK_CONFIG@@ placeholder. All other substitutions are shared.
-  #
-  #   preseed.cfg            wired DHCP, fully unattended (default boot entry)
-  #   preseed-wifi.cfg       interactive: prompts for interface/SSID/passphrase
-  #   preseed-baked-wifi.cfg baked WiFi creds (only when WIFI_SSID+WIFI_PASSWORD set)
-
-  # Wired (default) — matches the original unattended behavior.
-  local wired_net="$WORK_DIR/net-wired.cfg"
-  {
-    printf 'd-i netcfg/choose_interface select auto\n'
-    printf 'd-i netcfg/get_hostname string debian\n'
-    printf 'd-i netcfg/get_domain string local\n'
-    printf 'd-i netcfg/disable_dhcp boolean false\n'
-  } > "$wired_net"
-
-  # Interactive WiFi — leave interface/SSID/passphrase un-preseeded so d-i
-  # prompts for them. This boots at priority=high (see configure_bootloaders),
-  # so only these un-answered network questions surface; the rest stay unattended.
-  local wifi_prompt_net="$WORK_DIR/net-wifi-prompt.cfg"
-  {
-    printf 'd-i netcfg/get_hostname string debian\n'
-    printf 'd-i netcfg/get_domain string local\n'
-  } > "$wifi_prompt_net"
-
-  render_preseed_variant "$wired_net" "$WORK_DIR/preseed.cfg"
-  render_preseed_variant "$wifi_prompt_net" "$WORK_DIR/preseed-wifi.cfg"
-
-  # Baked "baked WiFi" — only when both SSID and passphrase are supplied.
-  if [[ -n "${WIFI_SSID:-}" && -n "${WIFI_PASSWORD:-}" ]]; then
-    local baked_wifi_net="$WORK_DIR/net-baked-wifi.cfg"
-    {
-      printf 'd-i netcfg/choose_interface select %s\n' "${WIFI_INTERFACE:-wlp0s20f3}"
-      printf 'd-i netcfg/get_hostname string %s\n'    "${WIFI_HOSTNAME:-debian}"
-      printf 'd-i netcfg/get_domain string %s\n'      "${WIFI_DOMAIN:-local}"
-      printf 'd-i netcfg/wireless_security_type select wpa\n'
-      printf 'd-i netcfg/wireless_show_essids select %s\n' "$WIFI_SSID"
-      printf 'd-i netcfg/wireless_wpa string %s\n'   "$WIFI_PASSWORD"
-    } > "$baked_wifi_net"
-    render_preseed_variant "$baked_wifi_net" "$WORK_DIR/preseed-baked-wifi.cfg"
-  fi
+  render_preseed_variants "$PRESEED_TEMPLATE" "$WORK_DIR" \
+    "$DISK" "$USER_NAME" "$USER_PASSWORD" "$SSH_PUB_KEY" \
+    "${WIFI_INTERFACE:-wlp0s20f3}" "${WIFI_HOSTNAME:-debian}" "${WIFI_DOMAIN:-local}" \
+    "${WIFI_SSID:-}" "${WIFI_PASSWORD:-}"
 
   echo "Rendering NoCloud user-data ..."
   render_cloud_init_user_data "$SEED_TEMPLATE" "$WORK_DIR/sysinit-user-data" "$USER_NAME" "$USER_PASSWORD" "$SSH_PUB_KEY"
@@ -181,10 +125,11 @@ print(offset)
   dd if="$initrd_work" bs=1 count="$gzip_offset" of="$prefix" 2>/dev/null
   dd if="$initrd_work" bs=1 skip="$gzip_offset" 2>/dev/null | gunzip > "$main_cpio"
 
-  # Append every preseed variant as a cpio entry at / of the initrd filesystem.
-  # We cd into WORK_DIR so the cpio paths are bare filenames (no leading /),
-  # matching the preseed/file=/preseed*.cfg boot parameters.
-  (cd "$WORK_DIR" && ls preseed*.cfg | cpio -H newc -o -A -F "$main_cpio")
+  # Append every preseed variant (and the WiFi pre-association script, if
+  # rendered) as a cpio entry at / of the initrd filesystem. We cd into
+  # WORK_DIR so the cpio paths are bare filenames (no leading /), matching
+  # the preseed/file=/preseed*.cfg and early_command /wifi-connect.sh paths.
+  (cd "$WORK_DIR" && { ls preseed*.cfg; [[ -f wifi-connect.sh ]] && echo wifi-connect.sh; true; } | cpio -H newc -o -A -F "$main_cpio")
 
   # Reassemble: uncompressed prefix + recompressed main cpio.
   # NOTE: We do NOT chmod -w here — the trap cleanup (rm -rf $WORK_DIR) needs
@@ -209,7 +154,7 @@ configure_bootloaders() {
   # entry drops auto=true/quiet and uses priority=high so d-i prompts only for
   # the un-preseeded network questions. The "baked WiFi" entry is emitted only
   # when preseed-baked-wifi.cfg was rendered (WIFI_SSID + WIFI_PASSWORD set).
-  local have_home_wifi=0
+  local have_baked_wifi=0
   [[ -f "$WORK_DIR/preseed-baked-wifi.cfg" ]] && have_baked_wifi=1
 
   cat > "$ISO_EXTRACT/isolinux/isolinux.cfg" <<'EOF'

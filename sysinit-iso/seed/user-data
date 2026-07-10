@@ -17,10 +17,46 @@ users:
 package_update: true
 
 packages:
+  - acpi
+  - arandr
+  - brightnessctl
   - curl
+  - dex
+  - dmenu
+  - dunst
+  - feh
+  - firefox-esr
+  - flameshot
+  - fontconfig
   - git
   - gnupg
+  - gvfs
+  - i3
+  - i3blocks
+  - i3lock
+  - i3status
+  - i3-wm
+  - jq
+  - lightdm
+  - network-manager-applet
+  - pulseaudio
+  - pavucontrol
+  - rofi
+  - scrot
   - sudo
+  - sysstat
+  - thunar
+  - thunar-archive-plugin
+  - thunar-volman
+  - unzip
+  - x11-xserver-utils
+  - xarchiver
+  - xfce4-terminal
+  - xorg
+  - xinit
+  - xss-lock
+  - zenity
+  - zip
 
 write_files:
   - path: /etc/systemd/resolved.conf.d/99-qemu-dns.conf
@@ -128,6 +164,20 @@ write_files:
 
       log "Installing uv and chezmoi"
       env PATH="$USER_HOME/.local/bin:$PATH" "$USER_HOME/.local/bin/mise" use --global --yes uv chezmoi
+
+      log "Installing Nerd Font (NerdFontsSymbolsOnly)"
+      FONT_NAME="NerdFontsSymbolsOnly"
+      FONT_DIR="$USER_HOME/.fonts/$FONT_NAME"
+      if [[ ! -d "$FONT_DIR" ]]; then
+        tmp_font_zip="$(mktemp /tmp/nerd-font.XXXXXX.zip)"
+        curl -fL --connect-timeout 10 --max-time 300 -o "$tmp_font_zip" \
+          "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/${FONT_NAME}.zip"
+        mkdir -p "$FONT_DIR"
+        unzip -q "$tmp_font_zip" -d "$FONT_DIR"
+        rm -f "$tmp_font_zip"
+        echo "$FONT_NAME $(date +"%F_%H-%M-%S")" >> "$USER_HOME/.fonts/_sysinit_font.lock"
+        fc-cache -f "$USER_HOME/.fonts" >/dev/null 2>&1 || true
+      fi
 
       log "Completing bootstrap"
       mkdir -p "$BOOTSTRAP_ROOT"
