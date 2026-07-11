@@ -168,20 +168,10 @@ render_preseed_variants() {
   if [[ -n "$wifi_ssid" && -n "$wifi_password" ]]; then
     local baked_wifi_net="$work_dir/net-baked-wifi.cfg"
     {
-      # Associate and get a DHCP lease before netcfg runs at all. netcfg's
-      # own wireless_show_essids question only lists live-scanned networks
-      # and, in testing, still prompts interactively no matter what value is
-      # preseeded for it (literal SSID, its localized display text, and its
-      # real Choices-C "manual" token all failed to skip it unattended). If
-      # the interface is already associated with a lease, netcfg should find
-      # it already configured and skip its own network questions instead.
-      printf 'd-i preseed/early_command string /bin/sh /wifi-connect.sh\n'
       printf 'd-i netcfg/choose_interface select %s\n' "$wifi_interface"
       printf 'd-i netcfg/get_hostname string %s\n' "$wifi_hostname"
       printf 'd-i netcfg/get_domain string %s\n' "$wifi_domain"
       printf 'd-i netcfg/disable_dhcp boolean false\n'
-      # Belt-and-suspenders in case netcfg still runs its wireless flow
-      # despite pre-association — same values proven correct in testing.
       printf 'd-i netcfg/wireless_show_essids select manual\n'
       printf 'd-i netcfg/wireless_essid string %s\n' "$wifi_ssid"
       printf 'd-i netcfg/wireless_security_type select wpa\n'

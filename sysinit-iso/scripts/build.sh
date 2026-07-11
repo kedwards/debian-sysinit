@@ -125,11 +125,10 @@ print(offset)
   dd if="$initrd_work" bs=1 count="$gzip_offset" of="$prefix" 2>/dev/null
   dd if="$initrd_work" bs=1 skip="$gzip_offset" 2>/dev/null | gunzip > "$main_cpio"
 
-  # Append every preseed variant (and the WiFi pre-association script, if
-  # rendered) as a cpio entry at / of the initrd filesystem. We cd into
-  # WORK_DIR so the cpio paths are bare filenames (no leading /), matching
-  # the preseed/file=/preseed*.cfg and early_command /wifi-connect.sh paths.
-  (cd "$WORK_DIR" && { ls preseed*.cfg; [[ -f wifi-connect.sh ]] && echo wifi-connect.sh; true; } | cpio -H newc -o -A -F "$main_cpio")
+  # Append every preseed variant as a cpio entry at / of the initrd filesystem.
+  # We cd into WORK_DIR so the cpio paths are bare filenames (no leading /),
+  # matching the preseed/file=/preseed*.cfg boot parameters.
+  (cd "$WORK_DIR" && ls preseed*.cfg | cpio -H newc -o -A -F "$main_cpio")
 
   # Reassemble: uncompressed prefix + recompressed main cpio.
   # NOTE: We do NOT chmod -w here — the trap cleanup (rm -rf $WORK_DIR) needs
