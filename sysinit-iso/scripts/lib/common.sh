@@ -167,7 +167,32 @@ render_preseed_variants() {
   # Baked "baked WiFi" — only when both SSID and passphrase are supplied.
   if [[ -n "$wifi_ssid" && -n "$wifi_password" ]]; then
     local baked_wifi_net="$work_dir/net-baked-wifi.cfg"
+
+    # netcfg's wireless_show_essids question prompts interactively regardless
+    # of any preseeded value (literal SSID, localized display text, and the
+    # Choices-C "manual" token all fail to suppress it). Pre-associating via
+    # early_command before netcfg runs lets netcfg detect the interface is
+    # already configured and skip its own wireless flow.
+    cat > "$work_dir/wifi-connect.sh" <<SCRIPT
+#!/bin/sh
+SSID="$wifi_ssid"
+PSK="$wifi_password"
+IFACE="$wifi_interface"
+if [ "\$IFACE" = "auto" ]; then
+    IFACE=\$(ip link show | awk -F': ' '/^[0-9]+: wl/{print \$2; exit}')
+fi
+[ -z "\$IFACE" ] && exit 0
+ip link set "\$IFACE" up 2>/dev/null || true
+WPA_CONF=/tmp/wpa.conf
+printf 'ctrl_interface=/var/run/wpa_supplicant\nnetwork={\n  ssid="%s"\n  psk="%s"\n}\n' "\$SSID" "\$PSK" > "\$WPA_CONF"
+wpa_supplicant -B -Dnl80211,wext -i "\$IFACE" -c "\$WPA_CONF" 2>/dev/null || true
+sleep 5
+udhcpc -i "\$IFACE" -n -q -t 15 2>/dev/null || true
+SCRIPT
+    chmod +x "$work_dir/wifi-connect.sh"
+
     {
+      printf 'd-i preseed/early_command string /bin/sh /wifi-connect.sh\n'
       printf 'd-i netcfg/choose_interface select %s\n' "$wifi_interface"
       printf 'd-i netcfg/get_hostname string %s\n' "$wifi_hostname"
       printf 'd-i netcfg/get_domain string %s\n' "$wifi_domain"
