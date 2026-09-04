@@ -25,10 +25,7 @@ SSH_PUB_KEY="$(resolve_ssh_pubkey)"
 [[ -z "$SSH_PUB_KEY" ]] && { echo "ERROR: No SSH public key found (checked ~/.ssh/ and 1Password agent)"; exit 1; }
 
 render_preseed_variants "$PRESEED_TEMPLATE" "$WORK_DIR" \
-  "$DISK" "$USER_NAME" "$USER_PASSWORD" "$SSH_PUB_KEY" \
-  "${WIFI_INTERFACE:-auto}" "${WIFI_HOSTNAME:-debian}" "${WIFI_DOMAIN:-local}" \
-  "${WIFI_SSID:-}" "${WIFI_PASSWORD:-}"
-
+  "$DISK" "$USER_NAME" "$USER_PASSWORD" "$SSH_PUB_KEY"
 
 echo "Rendered to $WORK_DIR:"
 ls "$WORK_DIR"/preseed*.cfg

@@ -129,17 +129,19 @@ _render_preseed_variant() {
       ' > "$output"
 }
 
-# Render every preseed variant (wired, interactive-wifi, baked-wifi) from the
-# shared template into work_dir.
+# Render every preseed variant from the shared template into work_dir.
 #
-#   preseed.cfg            wired DHCP, fully unattended (default boot entry)
-#   preseed-wifi.cfg       interactive: prompts for interface/SSID/passphrase
-#   preseed-baked-wifi.cfg baked WiFi creds (only when wifi_ssid+wifi_password set)
+#   preseed.cfg       wired DHCP, fully unattended (default boot entry)
+#   preseed-wifi.cfg  interactive: prompts for interface/SSID/passphrase
+#
+# WiFi credentials are deliberately never baked in. Doing so ties an image to
+# one network, and d-i's netcfg only speaks WPA2-PSK anyway — it cannot
+# negotiate WPA3 or WPA3-transition (PMF) and fails with "the exchange of keys
+# and association with the access point failed". Install over ethernet/USB
+# tethering, or use the interactive entry and type the credentials once.
 render_preseed_variants() {
   local template="$1" work_dir="$2"
   local disk="$3" user_name="$4" user_password="$5" ssh_pub_key="$6"
-  local wifi_interface="${7:-auto}" wifi_hostname="${8:-debian}" wifi_domain="${9:-local}"
-  local wifi_ssid="${10:-}" wifi_password="${11:-}"
 
   # Wired (default) — matches the original unattended behavior.
   local wired_net="$work_dir/net-wired.cfg"
@@ -163,48 +165,6 @@ render_preseed_variants() {
     "$disk" "$user_name" "$user_password" "$ssh_pub_key"
   _render_preseed_variant "$template" "$wifi_prompt_net" "$work_dir/preseed-wifi.cfg" \
     "$disk" "$user_name" "$user_password" "$ssh_pub_key"
-
-  # Baked "baked WiFi" — only when both SSID and passphrase are supplied.
-  if [[ -n "$wifi_ssid" && -n "$wifi_password" ]]; then
-    local baked_wifi_net="$work_dir/net-baked-wifi.cfg"
-
-    # netcfg's wireless_show_essids question prompts interactively regardless
-    # of any preseeded value (literal SSID, localized display text, and the
-    # Choices-C "manual" token all fail to suppress it). Pre-associating via
-    # early_command before netcfg runs lets netcfg detect the interface is
-    # already configured and skip its own wireless flow.
-    cat > "$work_dir/wifi-connect.sh" <<SCRIPT
-#!/bin/sh
-SSID="$wifi_ssid"
-PSK="$wifi_password"
-IFACE="$wifi_interface"
-if [ "\$IFACE" = "auto" ]; then
-    IFACE=\$(ip link show | awk -F': ' '/^[0-9]+: wl/{print \$2; exit}')
-fi
-[ -z "\$IFACE" ] && exit 0
-ip link set "\$IFACE" up 2>/dev/null || true
-WPA_CONF=/tmp/wpa.conf
-printf 'ctrl_interface=/var/run/wpa_supplicant\nnetwork={\n  ssid="%s"\n  psk="%s"\n}\n' "\$SSID" "\$PSK" > "\$WPA_CONF"
-wpa_supplicant -B -Dnl80211,wext -i "\$IFACE" -c "\$WPA_CONF" 2>/dev/null || true
-sleep 5
-udhcpc -i "\$IFACE" -n -q -t 15 2>/dev/null || true
-SCRIPT
-    chmod +x "$work_dir/wifi-connect.sh"
-
-    {
-      printf 'd-i preseed/early_command string /bin/sh /wifi-connect.sh\n'
-      printf 'd-i netcfg/choose_interface select %s\n' "$wifi_interface"
-      printf 'd-i netcfg/get_hostname string %s\n' "$wifi_hostname"
-      printf 'd-i netcfg/get_domain string %s\n' "$wifi_domain"
-      printf 'd-i netcfg/disable_dhcp boolean false\n'
-      printf 'd-i netcfg/wireless_show_essids select manual\n'
-      printf 'd-i netcfg/wireless_essid string %s\n' "$wifi_ssid"
-      printf 'd-i netcfg/wireless_security_type select wpa\n'
-      printf 'd-i netcfg/wireless_wpa string %s\n' "$wifi_password"
-    } > "$baked_wifi_net"
-    _render_preseed_variant "$template" "$baked_wifi_net" "$work_dir/preseed-baked-wifi.cfg" \
-      "$disk" "$user_name" "$user_password" "$ssh_pub_key"
-  fi
 }
 
 # Run debconf-set-selections -c (syntax check, no side effects) against every

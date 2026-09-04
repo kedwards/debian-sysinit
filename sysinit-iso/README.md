@@ -35,15 +35,19 @@ The custom ISO presents a boot menu with these entries:
   Fully unattended over wired DHCP. This is what the automated test uses.
 - **Automated Install (enter WiFi)** — non-default. The installer prompts for the
   network interface, nearby SSID, and WPA passphrase, then continues unattended for
-  everything else. Use this when you don't know the WiFi params at build time.
-- **Automated Install (baked WiFi)** — only present when you set `WIFI_SSID` and
-  `WIFI_PASSWORD` at build time; those credentials are baked into this entry so the
-  install runs fully unattended over WiFi.
+  everything else.
 
-WiFi requires the wireless firmware to be present in the installer. Current Debian 13
-netinst images bundle `non-free-firmware` (including `firmware-iwlwifi`), so Intel
-adapters appear automatically; if a base image ever ships without it, the WiFi entries
-won't find the adapter.
+WiFi credentials are deliberately never baked into the image. Baking them ties an ISO
+to a single network, and the installer's `netcfg` only speaks WPA2-PSK — it cannot
+negotiate WPA3 or WPA3-transition (PMF) and fails with *"the exchange of keys and
+association with the access point failed"*. Prefer a wired connection (a USB-C dock or
+phone USB tethering both appear as ethernet and work with the default entry); use the
+interactive entry if no wire is available.
+
+WiFi also requires wireless firmware in the installer. Current Debian 13 netinst images
+bundle `non-free-firmware` (including `firmware-iwlwifi`), so Intel adapters appear
+automatically; if a base image ever ships without it, the WiFi entry won't find the
+adapter.
 
 ### Installer ISO workflow
 
@@ -135,8 +139,8 @@ or:
 bash scripts/render-preseed.sh
 ```
 
-Renders `preseed.cfg`, `preseed-wifi.cfg`, and (when `WIFI_SSID`/`WIFI_PASSWORD` are set)
-`preseed-baked-wifi.cfg` from `preseed.cfg.tmpl` into `build/`, then checks each with
+Renders `preseed.cfg` and `preseed-wifi.cfg` from `preseed.cfg.tmpl` into `build/`,
+then checks each with
 `debconf-set-selections -c` — the standard Debian syntax checker, run with no side effects. This
 is much faster than `task build` since it skips downloading and repacking the installer ISO; use
 it while iterating on `preseed.cfg.tmpl`. If a question name/type is wrong, cross-check it against
@@ -200,13 +204,6 @@ These environment variables are supported through `Taskfile.yml` and/or the scri
 - `USER_NAME` — install/bootstrap user name, default `devops`
 - `USER_PASSWORD` — install user password for the ISO path, default `devops`
 - `SSH_PUBKEY` — explicit public key content to inject
-- `WIFI_SSID` / `WIFI_PASSWORD` — set both to add a non-default "baked WiFi" boot
-  entry with these credentials baked in; leave unset to omit that entry (the
-  interactive "enter WiFi" entry is always available regardless)
-- `WIFI_INTERFACE` / `WIFI_HOSTNAME` / `WIFI_DOMAIN` — optional overrides for the
-  baked "home WiFi" entry, default `auto` / `debian` / `local`. Only set
-  `WIFI_INTERFACE` if the target has more than one wireless adapter and
-  auto-detection picks the wrong one.
 - `SSH_PORT` — forwarded host SSH port, default `2222`
 - `QEMU_DISPLAY` — `gtk` or `none`
 - `KEEP_TEST_DISK` — set to `1` to preserve the ISO qcow2 disk after tests

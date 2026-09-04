@@ -33,8 +33,6 @@ services:
       TEST_ISO: ${TEST_ISO:-}
       USER_NAME: ${USER_NAME:-devops}
       USER_PASSWORD: ${USER_PASSWORD:-devops}
-      WIFI_PASSWORD: ${WIFI_PASSWORD:-}
-      WIFI_SSID: ${WIFI_SSID:-}
     volumes:
       - .:/workspace
       - ${HOME}/.ssh:/tmp/sysinit-home/.ssh:ro

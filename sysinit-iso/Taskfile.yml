@@ -14,11 +14,6 @@ vars:
   SSH_PORT: '{{.SSH_PORT | default "2222"}}'
   SSH_PUB_KEY: '{{.SSH_PUB_KEY | default ""}}'
 
-  # wifi
-  WIFI_INTERFACE: '{{.WIFI_INTERFACE | default "auto"}}'
-  WIFI_SSID: '{{.WIFI_SSID | default ""}}'
-  WIFI_PASSWORD: '{{.WIFI_PASSWORD | default ""}}'
-
   # Display mode for QEMU
   # "gtk" for graphical
   # "none" for headless
@@ -52,8 +47,6 @@ tasks:
   #     DISK: "{{.DISK}}"
   #     USER_NAME: "{{.USER_NAME}}"
   #     USER_PASSWORD: "{{.USER_PASSWORD}}"
-  #     WIFI_SSID: "{{.WIFI_SSID}}"
-  #     WIFI_PASSWORD: "{{.WIFI_PASSWORD}}"
   #   cmds:
   #     - task docker:iso:build
 
@@ -115,9 +108,6 @@ tasks:
       DISK: "{{.DISK}}"
       USER_NAME: "{{.USER_NAME}}"
       USER_PASSWORD: "{{.USER_PASSWORD}}"
-      WIFI_INTERFACE: "{{.WIFI_INTERFACE}}"
-      WIFI_SSID: "{{.WIFI_SSID}}"
-      WIFI_PASSWORD: "{{.WIFI_PASSWORD}}"
     cmds:
       - HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose run --rm sysinit-iso bash scripts/build.sh
 
@@ -128,9 +118,6 @@ tasks:
       DISK: "{{.DISK}}"
       USER_NAME: "{{.USER_NAME}}"
       USER_PASSWORD: "{{.USER_PASSWORD}}"
-      WIFI_INTERFACE: "{{.WIFI_INTERFACE}}"
-      WIFI_SSID: "{{.WIFI_SSID}}"
-      WIFI_PASSWORD: "{{.WIFI_PASSWORD}}"
     cmds:
       - HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose run --rm sysinit-iso bash scripts/render-preseed.sh
 

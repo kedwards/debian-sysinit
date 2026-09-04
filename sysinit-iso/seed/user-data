@@ -38,6 +38,7 @@ packages:
   - i3-wm
   - jq
   - lightdm
+  - network-manager
   - network-manager-applet
   - pulseaudio
   - pavucontrol

@@ -73,9 +73,7 @@ extract_iso() {
 create_preseed_config() {
   echo "Rendering preseed variants ..."
   render_preseed_variants "$PRESEED_TEMPLATE" "$WORK_DIR" \
-    "$DISK" "$USER_NAME" "$USER_PASSWORD" "$SSH_PUB_KEY" \
-    "${WIFI_INTERFACE:-wlp0s20f3}" "${WIFI_HOSTNAME:-debian}" "${WIFI_DOMAIN:-local}" \
-    "${WIFI_SSID:-}" "${WIFI_PASSWORD:-}"
+    "$DISK" "$USER_NAME" "$USER_PASSWORD" "$SSH_PUB_KEY"
 
   echo "Rendering NoCloud user-data ..."
   render_cloud_init_user_data "$SEED_TEMPLATE" "$WORK_DIR/sysinit-user-data" "$USER_NAME" "$USER_PASSWORD" "$SSH_PUB_KEY"
@@ -125,11 +123,10 @@ print(offset)
   dd if="$initrd_work" bs=1 count="$gzip_offset" of="$prefix" 2>/dev/null
   dd if="$initrd_work" bs=1 skip="$gzip_offset" 2>/dev/null | gunzip > "$main_cpio"
 
-  # Append every preseed variant (and wifi-connect.sh if rendered) as a cpio
-  # entry at / of the initrd filesystem. We cd into WORK_DIR so the cpio paths
-  # are bare filenames (no leading /), matching the preseed/file= and
-  # early_command /wifi-connect.sh paths.
-  (cd "$WORK_DIR" && { ls preseed*.cfg; [[ -f wifi-connect.sh ]] && echo wifi-connect.sh || true; } | cpio -H newc -o -A -F "$main_cpio")
+  # Append every preseed variant as a cpio entry at / of the initrd filesystem.
+  # We cd into WORK_DIR so the cpio paths are bare filenames (no leading /),
+  # matching the preseed/file=/preseed*.cfg boot parameters.
+  (cd "$WORK_DIR" && ls preseed*.cfg | cpio -H newc -o -A -F "$main_cpio")
 
   # Reassemble: uncompressed prefix + recompressed main cpio.
   # NOTE: We do NOT chmod -w here — the trap cleanup (rm -rf $WORK_DIR) needs
@@ -150,13 +147,9 @@ configure_bootloaders() {
 
   # The default (index 0) Ethernet entry is fully unattended and wired — its
   # cmdline is kept identical to the original so the automated QEMU test keeps
-  # passing. The WiFi entries are non-default. The interactive "enter WiFi"
-  # entry drops auto=true/quiet and uses priority=high so d-i prompts only for
-  # the un-preseeded network questions. The "baked WiFi" entry is emitted only
-  # when preseed-baked-wifi.cfg was rendered (WIFI_SSID + WIFI_PASSWORD set).
-  local have_baked_wifi=0
-  [[ -f "$WORK_DIR/preseed-baked-wifi.cfg" ]] && have_baked_wifi=1
-
+  # passing. The interactive "enter WiFi" entry is non-default: it drops
+  # auto=true/quiet and uses priority=high so d-i prompts only for the
+  # un-preseeded network questions, leaving the rest unattended.
   cat > "$ISO_EXTRACT/isolinux/isolinux.cfg" <<'EOF'
 default install
 timeout 50
@@ -173,16 +166,6 @@ label wifi
     append vga=788 initrd=/install.amd/initrd.gz priority=high preseed/file=/preseed-wifi.cfg ---
 EOF
 
-  if [[ "$have_baked_wifi" == "1" ]]; then
-    cat >> "$ISO_EXTRACT/isolinux/isolinux.cfg" <<'EOF'
-
-label bakedwifi
-    menu label Automated Install (^baked WiFi)
-    kernel /install.amd/vmlinuz
-    append vga=788 initrd=/install.amd/initrd.gz auto=true priority=critical preseed/file=/preseed-baked-wifi.cfg quiet ---
-EOF
-  fi
-
   cat > "$ISO_EXTRACT/boot/grub/grub.cfg" <<'EOF'
 set default=0
 set timeout=5
@@ -197,16 +180,6 @@ menuentry "Automated Install (enter WiFi)" {
     initrd /install.amd/initrd.gz
 }
 EOF
-
-  if [[ "$have_baked_wifi" == "1" ]]; then
-    cat >> "$ISO_EXTRACT/boot/grub/grub.cfg" <<'EOF'
-
-menuentry "Automated Install (baked WiFi)" {
-    linux /install.amd/vmlinuz vga=788 auto=true priority=critical preseed/file=/preseed-baked-wifi.cfg quiet ---
-    initrd /install.amd/initrd.gz
-}
-EOF
-  fi
 }
 
 # ---------------------------------------------------------------------------
