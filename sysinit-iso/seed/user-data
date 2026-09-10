@@ -36,6 +36,7 @@ packages:
   - i3lock
   - i3status
   - i3-wm
+  - imagemagick 
   - jq
   - lightdm
   - network-manager
