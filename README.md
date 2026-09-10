@@ -1,4 +1,4 @@
-# sysinit-iso
+# Debian Sysinit
 
 Builds and tests Debian `sysinit` bootstrap media through two local workflows:
 
