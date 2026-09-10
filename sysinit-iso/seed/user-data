@@ -180,6 +180,9 @@ write_files:
         fc-cache -f "$USER_HOME/.fonts" >/dev/null 2>&1 || true
       fi
 
+      log "Installling Ghostty"
+      /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/mkasberg/ghostty-ubuntu/HEAD/install.sh)" 
+
       log "Completing bootstrap"
       mkdir -p "$BOOTSTRAP_ROOT"
       touch "$BOOTSTRAP_SENTINEL"
