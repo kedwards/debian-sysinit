@@ -66,11 +66,23 @@ render_cloud_init_user_data() {
   local hashed_password
   hashed_password="$(openssl passwd -6 "$user_password")"
 
-  sed -e "s|@@USERNAME@@|$username|g" \
-      -e "s|@@SSH_PUBKEY@@|$ssh_pubkey|g" \
-      -e "s|@@USER_PASSWORD@@|$user_password|g" \
-      -e "s|@@USER_PASSWORD_HASH@@|$hashed_password|g" \
-      "$template_path" > "$output_path"
+  local bootstrap_path
+  bootstrap_path="$(dirname "$template_path")/bootstrap.sh"
+
+  # Inline seed/bootstrap.sh at the placeholder, re-indenting it for the YAML block scalar.
+  awk -v script="$bootstrap_path" '
+    match($0, /^ *@@BOOTSTRAP_SH@@$/) {
+      indent = $0; sub(/@@BOOTSTRAP_SH@@$/, "", indent)
+      while ((getline line < script) > 0) print (line == "" ? "" : indent line)
+      close(script); next
+    }
+    { print }
+  ' "$template_path" |
+    sed -e "s|@@USERNAME@@|$username|g" \
+        -e "s|@@SSH_PUBKEY@@|$ssh_pubkey|g" \
+        -e "s|@@USER_PASSWORD@@|$user_password|g" \
+        -e "s|@@USER_PASSWORD_HASH@@|$hashed_password|g" \
+        > "$output_path"
 }
 
 write_cloud_init_meta_data() {

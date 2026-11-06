@@ -12,6 +12,9 @@ Both workflows are intended for local QEMU-based validation and rely on the same
 - `Taskfile.yml` — convenience tasks for ISO and cloud-image build/test flows
 - `preseed.cfg.tmpl` — the unattended Debian installer template used by the ISO flow
 - `seed/user-data` — cloud-init template used by the cloud-image flow
+- `seed/bootstrap.sh` — Debian-only bootstrap (packages, systemd-resolved, Docker, AWS SSM plugin, mise + uv + chezmoi,
+  Nerd Font, Ghostty). It is inlined into `seed/user-data` at render time, and can also be run on its own on a
+  stock Debian install (see below). chezmoi installs the mise tools afterwards.
 - `scripts/build.sh` — downloads, verifies, modifies, and rebuilds the Debian installer ISO
 - `scripts/render-preseed.sh` — renders the preseed variants from the template and checks their
   syntax, without touching the installer ISO
@@ -73,6 +76,17 @@ The cloud-image path:
 - creates a QCOW2 overlay backed by the downloaded Debian base image
 - boots the VM and runs a local `sysinit` cloud-init bootstrap on first boot
 - validates bootstrap completion, SSH access, sudo setup, Docker, systemd-resolved, and tool installation
+
+### Bootstrap a stock Debian install (no custom ISO)
+
+Run as your regular user (needs sudo):
+
+```bash path=null start=null
+curl -fsSL https://raw.githubusercontent.com/kedwards/debian-sysinit/main/seed/bootstrap.sh | bash
+```
+
+It is idempotent and writes `/opt/sysinit/.bootstrapped` when done. Then apply your dotfiles with
+`chezmoi init --apply <repo>` to get the mise tools. Log out and back in for the `docker` group.
 
 ## Prerequisites
 
