@@ -15,7 +15,7 @@ services:
       BOOT_TIMEOUT: ${BOOT_TIMEOUT:-}
       CLOUDINIT_TIMEOUT: ${CLOUDINIT_TIMEOUT:-}
       HOME: /tmp/sysinit-home
-      DISK: ${DISK:-/dev/vda}
+      DISK: ${DISK:-/dev/nvme0n1}
       IMAGE: ${IMAGE:-}
       INSTALL_TIMEOUT: ${INSTALL_TIMEOUT:-}
       KEEP_TEST_DISK: ${KEEP_TEST_DISK:-0}
@@ -33,6 +33,8 @@ services:
       TEST_ISO: ${TEST_ISO:-}
       USER_NAME: ${USER_NAME:-devops}
       USER_PASSWORD: ${USER_PASSWORD:-devops}
+      WIFI_PSK: ${WIFI_PSK:-}
+      WIFI_SSID: ${WIFI_SSID:-}
     volumes:
       - .:/workspace
       - ${HOME}/.ssh:/tmp/sysinit-home/.ssh:ro

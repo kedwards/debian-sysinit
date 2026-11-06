@@ -125,37 +125,48 @@ resolve_sysinit_iso() {
 
 # ---------------------------------------------------------------------------
 # Render the preseed template with shared substitutions, replacing the
-# @@NETWORK_CONFIG@@ placeholder with the contents of the given network snippet.
+# @@NETWORK_CONFIG@@ and @@PARTITIONING@@ placeholders with the contents of the
+# given snippet files.
 _render_preseed_variant() {
-  local template="$1" net_snippet="$2" output="$3"
-  local disk="$4" user_name="$5" user_password="$6" ssh_pub_key="$7"
+  local template="$1" net_snippet="$2" part_snippet="$3" output="$4"
+  local disk="$5" user_name="$6" user_password="$7" ssh_pub_key="$8"
 
   sed -e "s|@@DISK@@|$disk|g" \
       -e "s|@@SSH_PUB_KEY@@|$ssh_pub_key|g" \
       -e "s|@@USER_NAME@@|$user_name|g" \
       -e "s|@@USER_PASSWORD@@|$user_password|g" \
       "$template" \
-    | awk -v net="$net_snippet" '
-        /@@NETWORK_CONFIG@@/ { while ((getline ln < net) > 0) print ln; next }
+    | awk -v net="$net_snippet" -v part="$part_snippet" '
+        /@@NETWORK_CONFIG@@/ { while ((getline ln < net) > 0) print ln; close(net); next }
+        /@@PARTITIONING@@/   { while ((getline ln < part) > 0) print ln; close(part); next }
         { print }
       ' > "$output"
 }
 
-# Render every preseed variant from the shared template into work_dir.
+# Render every preseed variant from the shared template into work_dir, one file
+# per network x partitioning combination: preseed-<net>-<part>.cfg
 #
-#   preseed.cfg       wired DHCP, fully unattended (default boot entry)
-#   preseed-wifi.cfg  interactive: prompts for interface/SSID/passphrase
+# Network:
+#   wired  DHCP over ethernet, fully unattended
+#   wifi   interactive: prompts for interface/SSID/passphrase — unless
+#          WIFI_SSID and WIFI_PSK are set at build time, which bakes them in
+#          for a hands-off wireless install (private build; the credentials
+#          end up in plain text in the ISO, so don't distribute it)
 #
-# WiFi credentials are deliberately never baked in. Doing so ties an image to
-# one network, and d-i's netcfg only speaks WPA2-PSK anyway — it cannot
-# negotiate WPA3 or WPA3-transition (PMF) and fails with "the exchange of keys
-# and association with the access point failed". Install over ethernet/USB
-# tethering, or use the interactive entry and type the credentials once.
+# Partitioning:
+#   disk    LVM on the whole disk, erasing it (unattended)
+#   free    regular partitions in the biggest free space, existing OSes kept
+#           (unattended; shrink Windows first)
+#   manual  the installer's partitioning screen (interactive)
+#
+# Without baked-in credentials WiFi stays interactive: d-i's netcfg only speaks
+# WPA2-PSK — it cannot negotiate WPA3 or WPA3-transition (PMF) and fails with
+# "the exchange of keys and association with the access point failed".
 render_preseed_variants() {
   local template="$1" work_dir="$2"
   local disk="$3" user_name="$4" user_password="$5" ssh_pub_key="$6"
 
-  # Wired (default) — matches the original unattended behavior.
+  # Wired — leave the choice to d-i's auto interface selection.
   local wired_net="$work_dir/net-wired.cfg"
   {
     printf 'd-i netcfg/choose_interface select auto\n'
@@ -164,19 +175,74 @@ render_preseed_variants() {
     printf 'd-i netcfg/disable_dhcp boolean false\n'
   } > "$wired_net"
 
-  # Interactive WiFi — leave interface/SSID/passphrase un-preseeded so d-i
-  # prompts for them. This boots at priority=high, so only these un-answered
-  # network questions surface; the rest stay unattended.
-  local wifi_prompt_net="$work_dir/net-wifi-prompt.cfg"
+  # WiFi — un-preseeded interface/SSID/passphrase make d-i prompt for them
+  # (boot priority=high surfaces only those). With WIFI_SSID/WIFI_PSK set,
+  # answer them instead.
+  local wifi_net="$work_dir/net-wifi.cfg"
   {
     printf 'd-i netcfg/get_hostname string debian\n'
     printf 'd-i netcfg/get_domain string local\n'
-  } > "$wifi_prompt_net"
+  } > "$wifi_net"
+  if [[ -n "${WIFI_SSID:-}" ]]; then
+    [[ -n "${WIFI_PSK:-}" ]] || { echo "ERROR: WIFI_SSID is set but WIFI_PSK is empty" >&2; return 1; }
+    {
+      printf 'd-i netcfg/choose_interface select auto\n'
+      printf 'd-i netcfg/disable_dhcp boolean false\n'
+      printf 'd-i netcfg/wireless_essid string %s\n' "$WIFI_SSID"
+      printf 'd-i netcfg/wireless_essid_again string %s\n' "$WIFI_SSID"
+      printf 'd-i netcfg/wireless_security_type select wpa\n'
+      printf 'd-i netcfg/wireless_wpa string %s\n' "$WIFI_PSK"
+    } >> "$wifi_net"
+  fi
 
-  _render_preseed_variant "$template" "$wired_net" "$work_dir/preseed.cfg" \
-    "$disk" "$user_name" "$user_password" "$ssh_pub_key"
-  _render_preseed_variant "$template" "$wifi_prompt_net" "$work_dir/preseed-wifi.cfg" \
-    "$disk" "$user_name" "$user_password" "$ssh_pub_key"
+  local part_disk="$work_dir/part-disk.cfg"
+  {
+    printf 'd-i partman-auto/disk string %s\n' "$disk"
+    printf 'd-i partman-auto/method string lvm\n'
+    printf 'd-i partman-auto-lvm/guided_size string max\n'
+    printf 'd-i partman-auto/choose_recipe select atomic\n'
+    printf 'd-i partman-lvm/confirm boolean true\n'
+    printf 'd-i partman-lvm/confirm_nooverwrite boolean true\n'
+    printf 'd-i partman-lvm/device_remove_lvm boolean true\n'
+    printf 'd-i partman-md/device_remove_md boolean true\n'
+    printf 'd-i partman-partitioning/confirm_write_new_label boolean true\n'
+    printf 'd-i partman/confirm boolean true\n'
+    printf 'd-i partman/confirm_nooverwrite boolean true\n'
+    printf 'd-i partman/choose_partition select finish\n'
+    printf 'd-i grub-installer/only_debian boolean true\n'
+    printf 'd-i grub-installer/bootdev string %s\n' "$disk"
+  } > "$part_disk"
+
+  # Dual-boot: keep other OSes, so GRUB must run os-prober and not assume
+  # Debian is alone on the disk.
+  local part_free="$work_dir/part-free.cfg"
+  {
+    printf 'd-i partman-auto/disk string %s\n' "$disk"
+    printf 'd-i partman-auto/method string regular\n'
+    printf 'd-i partman-auto/init_automatically_partition select biggest_free\n'
+    printf 'd-i partman-auto/choose_recipe select atomic\n'
+    printf 'd-i partman-partitioning/confirm_write_new_label boolean true\n'
+    printf 'd-i partman/confirm boolean true\n'
+    printf 'd-i partman/confirm_nooverwrite boolean true\n'
+    printf 'd-i partman/choose_partition select finish\n'
+    printf 'd-i grub-installer/only_debian boolean false\n'
+    printf 'd-i grub-installer/with_other_os boolean true\n'
+    printf 'd-i grub-installer/bootdev string %s\n' "$disk"
+  } > "$part_free"
+
+  local part_manual="$work_dir/part-manual.cfg"
+  {
+    printf 'd-i grub-installer/only_debian boolean false\n'
+    printf 'd-i grub-installer/with_other_os boolean true\n'
+  } > "$part_manual"
+
+  local net part
+  for net in wired wifi; do
+    for part in disk free manual; do
+      _render_preseed_variant "$template" "$work_dir/net-$net.cfg" "$work_dir/part-$part.cfg" \
+        "$work_dir/preseed-$net-$part.cfg" "$disk" "$user_name" "$user_password" "$ssh_pub_key"
+    done
+  done
 }
 
 # Run debconf-set-selections -c (syntax check, no side effects) against every

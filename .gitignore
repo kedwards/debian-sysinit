@@ -4,3 +4,4 @@ vmlinuz
 initrd.gz
 *.iso
 *.qcow2
+build/

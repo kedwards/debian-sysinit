@@ -13,7 +13,7 @@ source "$SCRIPT_DIR/lib/common.sh"
 
 USER_NAME="${USER_NAME:-devops}"
 USER_PASSWORD="${USER_PASSWORD:-devops}"
-DISK="${DISK:-/dev/vda}"
+DISK="${DISK:-/dev/nvme0n1}"
 
 PRESEED_TEMPLATE="$PROJECT_DIR/preseed.cfg.tmpl"
 WORK_DIR="${OUTPUT_DIR:-$PROJECT_DIR/build}"

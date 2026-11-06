@@ -10,11 +10,11 @@ source "$SCRIPT_DIR/lib/common.sh"
 USER_NAME="${USER_NAME:-devops}"
 USER_PASSWORD="${USER_PASSWORD:-devops}"
 
-# Target disk
-# /dev/vda      = virtio (QEMU default)
+# Target disk for the whole-disk / free-space entries
+# /dev/nvme0n1  = NVMe (default)
 # /dev/sda      = bare metal SATA / IDE
-# /dev/nvme0n1  = NVMe
-DISK="${DISK:-/dev/vda}"
+# /dev/vda      = virtio — use this for QEMU/VM testing (DISK=/dev/vda)
+DISK="${DISK:-/dev/nvme0n1}"
 
 # Debian netinstall
 ISOARCH="amd64"
@@ -137,49 +137,65 @@ print(offset)
 }
 
 # ---------------------------------------------------------------------------
-# Write both isolinux (BIOS) and grub (UEFI) bootloader configs.
+# Write both isolinux (BIOS) and grub (UEFI) bootloader configs, one entry per
+# network x partitioning variant (see render_preseed_variants).
 #
-# preseed/file=/preseed.cfg  points to the file inside the initrd filesystem.
-# auto=true + priority=critical suppress interactive prompts.
+# preseed/file=/preseed-<net>-<part>.cfg points to the file inside the initrd.
+# Fully answered variants boot with auto=true + priority=critical and no
+# prompts. Variants that need input (manual partitioning, or WiFi without
+# baked-in credentials) drop auto=true/quiet and use priority=high so d-i asks
+# only the un-preseeded questions and the rest stays unattended.
+#
+# The first entry (Ethernet, whole disk) is the default; its cmdline is kept
+# identical to the original so the automated QEMU test keeps passing.
 # ---------------------------------------------------------------------------
 configure_bootloaders() {
   echo "Configuring bootloaders ..."
 
-  # The default (index 0) Ethernet entry is fully unattended and wired — its
-  # cmdline is kept identical to the original so the automated QEMU test keeps
-  # passing. The interactive "enter WiFi" entry is non-default: it drops
-  # auto=true/quiet and uses priority=high so d-i prompts only for the
-  # un-preseeded network questions, leaving the rest unattended.
-  cat > "$ISO_EXTRACT/isolinux/isolinux.cfg" <<'EOF'
-default install
-timeout 50
+  local wifi_label="WiFi"
+  [[ -n "${WIFI_SSID:-}" ]] && wifi_label="WiFi, baked-in network"
 
-label install
-    menu label ^Automated Install (Ethernet)
-    menu default
-    kernel /install.amd/vmlinuz
-    append vga=788 initrd=/install.amd/initrd.gz auto=true priority=critical preseed/file=/preseed.cfg quiet ---
+  local isolinux_cfg grub_cfg
+  isolinux_cfg=$'default install-wired-disk\ntimeout 50\n'
+  grub_cfg=$'set default=0\nset timeout=5\n'
 
-label wifi
-    menu label Automated Install (enter ^WiFi)
-    kernel /install.amd/vmlinuz
-    append vga=788 initrd=/install.amd/initrd.gz priority=high preseed/file=/preseed-wifi.cfg ---
-EOF
+  local part part_label net net_label label params unattended
+  for part in disk free manual; do
+    case "$part" in
+      disk)   part_label="Install, ERASES WHOLE DISK" ;;
+      free)   part_label="Dual-boot, use biggest free space" ;;
+      manual) part_label="Dual-boot, choose partitions" ;;
+    esac
+    for net in wired wifi; do
+      case "$net" in
+        wired) net_label="Ethernet" ;;
+        wifi)  net_label="$wifi_label" ;;
+      esac
 
-  cat > "$ISO_EXTRACT/boot/grub/grub.cfg" <<'EOF'
-set default=0
-set timeout=5
+      unattended=1
+      [[ "$part" == manual ]] && unattended=0
+      [[ "$net" == wifi && -z "${WIFI_SSID:-}" ]] && unattended=0
+      if (( unattended )); then
+        params="auto=true priority=critical preseed/file=/preseed-$net-$part.cfg quiet"
+      else
+        params="priority=high preseed/file=/preseed-$net-$part.cfg"
+      fi
+      label="$part_label ($net_label)"
 
-menuentry "Automated Install (Ethernet)" {
-    linux /install.amd/vmlinuz vga=788 auto=true priority=critical preseed/file=/preseed.cfg quiet ---
-    initrd /install.amd/initrd.gz
-}
+      isolinux_cfg+=$'\n'"label install-$net-$part"$'\n'
+      isolinux_cfg+="    menu label $label"$'\n'
+      [[ "$net-$part" == wired-disk ]] && isolinux_cfg+=$'    menu default\n'
+      isolinux_cfg+=$'    kernel /install.amd/vmlinuz\n'
+      isolinux_cfg+="    append vga=788 initrd=/install.amd/initrd.gz $params ---"$'\n'
 
-menuentry "Automated Install (enter WiFi)" {
-    linux /install.amd/vmlinuz vga=788 priority=high preseed/file=/preseed-wifi.cfg ---
-    initrd /install.amd/initrd.gz
-}
-EOF
+      grub_cfg+=$'\n'"menuentry \"$label\" {"$'\n'
+      grub_cfg+="    linux /install.amd/vmlinuz vga=788 $params ---"$'\n'
+      grub_cfg+=$'    initrd /install.amd/initrd.gz\n}\n'
+    done
+  done
+
+  printf '%s' "$isolinux_cfg" > "$ISO_EXTRACT/isolinux/isolinux.cfg"
+  printf '%s' "$grub_cfg" > "$ISO_EXTRACT/boot/grub/grub.cfg"
 }
 
 # ---------------------------------------------------------------------------

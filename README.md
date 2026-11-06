@@ -30,36 +30,56 @@ Both workflows are intended for local QEMU-based validation and rely on the same
 
 ## What each workflow does
 
-### Boot menu / network options
+### Boot menu
 
-The custom ISO presents a boot menu with these entries:
+The custom ISO has one entry per partitioning mode and network type:
 
-- **Automated Install (Ethernet)** — default, auto-selected after a short timeout.
-  Fully unattended over wired DHCP. This is what the automated test uses.
-- **Automated Install (enter WiFi)** — non-default. The installer prompts for the
-  network interface, nearby SSID, and WPA passphrase, then continues unattended for
-  everything else.
+| Partitioning | Ethernet | WiFi |
+|---|---|---|
+| **Install, ERASES WHOLE DISK** — LVM on `DISK`, unattended | default entry, auto-selected after a short timeout | prompts for network |
+| **Dual-boot, use biggest free space** — regular partitions in the largest free area of `DISK`, other OSes kept, unattended | unattended | prompts for network |
+| **Dual-boot, choose partitions** — the installer's partitioning screen | prompts for partitioning only | prompts for network and partitioning |
 
-WiFi credentials are deliberately never baked into the image. Baking them ties an ISO
-to a single network, and the installer's `netcfg` only speaks WPA2-PSK — it cannot
-negotiate WPA3 or WPA3-transition (PMF) and fails with *"the exchange of keys and
-association with the access point failed"*. Prefer a wired connection (a USB-C dock or
-phone USB tethering both appear as ethernet and work with the default entry); use the
-interactive entry if no wire is available.
+For a Windows/Debian dual boot, shrink the Windows partition first (from Windows, Disk Management),
+then use either dual-boot entry. "Biggest free space" is fully automatic; "choose partitions" lets you
+reuse an existing EFI partition or pick the layout yourself. GRUB runs os-prober, so Windows is added to
+the boot menu. The "free space" mode has not been tried against a real Windows disk; check the result
+before relying on it.
 
-WiFi also requires wireless firmware in the installer. Current Debian 13 netinst images
-bundle `non-free-firmware` (including `firmware-iwlwifi`), so Intel adapters appear
-automatically; if a base image ever ships without it, the WiFi entry won't find the
-adapter.
+The default `DISK` is `/dev/nvme0n1`. Override it for other hardware, e.g. `DISK=/dev/sda`. For QEMU/VM
+testing use `DISK=/dev/vda` (virtio); `task iso:test` already builds with it. The dual-boot "choose
+partitions" entries ignore `DISK`.
+
+### WiFi
+
+By default WiFi credentials are not baked into the image: the installer prompts for the interface, SSID,
+and WPA passphrase. Prefer a wired connection (a USB-C dock or phone USB tethering both appear as
+ethernet and work with the Ethernet entries). The installer's `netcfg` only speaks WPA2-PSK; it cannot
+negotiate WPA3 or WPA3-transition (PMF) and fails with *"the exchange of keys and association with the
+access point failed"*.
+
+WiFi also requires wireless firmware in the installer. Current Debian 13 netinst images bundle
+`non-free-firmware` (including `firmware-iwlwifi`), so Intel adapters appear automatically.
+
+**Private hands-off wireless build.** Set `WIFI_SSID` and `WIFI_PSK` at build time and the WiFi entries
+use them instead of prompting, so they run as unattended as the Ethernet ones:
+
+```bash path=null start=null
+WIFI_SSID='my-network' WIFI_PSK='passphrase' task iso:build
+```
+
+The credentials are stored in plain text inside the ISO (and in `build/` if you run `task preseed:render`),
+so it works only for that network and the ISO must not be shared. Build it, use it, delete it. WPA2-PSK
+networks only. The label of the WiFi entries changes to "WiFi, baked-in network".
 
 ### Installer ISO workflow
 
 The custom ISO:
 
 - starts from the current Debian 13 `amd64` netinst image
-- injects rendered preseed files into the installer initrd
+- injects the rendered preseed files (one per network x partitioning variant) into the installer initrd
 - rewrites BIOS and UEFI boot entries so the installer runs automatically
-- installs Debian with LVM on the selected target disk
+- installs Debian with LVM on the target disk, or alongside an existing OS (see the boot menu)
 - creates a `devops` user by default
 - installs `openssh-server`, `sudo`, `curl`, `git`, `gnupg`, `cloud-init`, and `qemu-guest-agent`
 - injects your SSH public key and enables SSH access
@@ -153,7 +173,7 @@ or:
 bash scripts/render-preseed.sh
 ```
 
-Renders `preseed.cfg` and `preseed-wifi.cfg` from `preseed.cfg.tmpl` into `build/`,
+Renders the six `preseed-<net>-<part>.cfg` variants from `preseed.cfg.tmpl` into `build/`,
 then checks each with
 `debconf-set-selections -c` — the standard Debian syntax checker, run with no side effects. This
 is much faster than `task build` since it skips downloading and repacking the installer ISO; use
@@ -221,7 +241,8 @@ These environment variables are supported through `Taskfile.yml` and/or the scri
 - `SSH_PORT` — forwarded host SSH port, default `2222`
 - `QEMU_DISPLAY` — `gtk` or `none`
 - `KEEP_TEST_DISK` — set to `1` to preserve the ISO qcow2 disk after tests
-- `DISK` — target install disk inside the ISO guest, default `/dev/vda`
+- `DISK` — target install disk for the whole-disk and free-space entries, default `/dev/nvme0n1`; use `/dev/vda` in VMs
+- `WIFI_SSID`, `WIFI_PSK` — bake a WiFi network into the ISO for a private hands-off wireless build
 - `OUTPUT_ISO` — output path for `scripts/build.sh`
 - `TEST_ISO` — ISO path for `scripts/test.sh`
 - `TEST_DISK` — ISO test disk path for `scripts/test.sh`

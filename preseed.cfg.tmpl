@@ -30,19 +30,8 @@ d-i clock-setup/utc boolean true
 d-i time/zone string UTC
 d-i clock-setup/ntp boolean true
 
-### ---------- Partitioning ----------
-d-i partman-auto/disk string @@DISK@@
-d-i partman-auto/method string lvm
-d-i partman-auto-lvm/guided_size string max
-d-i partman-auto/choose_recipe select atomic
-d-i partman-lvm/confirm boolean true
-d-i partman-lvm/confirm_nooverwrite boolean true
-d-i partman-lvm/device_remove_lvm boolean true
-d-i partman-md/device_remove_md boolean true
-d-i partman-partitioning/confirm_write_new_label boolean true
-d-i partman/confirm boolean true
-d-i partman/confirm_nooverwrite boolean true
-d-i partman/choose_partition select finish
+### ---------- Partitioning and bootloader ----------
+@@PARTITIONING@@
 
 ### ---------- Users ----------
 d-i passwd/root-login boolean false
@@ -65,10 +54,6 @@ d-i pkgsel/include string \
   qemu-guest-agent
 d-i pkgsel/upgrade select none
 popularity-contest popularity-contest/participate boolean false
-
-### ---------- Bootloader ----------
-d-i grub-installer/only_debian boolean true
-d-i grub-installer/bootdev string @@DISK@@
 
 ### ---------- Late commands ----------
 d-i preseed/late_command string \
