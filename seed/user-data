@@ -19,8 +19,6 @@ package_update: true
 
 # Headless: the i3 desktop is installed later by chezmoi when enable_desktop is on
 packages:
-  - curl
-  - gnupg
   - sudo
   - systemd-resolved
 

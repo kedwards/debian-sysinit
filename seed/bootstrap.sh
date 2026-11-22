@@ -34,10 +34,7 @@ sudo apt-get install -y \
   make \
   postgresql-client \
   rsync \
-  sudo \
   unzip \
-  xclip \
-  xsel \
   zip
 
 log "Installing AWS Session Manager plugin"
