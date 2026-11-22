@@ -27,15 +27,11 @@ sudo apt-get update
 sudo apt-get install -y \
   ca-certificates \
   curl \
-  dirmngr \
   gcc \
   git \
   gnupg \
   make \
-  postgresql-client \
-  rsync \
-  unzip \
-  zip
+  unzip
 
 log "Installing AWS Session Manager plugin"
 if ! command -v session-manager-plugin >/dev/null 2>&1 && ! command -v sessionmanagerplugin >/dev/null 2>&1; then
