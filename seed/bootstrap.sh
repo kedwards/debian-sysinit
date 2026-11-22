@@ -25,7 +25,6 @@ sudo chown "$USER_NAME:$USER_NAME" "$BOOTSTRAP_ROOT"
 log "Installing base packages"
 sudo apt-get update
 sudo apt-get install -y \
-  systemd-resolved \
   ca-certificates \
   curl \
   dirmngr \
@@ -42,12 +41,6 @@ sudo apt-get install -y \
   xsel \
   zip
 
-log "Configuring systemd-resolved"
-sudo mkdir -p /etc/systemd/resolved.conf.d
-sudo ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
-sudo systemctl enable systemd-resolved
-sudo systemctl restart systemd-resolved
-
 log "Installing AWS Session Manager plugin"
 if ! command -v session-manager-plugin >/dev/null 2>&1 && ! command -v sessionmanagerplugin >/dev/null 2>&1; then
   tmp_deb="$(mktemp /tmp/session-manager-plugin.XXXXXX.deb)"
@@ -62,14 +55,14 @@ fi
 
 log "Installing Docker"
 if [[ ! -f /etc/apt/sources.list.d/docker.sources ]]; then
-  sudo install -m 0755 -d /etc/apt/keyrings
-  curl -fsSL https://download.docker.com/linux/debian/gpg | sudo tee /etc/apt/keyrings/docker.asc >/dev/null
-  sudo chmod a+r /etc/apt/keyrings/docker.asc
   . /etc/os-release
+  sudo install -m 0755 -d /etc/apt/keyrings
+  curl -fsSL "https://download.docker.com/linux/${ID}/gpg" | sudo tee /etc/apt/keyrings/docker.asc >/dev/null
+  sudo chmod a+r /etc/apt/keyrings/docker.asc
   sudo tee /etc/apt/sources.list.d/docker.sources >/dev/null <<EOF
 Types: deb
-URIs: https://download.docker.com/linux/debian
-Suites: ${VERSION_CODENAME}
+URIs: https://download.docker.com/linux/${ID}
+Suites: ${UBUNTU_CODENAME:-$VERSION_CODENAME}
 Components: stable
 Signed-By: /etc/apt/keyrings/docker.asc
 EOF

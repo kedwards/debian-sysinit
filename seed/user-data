@@ -47,6 +47,7 @@ packages:
   - scrot
   - sudo
   - sysstat
+  - systemd-resolved
   - thunar
   - thunar-archive-plugin
   - thunar-volman
@@ -102,9 +103,9 @@ write_files:
 runcmd:
   - mkdir -p /opt
   - chown @@USERNAME@@:@@USERNAME@@ /opt
-  - mkdir -p /etc/systemd/resolved.conf.d
-  # systemd-resolved is installed later by bootstrap.sh; only restart if already present
-  - systemctl restart systemd-resolved 2>/dev/null || true
+  - ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+  - systemctl enable systemd-resolved
+  - systemctl restart systemd-resolved
   - systemctl daemon-reload
   - systemctl enable sysinit-bootstrap.service
   - systemctl start sysinit-bootstrap.service
