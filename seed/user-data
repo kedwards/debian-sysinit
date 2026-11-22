@@ -17,49 +17,12 @@ users:
 
 package_update: true
 
+# Headless: the i3 desktop is installed later by chezmoi when enable_desktop is on
 packages:
-  - acpi
-  - arandr
-  - brightnessctl
   - curl
-  - dex
-  - dmenu
-  - dunst
-  - feh
-  - flameshot
-  - fontconfig
-  - git
   - gnupg
-  - gvfs
-  - i3
-  - i3blocks
-  - i3lock
-  - i3status
-  - i3-wm
-  - imagemagick
-  - jq
-  - lightdm
-  - network-manager
-  - network-manager-applet
-  - pulseaudio
-  - pavucontrol
-  - rofi
-  - scrot
   - sudo
-  - sysstat
   - systemd-resolved
-  - thunar
-  - thunar-archive-plugin
-  - thunar-volman
-  - unzip
-  - x11-xserver-utils
-  - xarchiver
-  - xfce4-terminal
-  - xorg
-  - xinit
-  - xss-lock
-  - zenity
-  - zip
 
 write_files:
   - path: /etc/systemd/resolved.conf.d/99-qemu-dns.conf

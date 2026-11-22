@@ -2,7 +2,7 @@
 # Debian workstation bootstrap. Run as the target user (needs sudo), e.g.:
 #   curl -fsSL https://raw.githubusercontent.com/kedwards/debian-sysinit/main/seed/bootstrap.sh | bash
 # Also embedded into seed/user-data at build time (see render_cloud_init_user_data).
-# Tools managed by mise are installed afterwards by chezmoi.
+# Headless base only; mise tools and the optional i3 desktop / GUI apps are installed afterwards by chezmoi.
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 
@@ -32,7 +32,6 @@ sudo apt-get install -y \
   git \
   gnupg \
   make \
-  meld \
   postgresql-client \
   rsync \
   sudo \
@@ -81,16 +80,6 @@ sudo usermod -aG docker "$USER_NAME"
 sudo systemctl enable docker
 sudo systemctl start docker
 
-log "Installing Waterfox"
-if [[ ! -f /etc/apt/sources.list.d/waterfox.list ]]; then
-  . /etc/os-release
-  waterfox_repo="https://download.opensuse.org/repositories/isv:/BrowserWorks/Debian_${VERSION_ID}"
-  curl -fsSL "${waterfox_repo}/Release.key" | gpg --dearmor | sudo tee /usr/share/keyrings/waterfox.gpg >/dev/null
-  echo "deb [signed-by=/usr/share/keyrings/waterfox.gpg] ${waterfox_repo}/ /" | sudo tee /etc/apt/sources.list.d/waterfox.list >/dev/null
-fi
-sudo apt-get update
-sudo apt-get install -y waterfox
-
 log "Installing mise"
 if [[ ! -x "$USER_HOME/.local/bin/mise" ]]; then
   tmp_dir="$(mktemp -d /tmp/mise-install.XXXXXX)"
@@ -104,23 +93,6 @@ fi
 
 log "Installing uv and chezmoi"
 env PATH="$USER_HOME/.local/bin:$PATH" "$USER_HOME/.local/bin/mise" use --global --yes uv chezmoi
-
-log "Installing Nerd Font (NerdFontsSymbolsOnly)"
-FONT_NAME="NerdFontsSymbolsOnly"
-FONT_DIR="$USER_HOME/.fonts/$FONT_NAME"
-if [[ ! -d "$FONT_DIR" ]]; then
-  tmp_font_zip="$(mktemp /tmp/nerd-font.XXXXXX.zip)"
-  curl -fL --connect-timeout 10 --max-time 300 -o "$tmp_font_zip" \
-    "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/${FONT_NAME}.zip"
-  mkdir -p "$FONT_DIR"
-  unzip -q "$tmp_font_zip" -d "$FONT_DIR"
-  rm -f "$tmp_font_zip"
-  echo "$FONT_NAME $(date +"%F_%H-%M-%S")" >> "$USER_HOME/.fonts/_sysinit_font.lock"
-  fc-cache -f "$USER_HOME/.fonts" >/dev/null 2>&1 || true
-fi
-
-log "Installing Ghostty"
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/mkasberg/ghostty-ubuntu/HEAD/install.sh)"
 
 log "Completing bootstrap"
 touch "$BOOTSTRAP_SENTINEL"

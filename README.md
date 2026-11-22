@@ -12,9 +12,9 @@ Both workflows are intended for local QEMU-based validation and rely on the same
 - `Taskfile.yml` — convenience tasks for ISO and cloud-image build/test flows
 - `preseed.cfg.tmpl` — the unattended Debian installer template used by the ISO flow
 - `seed/user-data` — cloud-init template used by the cloud-image flow
-- `seed/bootstrap.sh` — Debian-only bootstrap (packages, Docker, AWS SSM plugin, mise + uv + chezmoi,
-  Nerd Font, Ghostty). It is inlined into `seed/user-data` at render time, and can also be run on its own on a
-  stock Debian install (see below). chezmoi installs the mise tools afterwards.
+- `seed/bootstrap.sh` — Debian-only headless bootstrap (packages, Docker, AWS SSM plugin, mise + uv + chezmoi).
+  It is inlined into `seed/user-data` at render time, and can also be run on its own on a stock Debian install
+  (see below). chezmoi installs the mise tools, and the i3 desktop and GUI apps when `enable_desktop` is on.
 - `scripts/build.sh` — downloads, verifies, modifies, and rebuilds the Debian installer ISO
 - `scripts/render-preseed.sh` — renders the preseed variants from the template and checks their
   syntax, without touching the installer ISO
